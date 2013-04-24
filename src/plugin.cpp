@@ -30,14 +30,29 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include <QtDeclarative/qdeclarative.h>
-#include <QtDeclarative/QDeclarativeExtensionPlugin>
+#include <QtGlobal>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+# include <QtQml>
+# include <QQmlEngine>
+# include <QQmlExtensionPlugin>
+# define QDeclarativeEngine QQmlEngine
+# define QDeclarativeExtensionPlugin QQmlExtensionPlugin
+#else
+# include <QtDeclarative/qdeclarative.h>
+# include <QtDeclarative/QDeclarativeExtensionPlugin>
+#endif
+
 
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
 
 class Q_DECL_EXPORT NemoCalendarPlugin : public QDeclarativeExtensionPlugin
 {
+    Q_OBJECT
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    Q_PLUGIN_METADATA(IID "org.nemomobile.calendar")
+#endif
 public:
     void registerTypes(const char *uri)
     {
@@ -47,4 +62,8 @@ public:
     }
 };
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 Q_EXPORT_PLUGIN2(nemocalendar, NemoCalendarPlugin);
+#endif
+
+#include "plugin.moc"
