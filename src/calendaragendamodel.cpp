@@ -44,11 +44,13 @@
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
     : NemoCalendarAbstractModel(parent)
 {
-    QHash<int,QByteArray> roles;
-    roles[EventObjectRole] = "event";
-    roles[SectionBucketRole] = "sectionBucket";
-    roles[NotebookColorRole] = "notebookColor";
-    setRoleNames(roles);
+    mRoleNames[EventObjectRole] = "event";
+    mRoleNames[SectionBucketRole] = "sectionBucket";
+    mRoleNames[NotebookColorRole] = "notebookColor";
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    setRoleNames(mRoleNames);
+#endif
 
     connect(this, SIGNAL(startDateChanged()), this, SLOT(load()));
     connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(load()));
@@ -58,6 +60,13 @@ NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
 {
     qDeleteAll(mEvents);
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
+{
+    return mRoleNames;
+}
+#endif
 
 QDate NemoCalendarAgendaModel::startDate() const
 {

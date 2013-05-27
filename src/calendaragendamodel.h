@@ -62,12 +62,18 @@ public:
 signals:
     void startDateChanged();
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+protected:
+    virtual QHash<int, QByteArray> roleNames() const;
+#endif
+
 private slots:
     void load();
 
 private:
     QDate mStartDate;
     QList<NemoCalendarEvent *> mEvents;
+    QHash<int,QByteArray> mRoleNames;
 };
 
 #endif // CALENDARAGENDAMODEL_H
