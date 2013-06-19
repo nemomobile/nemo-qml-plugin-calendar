@@ -101,6 +101,20 @@ void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
     emit endTimeChanged();
 }
 
+bool NemoCalendarEvent::allDay() const
+{
+    return mEvent->allDay();
+}
+
+void NemoCalendarEvent::setAllDay(bool a)
+{
+    if (allDay() == a)
+        return;
+
+    mEvent->setAllDay(a);
+    emit allDayChanged();
+}
+
 void NemoCalendarEvent::save()
 {
     if (mEvent->revision() == 0) {

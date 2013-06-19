@@ -63,6 +63,10 @@ public:
     QDateTime endTime() const;
     void setEndTime(const QDateTime &endTime);
 
+    Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
+    bool allDay() const;
+    void setAllDay(bool);
+
     Q_INVOKABLE void save();
 
 signals:
@@ -70,6 +74,7 @@ signals:
     void descriptionChanged();
     void startTimeChanged();
     void endTimeChanged();
+    void allDayChanged();
 
 private:
     KCalCore::Event::Ptr mEvent;
