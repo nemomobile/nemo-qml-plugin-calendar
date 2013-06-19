@@ -90,6 +90,9 @@ void NemoCalendarAgendaModel::load()
 
     beginResetModel();
     qDeleteAll(mEvents);
+
+    int oldSize = mEvents.size();
+
     mEvents.clear();
     mEvents.reserve(eventList.size());
 
@@ -99,6 +102,14 @@ void NemoCalendarAgendaModel::load()
     }
 
     endResetModel();
+
+    if (oldSize != mEvents.size())
+        emit countChanged();
+}
+
+int NemoCalendarAgendaModel::count() const
+{
+    return mEvents.size();
 }
 
 int NemoCalendarAgendaModel::rowCount(const QModelIndex &index) const

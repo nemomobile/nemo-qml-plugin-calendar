@@ -41,6 +41,8 @@ class NemoCalendarEvent;
 class NemoCalendarAgendaModel : public NemoCalendarAbstractModel
 {
     Q_OBJECT
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
 
 public:
     enum {
@@ -52,14 +54,16 @@ public:
     explicit NemoCalendarAgendaModel(QObject *parent = 0);
     virtual ~NemoCalendarAgendaModel();
 
-    Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     QDate startDate() const;
     void setStartDate(const QDate &startDate);
+
+    int count() const;
 
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
 signals:
+    void countChanged();
     void startDateChanged();
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
