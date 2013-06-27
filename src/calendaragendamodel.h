@@ -43,6 +43,10 @@ class NemoCalendarAgendaModel : public NemoCalendarAbstractModel
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
+    Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
+
+    Q_PROPERTY(int minimumBuffer READ minimumBuffer WRITE setMinimumBuffer NOTIFY minimumBufferChanged)
+    Q_PROPERTY(int startDateIndex READ startDateIndex NOTIFY startDateIndexChanged)
 
 public:
     enum {
@@ -57,7 +61,15 @@ public:
     QDate startDate() const;
     void setStartDate(const QDate &startDate);
 
+    QDate endDate() const;
+    void setEndDate(const QDate &endDate);
+
     int count() const;
+
+    int minimumBuffer() const;
+    void setMinimumBuffer(int);
+
+    int startDateIndex() const;
 
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
@@ -65,6 +77,9 @@ public:
 signals:
     void countChanged();
     void startDateChanged();
+    void minimumBufferChanged();
+    void startDateIndexChanged();
+    void endDateChanged();
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 protected:
@@ -72,12 +87,19 @@ protected:
 #endif
 
 private slots:
-    void load();
+    void refresh();
 
 private:
+    void doRefresh();
+
     QDate mStartDate;
+    QDate mEndDate;
+    int mBuffer;
     QList<NemoCalendarEvent *> mEvents;
     QHash<int,QByteArray> mRoleNames;
+
+    bool mRefreshingModel:1;
+    bool mRerefreshNeeded:1;
 };
 
 #endif // CALENDARAGENDAMODEL_H

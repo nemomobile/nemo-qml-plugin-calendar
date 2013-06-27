@@ -42,7 +42,8 @@
 #include "calendardb.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
-    : NemoCalendarAbstractModel(parent)
+: NemoCalendarAbstractModel(parent), mBuffer(0), mRefreshingModel(false),
+  mRerefreshNeeded(false)
 {
     mRoleNames[EventObjectRole] = "event";
     mRoleNames[SectionBucketRole] = "sectionBucket";
@@ -52,8 +53,7 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
     setRoleNames(mRoleNames);
 #endif
 
-    connect(this, SIGNAL(startDateChanged()), this, SLOT(load()));
-    connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(load()));
+    connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(refresh()));
 }
 
 NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
@@ -80,36 +80,153 @@ void NemoCalendarAgendaModel::setStartDate(const QDate &startDate)
 
     mStartDate = startDate;
     emit startDateChanged();
+
+    refresh();
 }
 
-void NemoCalendarAgendaModel::load()
+QDate NemoCalendarAgendaModel::endDate() const
 {
-    // TODO: we really need a centralised event cache
-    KCalCore::Event::List eventList = NemoCalendarDb::calendar()->rawEventsForDate(mStartDate, KDateTime::Spec(KDateTime::LocalZone), KCalCore::EventSortStartDate, KCalCore::SortDirectionAscending);
-    qDebug() << Q_FUNC_INFO << "Loaded " << eventList.count() << " events for " << mStartDate;
+    return mEndDate;
+}
 
-    beginResetModel();
-    qDeleteAll(mEvents);
+void NemoCalendarAgendaModel::setEndDate(const QDate &endDate)
+{
+    if (mEndDate == endDate)
+        return;
 
-    int oldSize = mEvents.size();
+    mEndDate = endDate;
+    emit endDateChanged();
 
-    mEvents.clear();
-    mEvents.reserve(eventList.size());
+    refresh();
+}
 
-    foreach (const KCalCore::Event::Ptr &evt, eventList) {
-        NemoCalendarEvent *event = new NemoCalendarEvent(evt);
-        mEvents.append(event);
+void NemoCalendarAgendaModel::refresh()
+{
+    if (mRefreshingModel) {
+        mRerefreshNeeded = true;
+        return;
     }
 
-    endResetModel();
+    mRefreshingModel = true;
+    doRefresh();
+    mRefreshingModel = false;
+    if (mRerefreshNeeded) {
+        mRerefreshNeeded = false;
+        refresh();
+    }
+}
 
-    if (oldSize != mEvents.size())
+static bool eventsEqual(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2)
+{
+    return e1 == e2 || e1->uid() == e2->uid();
+}
+
+static bool eventsLessThan(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2)
+{
+    const KDateTime d1 = e1->dtStart();
+    KDateTime::Comparison res = d1.compare(e2->dtStart());
+    if (res == KDateTime::Equal) {
+        int cmp = QString::compare(e1->summary(), e2->summary(), Qt::CaseInsensitive);
+        if (cmp == 0) return QString::compare(e1->uid(), e2->uid()) < 0;
+        else return cmp < 0;
+    } else {
+        return (res & KDateTime::Before || res & KDateTime::AtStart);
+    }
+}
+
+void NemoCalendarAgendaModel::doRefresh()
+{
+    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
+
+    // Sorting function
+    bool (*lessThan)(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2);
+    lessThan = eventsLessThan;
+
+    // Matching function
+    bool (*equal)(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2);
+    equal = eventsEqual;
+
+
+    KCalCore::Event::List newEvents = calendar->rawEvents(mStartDate, mEndDate.isValid()?mEndDate:mStartDate,
+                                                          KDateTime::Spec(KDateTime::LocalZone));
+    qSort(newEvents.begin(), newEvents.end(), lessThan);
+
+    QList<NemoCalendarEvent *> events = mEvents;
+
+    int newEventsCounter = 0;
+    int eventsCounter = 0;
+
+    int mEventsIndex = 0;
+
+    while (newEventsCounter < newEvents.count() || eventsCounter < events.count()) {
+        // Remove old events
+        int removeCount = 0;
+        while ((eventsCounter + removeCount) < events.count() &&
+               (newEventsCounter >= newEvents.count() ||
+                lessThan(events.at(eventsCounter + removeCount)->event(), newEvents.at(newEventsCounter))))
+            removeCount++;
+
+        if (removeCount) {
+            beginRemoveRows(QModelIndex(), mEventsIndex, mEventsIndex + removeCount - 1);
+            mEvents.erase(mEvents.begin() + mEventsIndex, mEvents.begin() + mEventsIndex + removeCount);
+            endRemoveRows();
+            for (int ii = eventsCounter; ii < eventsCounter + removeCount; ++ii)
+                delete events.at(ii);
+            eventsCounter += removeCount;
+        }
+
+        // Skip matching events
+        while (eventsCounter < events.count() && newEventsCounter < newEvents.count() &&
+               equal(newEvents.at(newEventsCounter), events.at(eventsCounter)->event())) {
+            eventsCounter++;
+            newEventsCounter++;
+            mEventsIndex++;
+        }
+
+        // Insert new events
+        int insertCount = 0;
+        while ((newEventsCounter + insertCount) < newEvents.count() && 
+               (eventsCounter >= events.count() ||
+                lessThan(newEvents.at(newEventsCounter + insertCount), events.at(eventsCounter)->event())))
+            insertCount++;
+
+        if (insertCount) {
+            beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
+            for (int ii = 0; ii < insertCount; ++ii) {
+                NemoCalendarEvent *event = new NemoCalendarEvent(newEvents.at(newEventsCounter + ii));
+                mEvents.insert(mEventsIndex++, event);
+            }
+            newEventsCounter += insertCount;
+            endInsertRows();
+        }
+    }
+
+    if (events.count() != mEvents.count())
         emit countChanged();
 }
 
 int NemoCalendarAgendaModel::count() const
 {
     return mEvents.size();
+}
+
+int NemoCalendarAgendaModel::minimumBuffer() const
+{
+    return mBuffer;
+}
+
+void NemoCalendarAgendaModel::setMinimumBuffer(int b)
+{
+    if (mBuffer == b)
+        return;
+
+    mBuffer = b;
+    emit minimumBufferChanged();
+}
+
+int NemoCalendarAgendaModel::startDateIndex() const
+{
+    return 0;
 }
 
 int NemoCalendarAgendaModel::rowCount(const QModelIndex &index) const

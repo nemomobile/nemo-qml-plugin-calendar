@@ -69,6 +69,8 @@ public:
 
     Q_INVOKABLE void save();
 
+    inline KCalCore::Event::Ptr &event();
+    inline const KCalCore::Event::Ptr &event() const;
 signals:
     void displayLabelChanged();
     void descriptionChanged();
@@ -79,5 +81,15 @@ signals:
 private:
     KCalCore::Event::Ptr mEvent;
 };
+
+KCalCore::Event::Ptr &NemoCalendarEvent::event()
+{
+    return mEvent;
+}
+
+const KCalCore::Event::Ptr &NemoCalendarEvent::event() const
+{
+    return mEvent;
+}
 
 #endif // CALENDAREVENT_H

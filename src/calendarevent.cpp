@@ -123,6 +123,7 @@ void NemoCalendarEvent::save()
         mEvent->setRevision(mEvent->revision() + 1);
     }
 
+    //
     // TODO: this sucks
     NemoCalendarDb::storage()->save();
 }
