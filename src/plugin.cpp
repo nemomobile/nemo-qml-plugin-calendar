@@ -47,6 +47,39 @@
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
 
+class QtDate : public QObject
+{
+    Q_OBJECT
+public:
+    QtDate(QObject *parent);
+
+public slots:
+    int daysTo(const QDate &, const QDate &);
+    QDate addDays(const QDate &, int);
+
+    static QObject *New(QQmlEngine *e, QJSEngine *);
+};
+
+QtDate::QtDate(QObject *parent)
+: QObject(parent)
+{
+}
+
+int QtDate::daysTo(const QDate &from, const QDate &to)
+{
+    return from.daysTo(to);
+}
+
+QDate QtDate::addDays(const QDate &date, int days)
+{
+    return date.addDays(days);
+}
+
+QObject *QtDate::New(QQmlEngine *e, QJSEngine *)
+{
+    return new QtDate(e);
+}
+
 class Q_DECL_EXPORT NemoCalendarPlugin : public QDeclarativeExtensionPlugin
 {
     Q_OBJECT
@@ -59,6 +92,9 @@ public:
         Q_ASSERT(uri == QLatin1String("org.nemomobile.calendar"));
         qmlRegisterUncreatableType<NemoCalendarEvent>(uri, 1, 0, "CalendarEvent", "Create CalendarEvent instances through a model");
         qmlRegisterType<NemoCalendarAgendaModel>(uri, 1, 0, "AgendaModel");
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);
+#endif
     }
 };
 
