@@ -46,6 +46,7 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
   mRerefreshNeeded(false)
 {
     mRoleNames[EventObjectRole] = "event";
+    mRoleNames[OccurrenceObjectRole] = "occurrence";
     mRoleNames[SectionBucketRole] = "sectionBucket";
     mRoleNames[NotebookColorRole] = "notebookColor";
 
@@ -116,21 +117,23 @@ void NemoCalendarAgendaModel::refresh()
     }
 }
 
-static bool eventsEqual(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2)
+static bool eventsEqual(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
+                        const mKCal::ExtendedCalendar::ExpandedIncidence &e2)
 {
-    return e1 == e2 || e1->uid() == e2->uid();
+    return e1.first.dtStart == e2.first.dtStart &&
+           e1.first.dtEnd == e2.first.dtEnd &&
+           e1.second->uid() == e2.second->uid();
 }
 
-static bool eventsLessThan(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2)
+static bool eventsLessThan(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
+                           const mKCal::ExtendedCalendar::ExpandedIncidence &e2)
 {
-    const KDateTime d1 = e1->dtStart();
-    KDateTime::Comparison res = d1.compare(e2->dtStart());
-    if (res == KDateTime::Equal) {
-        int cmp = QString::compare(e1->summary(), e2->summary(), Qt::CaseInsensitive);
-        if (cmp == 0) return QString::compare(e1->uid(), e2->uid()) < 0;
+    if (e1.first.dtStart == e2.first.dtStart) {
+        int cmp = QString::compare(e1.second->summary(), e2.second->summary(), Qt::CaseInsensitive);
+        if (cmp == 0) return QString::compare(e1.second->uid(), e2.second->uid()) < 0;
         else return cmp < 0;
     } else {
-        return (res & KDateTime::Before || res & KDateTime::AtStart);
+        return e1.first.dtStart < e2.first.dtStart;
     }
 }
 
@@ -138,20 +141,14 @@ void NemoCalendarAgendaModel::doRefresh()
 {
     mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
 
-    // Sorting function
-    bool (*lessThan)(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2);
-    lessThan = eventsLessThan;
+    QDate endDate = mEndDate.isValid()?mEndDate:mStartDate;
 
-    // Matching function
-    bool (*equal)(const KCalCore::Event::Ptr &e1, const KCalCore::Event::Ptr &e2);
-    equal = eventsEqual;
+    mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents =
+        calendar->rawExpandedEvents(mStartDate, endDate, false, false, KDateTime::Spec(KDateTime::LocalZone));
 
+    qSort(newEvents.begin(), newEvents.end(), eventsLessThan);
 
-    KCalCore::Event::List newEvents = calendar->rawEvents(mStartDate, mEndDate.isValid()?mEndDate:mStartDate,
-                                                          KDateTime::Spec(KDateTime::LocalZone));
-    qSort(newEvents.begin(), newEvents.end(), lessThan);
-
-    QList<NemoCalendarEvent *> events = mEvents;
+    QList<NemoCalendarEventOccurrence *> events = mEvents;
 
     int newEventsCounter = 0;
     int eventsCounter = 0;
@@ -163,7 +160,8 @@ void NemoCalendarAgendaModel::doRefresh()
         int removeCount = 0;
         while ((eventsCounter + removeCount) < events.count() &&
                (newEventsCounter >= newEvents.count() ||
-                lessThan(events.at(eventsCounter + removeCount)->event(), newEvents.at(newEventsCounter))))
+                eventsLessThan(events.at(eventsCounter + removeCount)->expandedEvent(),
+                               newEvents.at(newEventsCounter))))
             removeCount++;
 
         if (removeCount) {
@@ -177,7 +175,7 @@ void NemoCalendarAgendaModel::doRefresh()
 
         // Skip matching events
         while (eventsCounter < events.count() && newEventsCounter < newEvents.count() &&
-               equal(newEvents.at(newEventsCounter), events.at(eventsCounter)->event())) {
+               eventsEqual(newEvents.at(newEventsCounter), events.at(eventsCounter)->expandedEvent())) {
             eventsCounter++;
             newEventsCounter++;
             mEventsIndex++;
@@ -187,13 +185,15 @@ void NemoCalendarAgendaModel::doRefresh()
         int insertCount = 0;
         while ((newEventsCounter + insertCount) < newEvents.count() && 
                (eventsCounter >= events.count() ||
-                lessThan(newEvents.at(newEventsCounter + insertCount), events.at(eventsCounter)->event())))
+                eventsLessThan(newEvents.at(newEventsCounter + insertCount),
+                               events.at(eventsCounter)->expandedEvent())))
             insertCount++;
 
         if (insertCount) {
             beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
             for (int ii = 0; ii < insertCount; ++ii) {
-                NemoCalendarEvent *event = new NemoCalendarEvent(newEvents.at(newEventsCounter + ii));
+                NemoCalendarEventOccurrence *event = 
+                    new NemoCalendarEventOccurrence(newEvents.at(newEventsCounter + ii));
                 mEvents.insert(mEventsIndex++, event);
             }
             newEventsCounter += insertCount;
@@ -244,6 +244,8 @@ QVariant NemoCalendarAgendaModel::data(const QModelIndex &index, int role) const
 
     switch (role) {
         case EventObjectRole:
+            return QVariant::fromValue<QObject *>(mEvents.at(index.row())->event());
+        case OccurrenceObjectRole:
             return QVariant::fromValue<QObject *>(mEvents.at(index.row()));
         case SectionBucketRole:
             return mEvents.at(index.row())->startTime().date();

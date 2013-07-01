@@ -37,6 +37,7 @@
 
 #include "calendarabstractmodel.h"
 class NemoCalendarEvent;
+class NemoCalendarEventOccurrence;
 
 class NemoCalendarAgendaModel : public NemoCalendarAbstractModel
 {
@@ -51,6 +52,7 @@ class NemoCalendarAgendaModel : public NemoCalendarAbstractModel
 public:
     enum {
         EventObjectRole = Qt::UserRole,
+        OccurrenceObjectRole,
         SectionBucketRole,
         NotebookColorRole
     };
@@ -95,7 +97,7 @@ private:
     QDate mStartDate;
     QDate mEndDate;
     int mBuffer;
-    QList<NemoCalendarEvent *> mEvents;
+    QList<NemoCalendarEventOccurrence *> mEvents;
     QHash<int,QByteArray> mRoleNames;
 
     bool mRefreshingModel:1;

@@ -31,6 +31,8 @@
  */
 
 #include "calendarevent.h"
+
+#include <QQmlInfo>
 #include "calendardb.h"
 
 NemoCalendarEvent::NemoCalendarEvent(QObject *parent)
@@ -115,6 +117,72 @@ void NemoCalendarEvent::setAllDay(bool a)
     emit allDayChanged();
 }
 
+NemoCalendarEvent::Recur NemoCalendarEvent::recur() const
+{
+    if (mEvent->recurs()) {
+        if (mEvent->recurrence()->rRules().count() != 1) {
+            return RecurCustom;
+        } else {
+            ushort rt = mEvent->recurrence()->recurrenceType();
+            int freq = mEvent->recurrence()->frequency();
+
+            if (rt == KCalCore::Recurrence::rDaily && freq == 1) {
+                return RecurDaily;
+            } else if (rt == KCalCore::Recurrence::rWeekly && freq == 1) {
+                return RecurWeekly;
+            } else if (rt == KCalCore::Recurrence::rWeekly && freq == 2) {
+                return RecurBiweekly;
+            } else if (rt == KCalCore::Recurrence::rMonthlyDay && freq == 1) {
+                return RecurMonthly;
+            } else if (rt == KCalCore::Recurrence::rYearlyMonth && freq == 1) {
+                return RecurYearly;
+            } else {
+                return RecurCustom;
+            }
+        }
+    } else {
+        return RecurOnce;
+    }
+}
+
+void NemoCalendarEvent::setRecur(Recur r)
+{
+    Recur oldRecur = recur();
+
+    if (r == RecurCustom) {
+        qmlInfo(this) << "Cannot assign RecurCustom";
+        r = RecurOnce;
+    }
+
+    if (r == RecurOnce)
+        mEvent->recurrence()->clear();
+
+    if (oldRecur == r)
+        return;
+
+    switch (r) {
+        case RecurOnce:
+            break;
+        case RecurDaily:
+            mEvent->recurrence()->setDaily(1);
+            break;
+        case RecurWeekly:
+            mEvent->recurrence()->setWeekly(1);
+            break;
+        case RecurBiweekly:
+            mEvent->recurrence()->setWeekly(2);
+            break;
+        case RecurMonthly:
+            mEvent->recurrence()->setMonthly(1);
+            break;
+        case RecurYearly:
+            mEvent->recurrence()->setYearly(1);
+            break;
+    }
+
+    emit recurChanged();
+}
+
 void NemoCalendarEvent::save()
 {
     if (mEvent->revision() == 0) {
@@ -127,3 +195,26 @@ void NemoCalendarEvent::save()
     // TODO: this sucks
     NemoCalendarDb::storage()->save();
 }
+
+NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &o,
+                                                         QObject *parent)
+: QObject(parent), mOccurrence(o), mEvent(0)
+{
+}
+
+QDateTime NemoCalendarEventOccurrence::startTime() const
+{
+    return mOccurrence.first.dtStart;
+}
+
+QDateTime NemoCalendarEventOccurrence::endTime() const
+{
+    return mOccurrence.first.dtEnd;
+}
+
+NemoCalendarEvent *NemoCalendarEventOccurrence::event()
+{
+    if (!mEvent) mEvent = new NemoCalendarEvent(mOccurrence.second.dynamicCast<KCalCore::Event>(), this);
+    return mEvent;
+}
+

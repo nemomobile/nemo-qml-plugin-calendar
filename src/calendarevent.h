@@ -38,12 +38,24 @@
 
 // mkcal
 #include <event.h>
+#include <extendedcalendar.h>
 
 class NemoCalendarEvent : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(Recur)
 
 public:
+    enum Recur {
+        RecurOnce,
+        RecurDaily,
+        RecurWeekly,
+        RecurBiweekly,
+        RecurMonthly,
+        RecurYearly,
+        RecurCustom
+    };
+
     explicit NemoCalendarEvent(QObject *parent = 0);
     NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent = 0);
 
@@ -67,6 +79,10 @@ public:
     bool allDay() const;
     void setAllDay(bool);
 
+    Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
+    Recur recur() const;
+    void setRecur(Recur);
+
     Q_INVOKABLE void save();
 
     inline KCalCore::Event::Ptr &event();
@@ -77,9 +93,32 @@ signals:
     void startTimeChanged();
     void endTimeChanged();
     void allDayChanged();
+    void recurChanged();
 
 private:
     KCalCore::Event::Ptr mEvent;
+};
+
+class NemoCalendarEventOccurrence : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QDateTime startTime READ startTime CONSTANT)
+    Q_PROPERTY(QDateTime endTime READ endTime CONSTANT)
+    Q_PROPERTY(NemoCalendarEvent *event READ event CONSTANT)
+
+public:
+    NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &,
+                                QObject *parent = 0);
+
+    QDateTime startTime() const;
+    QDateTime endTime() const;
+    NemoCalendarEvent *event();
+
+    inline mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent();
+    inline const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
+private:
+    mKCal::ExtendedCalendar::ExpandedIncidence mOccurrence;
+    NemoCalendarEvent *mEvent;
 };
 
 KCalCore::Event::Ptr &NemoCalendarEvent::event()
@@ -90,6 +129,16 @@ KCalCore::Event::Ptr &NemoCalendarEvent::event()
 const KCalCore::Event::Ptr &NemoCalendarEvent::event() const
 {
     return mEvent;
+}
+
+mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent()
+{
+    return mOccurrence;
+}
+
+const mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent() const
+{
+    return mOccurrence;
 }
 
 #endif // CALENDAREVENT_H
