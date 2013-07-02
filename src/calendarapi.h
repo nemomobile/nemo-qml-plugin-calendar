@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 Jolla Ltd.
- * Contact: Robin Burchell <robin.burchell@jollamobile.com>
+ * Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -30,41 +30,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CALENDAREVENTCACHE_H
-#define CALENDAREVENTCACHE_H
+#ifndef CALENDARAPI_H
+#define CALENDARAPI_H
 
-// Qt
-#include <QSet>
-#include <QObject>
+#include <QAbstractListModel>
 
-// mkcal
-#include <event.h>
-#include <extendedstorage.h>
-
+class QJSEngine;
+class QQmlEngine;
 class NemoCalendarEvent;
-class NemoCalendarEventOccurrence;
-class NemoCalendarEventCache : public QObject, public mKCal::ExtendedStorageObserver
+
+class NemoCalendarApi : public QObject
 {
     Q_OBJECT
-private:
-    NemoCalendarEventCache();
-
 public:
-    static NemoCalendarEventCache *instance();
+    NemoCalendarApi(QObject *parent = 0);
 
-    /* mKCal::ExtendedStorageObserver */
-    void storageModified(mKCal::ExtendedStorage *storage, const QString &info);
-    void storageProgress(mKCal::ExtendedStorage *storage, const QString &info);
-    void storageFinished(mKCal::ExtendedStorage *storage, bool error, const QString &info);
+    Q_INVOKABLE NemoCalendarEvent *createEvent();
+    Q_INVOKABLE void remove(const QString &);
+    Q_INVOKABLE void remove(const QString &, const QDateTime &);
 
-signals:
-    void modelReset();
-
-private:
-    friend class NemoCalendarEvent;
-    friend class NemoCalendarEventOccurrence;
-    QSet<NemoCalendarEvent *> mEvents;
-    QSet<NemoCalendarEventOccurrence *> mEventOccurrences;
+    static QObject *New(QQmlEngine *, QJSEngine *);
 };
 
-#endif // CALENDAREVENTCACHE_H
+#endif // CALENDARAPI_H

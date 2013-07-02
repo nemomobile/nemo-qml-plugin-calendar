@@ -34,12 +34,12 @@
 #define CALENDARAGENDAMODEL_H
 
 #include <QDate>
+#include <QAbstractListModel>
 
-#include "calendarabstractmodel.h"
 class NemoCalendarEvent;
 class NemoCalendarEventOccurrence;
 
-class NemoCalendarAgendaModel : public NemoCalendarAbstractModel
+class NemoCalendarAgendaModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
@@ -92,7 +92,7 @@ private slots:
     void refresh();
 
 private:
-    void doRefresh();
+    void doRefresh(bool reset = false);
 
     QDate mStartDate;
     QDate mEndDate;

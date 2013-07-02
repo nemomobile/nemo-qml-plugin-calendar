@@ -38,11 +38,12 @@
 # include <QQmlExtensionPlugin>
 # define QDeclarativeEngine QQmlEngine
 # define QDeclarativeExtensionPlugin QQmlExtensionPlugin
+#include "calendarapi.h"
+#include "calendareventquery.h"
 #else
 # include <QtDeclarative/qdeclarative.h>
 # include <QtDeclarative/QDeclarativeExtensionPlugin>
 #endif
-
 
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
@@ -93,7 +94,9 @@ public:
         qmlRegisterUncreatableType<NemoCalendarEvent>(uri, 1, 0, "CalendarEvent", "Create CalendarEvent instances through a model");
         qmlRegisterType<NemoCalendarAgendaModel>(uri, 1, 0, "AgendaModel");
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        qmlRegisterType<NemoCalendarEventQuery>(uri, 1, 0, "EventQuery");
         qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);
+        qmlRegisterSingletonType<NemoCalendarApi>(uri, 1, 0, "Calendar", NemoCalendarApi::New);
 #endif
     }
 };

@@ -22,18 +22,20 @@ equals(QT_MAJOR_VERSION, 5): PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5
 
 SOURCES += \
     plugin.cpp \
-    calendarabstractmodel.cpp \
     calendarevent.cpp \
     calendaragendamodel.cpp \
     calendardb.cpp \
-    calendareventcache.cpp
+    calendareventcache.cpp \
+    calendarapi.cpp \
+    calendareventquery.cpp \
 
 HEADERS += \
     calendarevent.h \
-    calendarabstractmodel.h \
     calendaragendamodel.h \
     calendardb.h \
-    calendareventcache.h
+    calendareventcache.h \
+    calendarapi.h \
+    calendareventquery.h \
 
 MOC_DIR = $$PWD/.moc
 OBJECTS_DIR = $$PWD/.obj

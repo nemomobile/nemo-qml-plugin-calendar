@@ -45,6 +45,15 @@ class NemoCalendarEvent : public QObject
     Q_OBJECT
     Q_ENUMS(Recur)
 
+    Q_PROPERTY(QString displayLabel READ displayLabel WRITE setDisplayLabel NOTIFY displayLabelChanged)
+    Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY descriptionChanged)
+    Q_PROPERTY(QDateTime startTime READ startTime WRITE setStartTime NOTIFY startTimeChanged)
+    Q_PROPERTY(QDateTime endTime READ endTime WRITE setEndTime NOTIFY endTimeChanged)
+    Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
+    Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
+    Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
+    Q_PROPERTY(QString color READ color CONSTANT)
+
 public:
     enum Recur {
         RecurOnce,
@@ -58,35 +67,37 @@ public:
 
     explicit NemoCalendarEvent(QObject *parent = 0);
     NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent = 0);
+    ~NemoCalendarEvent();
 
-    Q_PROPERTY(QString displayLabel READ displayLabel WRITE setDisplayLabel NOTIFY displayLabelChanged)
     QString displayLabel() const;
     void setDisplayLabel(const QString &displayLabel);
 
-    Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY descriptionChanged)
     QString description() const;
     void setDescription(const QString &description);
 
-    Q_PROPERTY(QDateTime startTime READ startTime WRITE setStartTime NOTIFY startTimeChanged)
     QDateTime startTime() const;
     void setStartTime(const QDateTime &startTime);
 
-    Q_PROPERTY(QDateTime endTime READ endTime WRITE setEndTime NOTIFY endTimeChanged)
     QDateTime endTime() const;
     void setEndTime(const QDateTime &endTime);
 
-    Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
     bool allDay() const;
     void setAllDay(bool);
 
-    Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
     Recur recur() const;
     void setRecur(Recur);
 
-    Q_INVOKABLE void save();
+    QString uniqueId() const;
 
-    inline KCalCore::Event::Ptr &event();
+    QString color() const;
+
+    Q_INVOKABLE void save();
+    Q_INVOKABLE void remove();
+
+    inline KCalCore::Event::Ptr event();
     inline const KCalCore::Event::Ptr &event() const;
+    void setEvent(const KCalCore::Event::Ptr &);
+
 signals:
     void displayLabelChanged();
     void descriptionChanged();
@@ -104,24 +115,31 @@ class NemoCalendarEventOccurrence : public QObject
     Q_OBJECT
     Q_PROPERTY(QDateTime startTime READ startTime CONSTANT)
     Q_PROPERTY(QDateTime endTime READ endTime CONSTANT)
-    Q_PROPERTY(NemoCalendarEvent *event READ event CONSTANT)
+    Q_PROPERTY(NemoCalendarEvent *event READ eventObject CONSTANT)
 
 public:
     NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &,
                                 QObject *parent = 0);
+    ~NemoCalendarEventOccurrence();
 
     QDateTime startTime() const;
     QDateTime endTime() const;
-    NemoCalendarEvent *event();
+    NemoCalendarEvent *eventObject();
 
-    inline mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent();
+    inline mKCal::ExtendedCalendar::ExpandedIncidence expandedEvent();
     inline const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
+
+    inline KCalCore::Event::Ptr event();
+    inline const KCalCore::Event::Ptr event() const;
+    void setEvent(const KCalCore::Event::Ptr &);
+
+    Q_INVOKABLE void remove();
 private:
     mKCal::ExtendedCalendar::ExpandedIncidence mOccurrence;
     NemoCalendarEvent *mEvent;
 };
 
-KCalCore::Event::Ptr &NemoCalendarEvent::event()
+KCalCore::Event::Ptr NemoCalendarEvent::event()
 {
     return mEvent;
 }
@@ -131,7 +149,17 @@ const KCalCore::Event::Ptr &NemoCalendarEvent::event() const
     return mEvent;
 }
 
-mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent()
+KCalCore::Event::Ptr NemoCalendarEventOccurrence::event()
+{
+    return mOccurrence.second.dynamicCast<KCalCore::Event>();
+}
+
+const KCalCore::Event::Ptr NemoCalendarEventOccurrence::event() const
+{
+    return mOccurrence.second.dynamicCast<KCalCore::Event>();
+}
+
+mKCal::ExtendedCalendar::ExpandedIncidence NemoCalendarEventOccurrence::expandedEvent()
 {
     return mOccurrence;
 }

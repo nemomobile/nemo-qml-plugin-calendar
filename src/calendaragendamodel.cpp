@@ -42,7 +42,7 @@
 #include "calendardb.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
-: NemoCalendarAbstractModel(parent), mBuffer(0), mRefreshingModel(false),
+: QAbstractListModel(parent), mBuffer(0), mRefreshingModel(false),
   mRerefreshNeeded(false)
 {
     mRoleNames[EventObjectRole] = "event";
@@ -122,13 +122,15 @@ static bool eventsEqual(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
 {
     return e1.first.dtStart == e2.first.dtStart &&
            e1.first.dtEnd == e2.first.dtEnd &&
-           e1.second->uid() == e2.second->uid();
+           (e1.second == e2.second || (e1.second && e2.second && e1.second->uid() == e2.second->uid()));
 }
 
 static bool eventsLessThan(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
                            const mKCal::ExtendedCalendar::ExpandedIncidence &e2)
 {
-    if (e1.first.dtStart == e2.first.dtStart) {
+    if (e1.second.isNull() != e2.second.isNull()) {
+        return e1.second.data() < e2.second.data();
+    } else if (e1.first.dtStart == e2.first.dtStart) {
         int cmp = QString::compare(e1.second->summary(), e2.second->summary(), Qt::CaseInsensitive);
         if (cmp == 0) return QString::compare(e1.second->uid(), e2.second->uid()) < 0;
         else return cmp < 0;
@@ -137,7 +139,7 @@ static bool eventsLessThan(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
     }
 }
 
-void NemoCalendarAgendaModel::doRefresh()
+void NemoCalendarAgendaModel::doRefresh(bool reset)
 {
     mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
 
@@ -147,6 +149,14 @@ void NemoCalendarAgendaModel::doRefresh()
         calendar->rawExpandedEvents(mStartDate, endDate, false, false, KDateTime::Spec(KDateTime::LocalZone));
 
     qSort(newEvents.begin(), newEvents.end(), eventsLessThan);
+
+    int oldEventCount = mEvents.count();
+
+    if (reset) {
+        beginResetModel();
+        qDeleteAll(mEvents);
+        mEvents.clear();
+    }
 
     QList<NemoCalendarEventOccurrence *> events = mEvents;
 
@@ -165,6 +175,7 @@ void NemoCalendarAgendaModel::doRefresh()
             removeCount++;
 
         if (removeCount) {
+            Q_ASSERT(false == reset);
             beginRemoveRows(QModelIndex(), mEventsIndex, mEventsIndex + removeCount - 1);
             mEvents.erase(mEvents.begin() + mEventsIndex, mEvents.begin() + mEventsIndex + removeCount);
             endRemoveRows();
@@ -176,6 +187,7 @@ void NemoCalendarAgendaModel::doRefresh()
         // Skip matching events
         while (eventsCounter < events.count() && newEventsCounter < newEvents.count() &&
                eventsEqual(newEvents.at(newEventsCounter), events.at(eventsCounter)->expandedEvent())) {
+            Q_ASSERT(false == reset);
             eventsCounter++;
             newEventsCounter++;
             mEventsIndex++;
@@ -190,18 +202,21 @@ void NemoCalendarAgendaModel::doRefresh()
             insertCount++;
 
         if (insertCount) {
-            beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
+            if (!reset) beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
             for (int ii = 0; ii < insertCount; ++ii) {
                 NemoCalendarEventOccurrence *event = 
                     new NemoCalendarEventOccurrence(newEvents.at(newEventsCounter + ii));
                 mEvents.insert(mEventsIndex++, event);
             }
             newEventsCounter += insertCount;
-            endInsertRows();
+            if (!reset) endInsertRows();
         }
     }
 
-    if (events.count() != mEvents.count())
+    if (reset)
+        endResetModel();
+
+    if (oldEventCount != mEvents.count())
         emit countChanged();
 }
 
@@ -244,7 +259,7 @@ QVariant NemoCalendarAgendaModel::data(const QModelIndex &index, int role) const
 
     switch (role) {
         case EventObjectRole:
-            return QVariant::fromValue<QObject *>(mEvents.at(index.row())->event());
+            return QVariant::fromValue<QObject *>(mEvents.at(index.row())->eventObject());
         case OccurrenceObjectRole:
             return QVariant::fromValue<QObject *>(mEvents.at(index.row()));
         case SectionBucketRole:

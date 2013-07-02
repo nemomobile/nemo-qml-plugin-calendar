@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 Jolla Ltd.
- * Contact: Robin Burchell <robin.burchell@jollamobile.com>
+ * Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -30,20 +30,53 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CALENDARABSTRACTMODEL_H
-#define CALENDARABSTRACTMODEL_H
+#ifndef CALENDAREVENTQUERY_H
+#define CALENDAREVENTQUERY_H
 
-#include <QAbstractListModel>
+#include <QObject>
+#include <QDateTime>
+#include <QQmlParserStatus>
 
-class NemoCalendarEvent;
-
-class NemoCalendarAbstractModel : public QAbstractListModel
+class NemoCalendarEventOccurrence;
+class NemoCalendarEventQuery : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
-public:
-    explicit NemoCalendarAbstractModel(QObject *parent = 0);
+    Q_INTERFACES(QQmlParserStatus)
+    Q_PROPERTY(QString uniqueId READ uniqueId WRITE setUniqueId NOTIFY uniqueIdChanged)
+    Q_PROPERTY(QDateTime startTime READ startTime WRITE setStartTime RESET resetStartTime NOTIFY startTimeChanged)
+    Q_PROPERTY(QObject *event READ event NOTIFY eventChanged)
+    Q_PROPERTY(QObject *occurrence READ occurrence NOTIFY occurrenceChanged)
 
-    Q_INVOKABLE NemoCalendarEvent *createEvent();
+public:
+    NemoCalendarEventQuery();
+
+    QString uniqueId() const;
+    void setUniqueId(const QString &);
+
+    QDateTime startTime() const;
+    void setStartTime(const QDateTime &);
+    void resetStartTime();
+
+    QObject *event() const;
+    QObject *occurrence() const;
+
+    virtual void classBegin();
+    virtual void componentComplete();
+
+signals:
+    void uniqueIdChanged();
+    void eventChanged();
+    void occurrenceChanged();
+    void startTimeChanged();
+
+private slots:
+    void refresh();
+
+private:
+    bool mIsComplete;
+    QString mUid;
+    QDateTime mStartTime;
+    NemoCalendarEventOccurrence *mOccurrence;
 };
 
-#endif // CALENDARABSTRACTMODEL_H
+#endif
