@@ -34,14 +34,16 @@
 #define CALENDARAGENDAMODEL_H
 
 #include <QDate>
+#include <QQmlParserStatus>
 #include <QAbstractListModel>
 
 class NemoCalendarEvent;
 class NemoCalendarEventOccurrence;
 
-class NemoCalendarAgendaModel : public QAbstractListModel
+class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
@@ -76,6 +78,9 @@ public:
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
+    virtual void classBegin();
+    virtual void componentComplete();
+
 signals:
     void countChanged();
     void startDateChanged();
@@ -102,6 +107,7 @@ private:
 
     bool mRefreshingModel:1;
     bool mRerefreshNeeded:1;
+    bool mIsComplete:1;
 };
 
 #endif // CALENDARAGENDAMODEL_H

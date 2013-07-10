@@ -43,7 +43,7 @@
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
 : QAbstractListModel(parent), mBuffer(0), mRefreshingModel(false),
-  mRerefreshNeeded(false)
+  mRerefreshNeeded(false), mIsComplete(true)
 {
     mRoleNames[EventObjectRole] = "event";
     mRoleNames[OccurrenceObjectRole] = "occurrence";
@@ -103,6 +103,9 @@ void NemoCalendarAgendaModel::setEndDate(const QDate &endDate)
 
 void NemoCalendarAgendaModel::refresh()
 {
+    if (!mIsComplete)
+        return;
+
     if (mRefreshingModel) {
         mRerefreshNeeded = true;
         return;
@@ -271,3 +274,13 @@ QVariant NemoCalendarAgendaModel::data(const QModelIndex &index, int role) const
     }
 }
 
+void NemoCalendarAgendaModel::classBegin()
+{
+    mIsComplete = false;
+}
+
+void NemoCalendarAgendaModel::componentComplete()
+{
+    mIsComplete = true;
+    refresh();
+}
