@@ -31,28 +31,42 @@
  */
 
 #include "calendarevent.h"
+
+
+#ifdef NEMO_USE_QT5
+#include <QQmlInfo>
+#else
+#include <QDeclarativeInfo>
+#endif
+
 #include "calendardb.h"
+#include "calendareventcache.h"
 
 NemoCalendarEvent::NemoCalendarEvent(QObject *parent)
-    : QObject(parent)
-    , mEvent(KCalCore::Event::Ptr(new KCalCore::Event))
+: QObject(parent), mNewEvent(true), mEvent(KCalCore::Event::Ptr(new KCalCore::Event))
 {
+    NemoCalendarEventCache::instance()->mEvents.insert(this);
 }
 
 NemoCalendarEvent::NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent)
-    : QObject(parent)
-    , mEvent(event)
+: QObject(parent), mNewEvent(false), mEvent(event)
 {
+    NemoCalendarEventCache::instance()->mEvents.insert(this);
+}
+
+NemoCalendarEvent::~NemoCalendarEvent()
+{
+    NemoCalendarEventCache::instance()->mEvents.remove(this);
 }
 
 QString NemoCalendarEvent::displayLabel() const
 {
-    return mEvent->summary();
+    return mEvent?mEvent->summary():QString();
 }
 
 void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
 {
-    if (mEvent->summary() == displayLabel)
+    if (!mEvent || mEvent->summary() == displayLabel)
         return;
 
     mEvent->setSummary(displayLabel);
@@ -61,12 +75,12 @@ void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
 
 QString NemoCalendarEvent::description() const
 {
-    return mEvent->description();
+    return mEvent?mEvent->description():QString();
 }
 
 void NemoCalendarEvent::setDescription(const QString &description)
 {
-    if (mEvent->description() == description)
+    if (!mEvent || mEvent->description() == description)
         return;
 
     mEvent->setDescription(description);
@@ -75,12 +89,12 @@ void NemoCalendarEvent::setDescription(const QString &description)
 
 QDateTime NemoCalendarEvent::startTime() const
 {
-    return mEvent->dtStart().dateTime();
+    return mEvent?mEvent->dtStart().dateTime():QDateTime();
 }
 
 void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
 {
-    if (mEvent->dtStart().dateTime() == startTime)
+    if (!mEvent || mEvent->dtStart().dateTime() == startTime)
         return;
 
     mEvent->setDtStart(KDateTime(startTime));
@@ -89,26 +103,247 @@ void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
 
 QDateTime NemoCalendarEvent::endTime() const
 {
-    return mEvent->dtEnd().dateTime();
+    return mEvent?mEvent->dtEnd().dateTime():QDateTime();
 }
 
 void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
 {
-    if (mEvent->dtEnd().dateTime() == endTime)
+    if (!mEvent || mEvent->dtEnd().dateTime() == endTime)
         return;
 
     mEvent->setDtEnd(KDateTime(endTime));
     emit endTimeChanged();
 }
 
+bool NemoCalendarEvent::allDay() const
+{
+    return mEvent?mEvent->allDay():false;
+}
+
+void NemoCalendarEvent::setAllDay(bool a)
+{
+    if (!mEvent || allDay() == a)
+        return;
+
+    mEvent->setAllDay(a);
+    emit allDayChanged();
+}
+
+NemoCalendarEvent::Recur NemoCalendarEvent::recur() const
+{
+    if (mEvent && mEvent->recurs()) {
+        if (mEvent->recurrence()->rRules().count() != 1) {
+            return RecurCustom;
+        } else {
+            ushort rt = mEvent->recurrence()->recurrenceType();
+            int freq = mEvent->recurrence()->frequency();
+
+            if (rt == KCalCore::Recurrence::rDaily && freq == 1) {
+                return RecurDaily;
+            } else if (rt == KCalCore::Recurrence::rWeekly && freq == 1) {
+                return RecurWeekly;
+            } else if (rt == KCalCore::Recurrence::rWeekly && freq == 2) {
+                return RecurBiweekly;
+            } else if (rt == KCalCore::Recurrence::rMonthlyDay && freq == 1) {
+                return RecurMonthly;
+            } else if (rt == KCalCore::Recurrence::rYearlyMonth && freq == 1) {
+                return RecurYearly;
+            } else {
+                return RecurCustom;
+            }
+        }
+    } else {
+        return RecurOnce;
+    }
+}
+
+void NemoCalendarEvent::setRecur(Recur r)
+{
+    if (!mEvent)
+        return;
+
+    Recur oldRecur = recur();
+    int oldExceptions = recurExceptions();
+
+    if (r == RecurCustom) {
+        qmlInfo(this) << "Cannot assign RecurCustom";
+        r = RecurOnce;
+    }
+
+    if (r == RecurOnce)
+        mEvent->recurrence()->clear();
+
+    if (oldRecur != r) {
+        switch (r) {
+            case RecurOnce:
+                break;
+            case RecurDaily:
+                mEvent->recurrence()->setDaily(1);
+                break;
+            case RecurWeekly:
+                mEvent->recurrence()->setWeekly(1);
+                break;
+            case RecurBiweekly:
+                mEvent->recurrence()->setWeekly(2);
+                break;
+            case RecurMonthly:
+                mEvent->recurrence()->setMonthly(1);
+                break;
+            case RecurYearly:
+                mEvent->recurrence()->setYearly(1);
+                break;
+            case RecurCustom:
+                break;
+        }
+
+        emit recurChanged();
+    }
+
+    if (recurExceptions() != oldExceptions)
+        emit recurExceptionsChanged();
+}
+
+int NemoCalendarEvent::recurExceptions() const
+{
+    return mEvent->recurs()?mEvent->recurrence()->exDateTimes().count():0;
+}
+
+void NemoCalendarEvent::removeException(int index)
+{
+    if (mEvent->recurs()) {
+        KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
+        if (list.count() > index) {
+            list.removeAt(index);
+            mEvent->recurrence()->setExDateTimes(list);
+            emit recurExceptionsChanged();
+        }
+    }
+}
+
+void NemoCalendarEvent::addException(const QDateTime &date)
+{
+    if (mEvent->recurs()) {
+        KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
+        list.append(KDateTime(date, KDateTime::Spec(KDateTime::LocalZone)));
+        mEvent->recurrence()->setExDateTimes(list);
+        emit recurExceptionsChanged();
+    } else {
+        qmlInfo(this) << "Cannot add exception to non-recurring event";
+    }
+}
+
+QDateTime NemoCalendarEvent::recurException(int index) const
+{
+    if (mEvent->recurs()) {
+        KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
+        if (list.count() > index)
+            return list.at(index).dateTime();
+    }
+    return QDateTime();
+}
+
+QString NemoCalendarEvent::uniqueId() const
+{
+    return mEvent->uid();
+}
+
+QString NemoCalendarEvent::color() const
+{
+    return "#00aeef"; // TODO: hardcoded, as we only support local events for now
+}
+
 void NemoCalendarEvent::save()
 {
-    if (mEvent->revision() == 0) {
+    if (mNewEvent) {
+        mNewEvent = false;
         NemoCalendarDb::calendar()->addEvent(mEvent, NemoCalendarDb::storage()->defaultNotebook()->uid());
+    }
+
+    mEvent->setRevision(mEvent->revision() + 1);
+
+    // TODO: this sucks
+    NemoCalendarDb::storage()->save();
+}
+
+// Removes the entire event
+void NemoCalendarEvent::remove()
+{
+    if (!mNewEvent) {
+        NemoCalendarDb::calendar()->deleteEvent(mEvent);
+
+        // TODO: this sucks
+        NemoCalendarDb::storage()->save();
+    }
+}
+
+void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)
+{
+    if (mEvent == event)
+        return;
+
+    QString dl = displayLabel();
+    QString de = description();
+    QDateTime st = startTime();
+    QDateTime et = endTime();
+    bool ad = allDay();
+    Recur re = recur();
+
+    mEvent = event;
+
+    if (displayLabel() != dl) emit displayLabelChanged();
+    if (description() != de) emit descriptionChanged();
+    if (startTime() != st) emit startTimeChanged();
+    if (endTime() != et) emit endTimeChanged();
+    if (allDay() != ad) emit allDayChanged();
+    if (recur() != re) emit recurChanged();
+}
+
+NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &o,
+                                                         QObject *parent)
+: QObject(parent), mOccurrence(o), mEvent(0)
+{
+    NemoCalendarEventCache::instance()->mEventOccurrences.insert(this);
+}
+
+NemoCalendarEventOccurrence::~NemoCalendarEventOccurrence()
+{
+    NemoCalendarEventCache::instance()->mEventOccurrences.remove(this);
+}
+
+QDateTime NemoCalendarEventOccurrence::startTime() const
+{
+    return mOccurrence.first.dtStart;
+}
+
+QDateTime NemoCalendarEventOccurrence::endTime() const
+{
+    return mOccurrence.first.dtEnd;
+}
+
+NemoCalendarEvent *NemoCalendarEventOccurrence::eventObject()
+{
+    if (!mEvent) mEvent = new NemoCalendarEvent(mOccurrence.second.dynamicCast<KCalCore::Event>(), this);
+    return mEvent;
+}
+
+void NemoCalendarEventOccurrence::setEvent(const KCalCore::Event::Ptr &event)
+{
+    mOccurrence.second = event;
+    if (mEvent) mEvent->setEvent(event);
+}
+
+// Removes just this occurrence of the event.  If this is a recurring event, it adds an exception for
+// this instance
+void NemoCalendarEventOccurrence::remove()
+{
+    if (mOccurrence.second->recurs()) {
+        mOccurrence.second->recurrence()->addExDateTime(KDateTime(mOccurrence.first.dtStart,
+                                                                  KDateTime::Spec(KDateTime::LocalZone)));
     } else {
-        mEvent->setRevision(mEvent->revision() + 1);
+        NemoCalendarDb::calendar()->deleteEvent(mOccurrence.second.dynamicCast<KCalCore::Event>());
     }
 
     // TODO: this sucks
     NemoCalendarDb::storage()->save();
 }
+

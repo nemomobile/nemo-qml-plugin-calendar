@@ -37,6 +37,7 @@
 #include <event.h>
 
 #include "calendardb.h"
+#include "calendarevent.h"
 #include "calendareventcache.h"
 
 NemoCalendarEventCache::NemoCalendarEventCache()
@@ -69,7 +70,24 @@ void NemoCalendarEventCache::storageModified(mKCal::ExtendedStorage *storage, co
     // comes.
     //
     // for now, let's just ask models to reload whenever a change happens.
+
     NemoCalendarDb::storage()->loadNotebookIncidences(NemoCalendarDb::storage()->defaultNotebook()->uid());
+    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
+
+    for (QSet<NemoCalendarEvent *>::Iterator iter = mEvents.begin(); iter != mEvents.end(); ++iter) {
+        QString uid = (*iter)->event()->uid();
+        KCalCore::Event::Ptr event = calendar->event(uid);
+        (*iter)->setEvent(event);
+    }
+
+    for (QSet<NemoCalendarEventOccurrence *>::Iterator iter = mEventOccurrences.begin();
+         iter != mEventOccurrences.end(); ++iter) {
+        QString uid = (*iter)->event()->uid();
+        KCalCore::Event::Ptr event = calendar->event(uid);
+        (*iter)->setEvent(event);
+    }
+
+
     qDebug() << Q_FUNC_INFO << "Emitting reset";
     emit modelReset();
 }

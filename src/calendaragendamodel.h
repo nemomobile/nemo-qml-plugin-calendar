@@ -34,17 +34,35 @@
 #define CALENDARAGENDAMODEL_H
 
 #include <QDate>
+#include <QAbstractListModel>
 
-#include "calendarabstractmodel.h"
+#ifdef NEMO_USE_QT5
+#include <QQmlParserStatus>
+#else
+#include <QDeclarativeParserStatus>
+#define QQmlParserStatus QDeclarativeParserStatus
+#endif
+
 class NemoCalendarEvent;
+class NemoCalendarEventOccurrence;
 
-class NemoCalendarAgendaModel : public NemoCalendarAbstractModel
+class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStatus
 {
     Q_OBJECT
+#ifdef NEMO_USE_QT5
+    Q_INTERFACES(QQmlParserStatus)
+#endif
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
+    Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
+
+    Q_PROPERTY(int minimumBuffer READ minimumBuffer WRITE setMinimumBuffer NOTIFY minimumBufferChanged)
+    Q_PROPERTY(int startDateIndex READ startDateIndex NOTIFY startDateIndexChanged)
 
 public:
     enum {
         EventObjectRole = Qt::UserRole,
+        OccurrenceObjectRole,
         SectionBucketRole,
         NotebookColorRole
     };
@@ -52,28 +70,52 @@ public:
     explicit NemoCalendarAgendaModel(QObject *parent = 0);
     virtual ~NemoCalendarAgendaModel();
 
-    Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     QDate startDate() const;
     void setStartDate(const QDate &startDate);
+
+    QDate endDate() const;
+    void setEndDate(const QDate &endDate);
+
+    int count() const;
+
+    int minimumBuffer() const;
+    void setMinimumBuffer(int);
+
+    int startDateIndex() const;
 
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
-signals:
-    void startDateChanged();
+    virtual void classBegin();
+    virtual void componentComplete();
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+signals:
+    void countChanged();
+    void startDateChanged();
+    void minimumBufferChanged();
+    void startDateIndexChanged();
+    void endDateChanged();
+
+#ifdef NEMO_USE_QT5
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
 #endif
 
 private slots:
-    void load();
+    void refresh();
 
 private:
+    void doRefresh(bool reset = false);
+
     QDate mStartDate;
-    QList<NemoCalendarEvent *> mEvents;
+    QDate mEndDate;
+    int mBuffer;
+    QList<NemoCalendarEventOccurrence *> mEvents;
     QHash<int,QByteArray> mRoleNames;
+
+    bool mRefreshingModel:1;
+    bool mRerefreshNeeded:1;
+    bool mIsComplete:1;
 };
 
 #endif // CALENDARAGENDAMODEL_H

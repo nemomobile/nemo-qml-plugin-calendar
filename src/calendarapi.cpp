@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 Jolla Ltd.
- * Contact: Robin Burchell <robin.burchell@jollamobile.com>
+ * Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -30,17 +30,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "calendarabstractmodel.h"
+#include "calendarapi.h"
+
+#include <QQmlEngine>
+#include "calendardb.h"
 #include "calendarevent.h"
 
-NemoCalendarAbstractModel::NemoCalendarAbstractModel(QObject *parent)
-    : QAbstractListModel(parent)
+NemoCalendarApi::NemoCalendarApi(QObject *parent)
+: QObject(parent)
 {
-
 }
 
-NemoCalendarEvent *NemoCalendarAbstractModel::createEvent()
+NemoCalendarEvent *NemoCalendarApi::createEvent()
 {
     return new NemoCalendarEvent;
 }
 
+void NemoCalendarApi::remove(const QString &uid)
+{
+    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
+    KCalCore::Event::Ptr event = calendar->event(uid);
+    if (!event)
+        return;
+    calendar->deleteEvent(event);
+    // TODO: this sucks
+    NemoCalendarDb::storage()->save();
+}
+
+void NemoCalendarApi::remove(const QString &uid, const QDateTime &time)
+{
+    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
+    KCalCore::Event::Ptr event = calendar->event(uid);
+    if (!event)
+        return;
+    if (event->recurs())
+        event->recurrence()->addExDateTime(KDateTime(time, KDateTime::Spec(KDateTime::LocalZone)));
+    else
+        calendar->deleteEvent(event);
+    // TODO: this sucks
+    NemoCalendarDb::storage()->save();
+}
+
+QObject *NemoCalendarApi::New(QQmlEngine *e, QJSEngine *)
+{
+    return new NemoCalendarApi(e);
+}
