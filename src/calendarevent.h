@@ -51,6 +51,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(QDateTime endTime READ endTime WRITE setEndTime NOTIFY endTimeChanged)
     Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
     Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
+    Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
     Q_PROPERTY(QString color READ color CONSTANT)
 
@@ -87,6 +88,11 @@ public:
     Recur recur() const;
     void setRecur(Recur);
 
+    int recurExceptions() const;
+    Q_INVOKABLE void removeException(int);
+    Q_INVOKABLE void addException(const QDateTime &);
+    Q_INVOKABLE QDateTime recurException(int) const;
+
     QString uniqueId() const;
 
     QString color() const;
@@ -105,8 +111,10 @@ signals:
     void endTimeChanged();
     void allDayChanged();
     void recurChanged();
+    void recurExceptionsChanged();
 
 private:
+    bool mNewEvent:1;
     KCalCore::Event::Ptr mEvent;
 };
 
