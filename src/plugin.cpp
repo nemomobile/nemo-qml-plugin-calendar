@@ -32,7 +32,7 @@
 
 #include <QtGlobal>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#ifdef NEMO_USE_QT5
 # include <QtQml>
 # include <QQmlEngine>
 # include <QQmlExtensionPlugin>
@@ -48,6 +48,7 @@
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
 
+#ifdef NEMO_USE_QT5
 class QtDate : public QObject
 {
     Q_OBJECT
@@ -80,11 +81,12 @@ QObject *QtDate::New(QQmlEngine *e, QJSEngine *)
 {
     return new QtDate(e);
 }
+#endif
 
 class Q_DECL_EXPORT NemoCalendarPlugin : public QDeclarativeExtensionPlugin
 {
     Q_OBJECT
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#ifdef NEMO_USE_QT5
     Q_PLUGIN_METADATA(IID "org.nemomobile.calendar")
 #endif
 public:
@@ -93,7 +95,7 @@ public:
         Q_ASSERT(uri == QLatin1String("org.nemomobile.calendar"));
         qmlRegisterUncreatableType<NemoCalendarEvent>(uri, 1, 0, "CalendarEvent", "Create CalendarEvent instances through a model");
         qmlRegisterType<NemoCalendarAgendaModel>(uri, 1, 0, "AgendaModel");
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#ifdef NEMO_USE_QT5
         qmlRegisterType<NemoCalendarEventQuery>(uri, 1, 0, "EventQuery");
         qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);
         qmlRegisterSingletonType<NemoCalendarApi>(uri, 1, 0, "Calendar", NemoCalendarApi::New);
@@ -101,8 +103,10 @@ public:
     }
 };
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#ifndef NEMO_USE_QT5
 Q_EXPORT_PLUGIN2(nemocalendar, NemoCalendarPlugin);
 #endif
 
+#ifdef NEMO_USE_QT5
 #include "plugin.moc"
+#endif

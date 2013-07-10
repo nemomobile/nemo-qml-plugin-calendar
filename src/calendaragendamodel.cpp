@@ -50,7 +50,7 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
     mRoleNames[SectionBucketRole] = "sectionBucket";
     mRoleNames[NotebookColorRole] = "notebookColor";
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#ifndef NEMO_USE_QT5
     setRoleNames(mRoleNames);
 #endif
 
@@ -62,7 +62,7 @@ NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
     qDeleteAll(mEvents);
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#ifdef NEMO_USE_QT5
 QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
 {
     return mRoleNames;
