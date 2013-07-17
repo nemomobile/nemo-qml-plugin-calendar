@@ -242,6 +242,83 @@ QDateTime NemoCalendarEvent::recurException(int index) const
     return QDateTime();
 }
 
+NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
+{
+    KCalCore::Alarm::List alarms = mEvent->alarms();
+    if (alarms.count() != 1)
+        return ReminderNone;
+
+    KCalCore::Duration d = alarms.at(0)->startOffset();
+    int sec = d.asSeconds();
+
+    switch (sec) {
+    case 0:
+        return ReminderTime;
+    case 5 * 60:
+        return Reminder5Min;
+    case 15 * 60:
+        return Reminder15Min;
+    case 30 * 60:
+        return Reminder30Min;
+    case 60 * 60:
+        return Reminder1Hour;
+    case 2 * 60 * 60:
+        return Reminder2Hour;
+    case 24 * 60 * 60:
+        return Reminder1Day;
+    case 2 * 24 * 60 * 60:
+        return Reminder2Day;
+    default:
+        return ReminderNone;
+    }
+}
+
+void NemoCalendarEvent::setReminder(Reminder r)
+{
+    Reminder old = reminder();
+    mEvent->clearAlarms();
+    if (r == old)
+        return;
+
+    KCalCore::Duration offset(0);
+
+    switch (r) {
+    default:
+    case ReminderNone:
+        return;
+    case ReminderTime:
+        break;
+    case Reminder5Min:
+        offset = KCalCore::Duration(5 * 60);
+        break;
+    case Reminder15Min:
+        offset = KCalCore::Duration(15 * 60);
+        break;
+    case Reminder30Min:
+        offset = KCalCore::Duration(30 * 60);
+        break;
+    case Reminder1Hour:
+        offset = KCalCore::Duration(60 * 60);
+        break;
+    case Reminder2Hour:
+        offset = KCalCore::Duration(2 * 60 * 60);
+        break;
+    case Reminder1Day:
+        offset = KCalCore::Duration(24 * 60 * 60);
+        break;
+    case Reminder2Day:
+        offset = KCalCore::Duration(2 * 24 * 60 * 60);
+        break;
+    }
+
+    KCalCore::Alarm::Ptr alarm = mEvent->newAlarm();
+    alarm->setEnabled(true);
+    alarm->setStartOffset(offset);
+
+    if (r != old)
+        emit reminderChanged();
+}
+
 QString NemoCalendarEvent::uniqueId() const
 {
     return mEvent->uid();

@@ -44,6 +44,7 @@ class NemoCalendarEvent : public QObject
 {
     Q_OBJECT
     Q_ENUMS(Recur)
+    Q_ENUMS(Reminder)
 
     Q_PROPERTY(QString displayLabel READ displayLabel WRITE setDisplayLabel NOTIFY displayLabelChanged)
     Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY descriptionChanged)
@@ -52,6 +53,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
     Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
     Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
+    Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
     Q_PROPERTY(QString color READ color CONSTANT)
 
@@ -64,6 +66,18 @@ public:
         RecurMonthly,
         RecurYearly,
         RecurCustom
+    };
+
+    enum Reminder {
+        ReminderNone,
+        ReminderTime,
+        Reminder5Min,
+        Reminder15Min,
+        Reminder30Min,
+        Reminder1Hour,
+        Reminder2Hour,
+        Reminder1Day,
+        Reminder2Day
     };
 
     explicit NemoCalendarEvent(QObject *parent = 0);
@@ -93,6 +107,9 @@ public:
     Q_INVOKABLE void addException(const QDateTime &);
     Q_INVOKABLE QDateTime recurException(int) const;
 
+    Reminder reminder() const;
+    void setReminder(Reminder);
+
     QString uniqueId() const;
 
     QString color() const;
@@ -112,6 +129,7 @@ signals:
     void allDayChanged();
     void recurChanged();
     void recurExceptionsChanged();
+    void reminderChanged();
 
 private:
     bool mNewEvent:1;
