@@ -245,10 +245,23 @@ QDateTime NemoCalendarEvent::recurException(int index) const
 NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
 {
     KCalCore::Alarm::List alarms = mEvent->alarms();
-    if (alarms.count() != 1)
+
+    KCalCore::Alarm::Ptr alarm;
+
+    for (int ii = 0; ii < alarms.count(); ++ii) {
+        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure)
+            continue;
+
+        if (alarm)
+            return ReminderNone;
+        else
+            alarm = alarms.at(ii);
+    }
+
+    if (!alarm)
         return ReminderNone;
 
-    KCalCore::Duration d = alarms.at(0)->startOffset();
+    KCalCore::Duration d = alarm->startOffset();
     int sec = d.asSeconds();
 
     switch (sec) {
@@ -276,7 +289,14 @@ NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
 void NemoCalendarEvent::setReminder(Reminder r)
 {
     Reminder old = reminder();
-    mEvent->clearAlarms();
+
+    KCalCore::Alarm::List alarms = mEvent->alarms();
+    for (int ii = 0; ii < alarms.count(); ++ii) {
+        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure)
+            continue;
+        mEvent->removeAlarm(alarms.at(ii));
+    }
+
     if (r == old)
         return;
 
@@ -327,6 +347,42 @@ QString NemoCalendarEvent::uniqueId() const
 QString NemoCalendarEvent::color() const
 {
     return "#00aeef"; // TODO: hardcoded, as we only support local events for now
+}
+
+QString NemoCalendarEvent::alarmProgram() const
+{
+    KCalCore::Alarm::List alarms = mEvent->alarms();
+
+    for (int ii = 0; ii < alarms.count(); ++ii) {
+        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure &&
+            alarms.at(ii)->programArguments() == uniqueId())
+            return alarms.at(ii)->programFile();
+    }
+
+    return QString();
+}
+
+void NemoCalendarEvent::setAlarmProgram(const QString &program)
+{
+    KCalCore::Alarm::List alarms = mEvent->alarms();
+
+    for (int ii = 0; ii < alarms.count(); ++ii) {
+        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure &&
+            alarms.at(ii)->programArguments() == uniqueId()) {
+
+            if (alarms.at(ii)->programFile() != program) {
+                alarms[ii]->setProgramFile(program);
+                emit alarmProgramChanged();
+            }
+
+            return;
+        }
+    }
+
+    KCalCore::Alarm::Ptr alarm = mEvent->newAlarm();
+    alarm->setEnabled(true);
+    alarm->setType(KCalCore::Alarm::Procedure);
+    alarm->setProcedureAlarm(program, uniqueId());
 }
 
 void NemoCalendarEvent::save()

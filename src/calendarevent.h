@@ -56,6 +56,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
     Q_PROPERTY(QString color READ color CONSTANT)
+    Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
 
 public:
     enum Recur {
@@ -114,6 +115,9 @@ public:
 
     QString color() const;
 
+    QString alarmProgram() const;
+    void setAlarmProgram(const QString &);
+
     Q_INVOKABLE void save();
     Q_INVOKABLE void remove();
 
@@ -130,6 +134,7 @@ signals:
     void recurChanged();
     void recurExceptionsChanged();
     void reminderChanged();
+    void alarmProgramChanged();
 
 private:
     bool mNewEvent:1;
