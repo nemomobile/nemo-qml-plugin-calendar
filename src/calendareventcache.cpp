@@ -32,6 +32,7 @@
 
 // Qt
 #include <QDebug>
+#include <QSettings>
 
 // mkcal
 #include <event.h>
@@ -46,8 +47,50 @@ NemoCalendarEventCache::NemoCalendarEventCache()
 {
     NemoCalendarDb::storage()->registerObserver(this);
 
-    // initialize storage
-    NemoCalendarDb::storage()->loadNotebookIncidences(NemoCalendarDb::storage()->defaultNotebook()->uid());
+    load();
+}
+
+void NemoCalendarEventCache::load()
+{
+    QSettings settings("nemo", "nemo-qml-plugin-calendar");
+
+    mKCal::Notebook::List notebooks = NemoCalendarDb::storage()->notebooks();
+    mNotebooks.clear();
+    mNotebookColors.clear();
+
+    QStringList defaultNotebookColors = QStringList() << "#00aeef" << "red" << "blue" << "green" << "pink" << "yellow";
+    int nextDefaultNotebookColor = 0;
+
+    for (int ii = 0; ii < notebooks.count(); ++ii) {
+        QString uid = notebooks.at(ii)->uid();
+        if (!settings.value("exclude/" + uid, false).toBool()) {
+            mNotebooks.insert(uid);
+            NemoCalendarDb::storage()->loadNotebookIncidences(uid);
+        }
+
+        QString color = settings.value("colors/" + uid, QString()).toString();
+        if (color.isEmpty())
+            color = defaultNotebookColors.at((nextDefaultNotebookColor++) % defaultNotebookColors.count());
+
+        mNotebookColors.insert(uid, color);
+    }
+
+    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
+
+    for (QSet<NemoCalendarEvent *>::Iterator iter = mEvents.begin(); iter != mEvents.end(); ++iter) {
+        QString uid = (*iter)->event()->uid();
+        KCalCore::Event::Ptr event = calendar->event(uid);
+        (*iter)->setEvent(event);
+    }
+
+    for (QSet<NemoCalendarEventOccurrence *>::Iterator iter = mEventOccurrences.begin();
+         iter != mEventOccurrences.end(); ++iter) {
+        QString uid = (*iter)->event()->uid();
+        KCalCore::Event::Ptr event = calendar->event(uid);
+        (*iter)->setEvent(event);
+    }
+
+    emit modelReset();
 }
 
 NemoCalendarEventCache *NemoCalendarEventCache::instance()
@@ -71,25 +114,7 @@ void NemoCalendarEventCache::storageModified(mKCal::ExtendedStorage *storage, co
     //
     // for now, let's just ask models to reload whenever a change happens.
 
-    NemoCalendarDb::storage()->loadNotebookIncidences(NemoCalendarDb::storage()->defaultNotebook()->uid());
-    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
-
-    for (QSet<NemoCalendarEvent *>::Iterator iter = mEvents.begin(); iter != mEvents.end(); ++iter) {
-        QString uid = (*iter)->event()->uid();
-        KCalCore::Event::Ptr event = calendar->event(uid);
-        (*iter)->setEvent(event);
-    }
-
-    for (QSet<NemoCalendarEventOccurrence *>::Iterator iter = mEventOccurrences.begin();
-         iter != mEventOccurrences.end(); ++iter) {
-        QString uid = (*iter)->event()->uid();
-        KCalCore::Event::Ptr event = calendar->event(uid);
-        (*iter)->setEvent(event);
-    }
-
-
-    qDebug() << Q_FUNC_INFO << "Emitting reset";
-    emit modelReset();
+    load();
 }
 
 void NemoCalendarEventCache::storageProgress(mKCal::ExtendedStorage *storage, const QString &info)
@@ -102,3 +127,24 @@ void NemoCalendarEventCache::storageFinished(mKCal::ExtendedStorage *storage, bo
 
 }
 
+QString NemoCalendarEventCache::notebookColor(const QString &notebook) const
+{
+    return mNotebookColors.value(notebook, "black");
+}
+
+void NemoCalendarEventCache::setNotebookColor(const QString &notebook, const QString &color)
+{
+    if (!mNotebookColors.contains(notebook))
+        return;
+
+    QSettings settings("nemo", "nemo-qml-plugin-calendar");
+
+    mNotebookColors[notebook] = color;
+    settings.setValue("colors/" + notebook, color);
+
+    for (QSet<NemoCalendarEvent *>::Iterator iter = mEvents.begin(); iter != mEvents.end(); ++iter) {
+        NemoCalendarEvent *e = *iter;
+        if (NemoCalendarDb::calendar()->notebook(e->event()) == notebook)
+            emit e->colorChanged();
+    }
+}

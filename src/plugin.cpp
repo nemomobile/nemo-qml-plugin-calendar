@@ -40,6 +40,7 @@
 # define QDeclarativeExtensionPlugin QQmlExtensionPlugin
 #include "calendarapi.h"
 #include "calendareventquery.h"
+#include "calendarnotebookmodel.h"
 #else
 # include <QtDeclarative/qdeclarative.h>
 # include <QtDeclarative/QDeclarativeExtensionPlugin>
@@ -97,6 +98,7 @@ public:
         qmlRegisterType<NemoCalendarAgendaModel>(uri, 1, 0, "AgendaModel");
 #ifdef NEMO_USE_QT5
         qmlRegisterType<NemoCalendarEventQuery>(uri, 1, 0, "EventQuery");
+        qmlRegisterType<NemoCalendarNotebookModel>(uri, 1, 0, "NotebookModel");
         qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);
         qmlRegisterSingletonType<NemoCalendarApi>(uri, 1, 0, "Calendar", NemoCalendarApi::New);
 #endif

@@ -55,8 +55,9 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
     Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
-    Q_PROPERTY(QString color READ color CONSTANT)
+    Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
+    Q_PROPERTY(bool readonly READ readonly CONSTANT)
 
 public:
     enum Recur {
@@ -118,6 +119,8 @@ public:
     QString alarmProgram() const;
     void setAlarmProgram(const QString &);
 
+    bool readonly() const;
+
     Q_INVOKABLE void save();
     Q_INVOKABLE void remove();
 
@@ -135,8 +138,11 @@ signals:
     void recurExceptionsChanged();
     void reminderChanged();
     void alarmProgramChanged();
+    void colorChanged();
 
 private:
+    friend class NemoCalendarEventCache;
+
     bool mNewEvent:1;
     KCalCore::Event::Ptr mEvent;
 };
