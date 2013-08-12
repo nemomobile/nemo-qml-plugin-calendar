@@ -33,6 +33,7 @@
 #ifndef CALENDARAPI_H
 #define CALENDARAPI_H
 
+#include <QStringList>
 #include <QAbstractListModel>
 
 class QJSEngine;
@@ -42,6 +43,8 @@ class NemoCalendarEvent;
 class NemoCalendarApi : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QStringList excludedNotebooks READ excludedNotebooks WRITE setExcludedNotebooks NOTIFY excludedNotebooksChanged)
+
 public:
     NemoCalendarApi(QObject *parent = 0);
 
@@ -49,7 +52,14 @@ public:
     Q_INVOKABLE void remove(const QString &);
     Q_INVOKABLE void remove(const QString &, const QDateTime &);
 
+    QStringList excludedNotebooks() const;
+    void setExcludedNotebooks(const QStringList &);
+
     static QObject *New(QQmlEngine *, QJSEngine *);
+
+signals:
+    void excludedNotebooksChanged();
+
 };
 
 #endif // CALENDARAPI_H

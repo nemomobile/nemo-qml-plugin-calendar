@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 Jolla Ltd.
- * Contact: Robin Burchell <robin.burchell@jollamobile.com>
+ * Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -30,28 +30,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include "calendardb.h"
+#ifndef CALENDARNOTEBOOKMODEL_H
+#define CALENDARNOTEBOOKMODEL_H
 
-#include <notebook.h>
-#include <QDebug>
-mKCal::ExtendedCalendar::Ptr &NemoCalendarDb::calendar()
+#include <QAbstractListModel>
+
+class NemoCalendarNotebookModel : public QAbstractListModel
 {
-    static mKCal::ExtendedCalendar::Ptr ptr;
-    if (ptr)
-        return ptr;
+    Q_OBJECT
+public:
+    enum {
+        NameRole = Qt::UserRole,
+        UidRole,
+        DescriptionRole,
+        ColorRole,
+    };
 
-    ptr = mKCal::ExtendedCalendar::Ptr(new mKCal::ExtendedCalendar(KDateTime::Spec::LocalZone()));
-    return ptr;
-}
+    NemoCalendarNotebookModel();
 
-mKCal::ExtendedStorage::Ptr &NemoCalendarDb::storage()
-{
-    static mKCal::ExtendedStorage::Ptr ptr;
-    if (ptr)
-        return ptr;
+    virtual int rowCount(const QModelIndex &index) const;
+    virtual QVariant data(const QModelIndex &index, int role) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &, int role);
 
-    ptr = calendar()->defaultStorage(calendar());
-    ptr->open();
+protected:
+    virtual QHash<int, QByteArray> roleNames() const;
 
-    return ptr;
-}
+private:
+    QHash<int, QByteArray> mRoleNames;
+};
+
+#endif // CALENDARNOTEBOOKMODEL_H

@@ -18,11 +18,13 @@ equals(QT_MAJOR_VERSION, 5) {
     SOURCES += \
         calendarapi.cpp \
         calendareventquery.cpp \
+        calendarnotebookmodel.cpp \
 
     HEADERS += \
         calendarapi.cpp \
         calendarapi.h \
         calendareventquery.h \
+        calendarnotebookmodel.h \
 
     DEFINES += NEMO_USE_QT5
 }

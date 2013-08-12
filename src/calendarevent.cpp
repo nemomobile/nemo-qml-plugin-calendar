@@ -346,7 +346,8 @@ QString NemoCalendarEvent::uniqueId() const
 
 QString NemoCalendarEvent::color() const
 {
-    return "#00aeef"; // TODO: hardcoded, as we only support local events for now
+    QString eventNotebook = NemoCalendarDb::calendar()->notebook(mEvent);
+    return NemoCalendarEventCache::instance()->notebookColor(eventNotebook);
 }
 
 QString NemoCalendarEvent::alarmProgram() const
@@ -383,6 +384,12 @@ void NemoCalendarEvent::setAlarmProgram(const QString &program)
     alarm->setEnabled(true);
     alarm->setType(KCalCore::Alarm::Procedure);
     alarm->setProcedureAlarm(program, uniqueId());
+}
+
+bool NemoCalendarEvent::readonly() const
+{
+    QString eventNotebook = NemoCalendarDb::calendar()->notebook(mEvent);
+    return eventNotebook != NemoCalendarDb::storage()->defaultNotebook()->uid();
 }
 
 void NemoCalendarEvent::save()

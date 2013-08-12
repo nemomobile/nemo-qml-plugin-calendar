@@ -64,7 +64,6 @@ public:
         EventObjectRole = Qt::UserRole,
         OccurrenceObjectRole,
         SectionBucketRole,
-        NotebookColorRole
     };
 
     explicit NemoCalendarAgendaModel(QObject *parent = 0);

@@ -48,7 +48,6 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
     mRoleNames[EventObjectRole] = "event";
     mRoleNames[OccurrenceObjectRole] = "occurrence";
     mRoleNames[SectionBucketRole] = "sectionBucket";
-    mRoleNames[NotebookColorRole] = "notebookColor";
 
 #ifndef NEMO_USE_QT5
     setRoleNames(mRoleNames);
@@ -150,6 +149,14 @@ void NemoCalendarAgendaModel::doRefresh(bool reset)
 
     mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents =
         calendar->rawExpandedEvents(mStartDate, endDate, false, false, KDateTime::Spec(KDateTime::LocalZone));
+
+    // Filter out excluded notebooks
+    for (int ii = 0; ii < newEvents.count(); ++ii) {
+        if (!NemoCalendarEventCache::instance()->mNotebooks.contains(NemoCalendarDb::calendar()->notebook(newEvents.at(ii).second))) {
+            newEvents.remove(ii);
+            --ii;
+        }
+    }
 
     qSort(newEvents.begin(), newEvents.end(), eventsLessThan);
 
@@ -267,8 +274,6 @@ QVariant NemoCalendarAgendaModel::data(const QModelIndex &index, int role) const
             return QVariant::fromValue<QObject *>(mEvents.at(index.row()));
         case SectionBucketRole:
             return mEvents.at(index.row())->startTime().date();
-        case NotebookColorRole:
-            return "#00aeef"; // TODO: hardcoded, as we only support local events for now
         default:
             return QVariant();
     }

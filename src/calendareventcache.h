@@ -51,18 +51,30 @@ private:
 
 public:
     static NemoCalendarEventCache *instance();
+    void load();
 
     /* mKCal::ExtendedStorageObserver */
     void storageModified(mKCal::ExtendedStorage *storage, const QString &info);
     void storageProgress(mKCal::ExtendedStorage *storage, const QString &info);
     void storageFinished(mKCal::ExtendedStorage *storage, bool error, const QString &info);
 
+    QString notebookColor(const QString &) const;
+    void setNotebookColor(const QString &, const QString &);
+
 signals:
     void modelReset();
 
 private:
+
+    friend class NemoCalendarApi;
     friend class NemoCalendarEvent;
+    friend class NemoCalendarAgendaModel;
     friend class NemoCalendarEventOccurrence;
+
+    QStringList mDefaultNotebookColors;
+
+    QSet<QString> mNotebooks;
+    QHash<QString, QString> mNotebookColors;
     QSet<NemoCalendarEvent *> mEvents;
     QSet<NemoCalendarEventOccurrence *> mEventOccurrences;
 };
