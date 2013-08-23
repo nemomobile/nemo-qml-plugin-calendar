@@ -61,6 +61,8 @@ public:
     QString notebookColor(const QString &) const;
     void setNotebookColor(const QString &, const QString &);
 
+    static QList<NemoCalendarEvent *> events(const KCalCore::Event::Ptr &event);
+
 signals:
     void modelReset();
 
