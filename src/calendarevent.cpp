@@ -70,7 +70,9 @@ void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
         return;
 
     mEvent->setSummary(displayLabel);
-    emit displayLabelChanged();
+
+    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+        emit event->displayLabelChanged();
 }
 
 QString NemoCalendarEvent::description() const
@@ -84,7 +86,9 @@ void NemoCalendarEvent::setDescription(const QString &description)
         return;
 
     mEvent->setDescription(description);
-    emit descriptionChanged();
+
+    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+        emit event->descriptionChanged();
 }
 
 QDateTime NemoCalendarEvent::startTime() const
@@ -98,7 +102,9 @@ void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
         return;
 
     mEvent->setDtStart(KDateTime(startTime));
-    emit startTimeChanged();
+
+    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+        emit event->startTimeChanged();
 }
 
 QDateTime NemoCalendarEvent::endTime() const
@@ -112,7 +118,9 @@ void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
         return;
 
     mEvent->setDtEnd(KDateTime(endTime));
-    emit endTimeChanged();
+
+    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+        emit event->endTimeChanged();
 }
 
 bool NemoCalendarEvent::allDay() const
@@ -126,7 +134,9 @@ void NemoCalendarEvent::setAllDay(bool a)
         return;
 
     mEvent->setAllDay(a);
-    emit allDayChanged();
+
+    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+        emit event->allDayChanged();
 }
 
 NemoCalendarEvent::Recur NemoCalendarEvent::recur() const
@@ -196,11 +206,14 @@ void NemoCalendarEvent::setRecur(Recur r)
                 break;
         }
 
-        emit recurChanged();
+        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+            emit event->recurChanged();
     }
 
-    if (recurExceptions() != oldExceptions)
-        emit recurExceptionsChanged();
+    if (recurExceptions() != oldExceptions) {
+        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+            emit event->recurExceptionsChanged();
+    }
 }
 
 int NemoCalendarEvent::recurExceptions() const
@@ -215,7 +228,8 @@ void NemoCalendarEvent::removeException(int index)
         if (list.count() > index) {
             list.removeAt(index);
             mEvent->recurrence()->setExDateTimes(list);
-            emit recurExceptionsChanged();
+            foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+                emit event->recurExceptionsChanged();
         }
     }
 }
@@ -226,7 +240,8 @@ void NemoCalendarEvent::addException(const QDateTime &date)
         KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
         list.append(KDateTime(date, KDateTime::Spec(KDateTime::LocalZone)));
         mEvent->recurrence()->setExDateTimes(list);
-        emit recurExceptionsChanged();
+        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+            emit event->recurExceptionsChanged();
     } else {
         qmlInfo(this) << "Cannot add exception to non-recurring event";
     }
@@ -335,8 +350,10 @@ void NemoCalendarEvent::setReminder(Reminder r)
     alarm->setEnabled(true);
     alarm->setStartOffset(offset);
 
-    if (r != old)
-        emit reminderChanged();
+    if (r != old) {
+        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+            emit event->reminderChanged();
+    }
 }
 
 QString NemoCalendarEvent::uniqueId() const
@@ -373,7 +390,8 @@ void NemoCalendarEvent::setAlarmProgram(const QString &program)
 
             if (alarms.at(ii)->programFile() != program) {
                 alarms[ii]->setProgramFile(program);
-                emit alarmProgramChanged();
+                foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+                    emit event->alarmProgramChanged();
             }
 
             return;

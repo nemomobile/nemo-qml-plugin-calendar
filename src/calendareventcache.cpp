@@ -148,3 +148,15 @@ void NemoCalendarEventCache::setNotebookColor(const QString &notebook, const QSt
             emit e->colorChanged();
     }
 }
+
+QList<NemoCalendarEvent *> NemoCalendarEventCache::events(const KCalCore::Event::Ptr &event)
+{
+    QList<NemoCalendarEvent *> rv;
+    for (QSet<NemoCalendarEvent *>::ConstIterator iter = instance()->mEvents.begin();
+            iter != instance()->mEvents.end(); ++iter) {
+        if ((*iter)->event().data() == event.data())
+            rv.append(*iter);
+    }
+    return rv;
+}
+
