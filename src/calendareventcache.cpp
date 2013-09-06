@@ -70,6 +70,8 @@ void NemoCalendarEventCache::load()
 
         QString color = settings.value("colors/" + uid, QString()).toString();
         if (color.isEmpty())
+            color = notebooks.at(ii)->color();
+        if (color.isEmpty())
             color = defaultNotebookColors.at((nextDefaultNotebookColor++) % defaultNotebookColors.count());
 
         mNotebookColors.insert(uid, color);
