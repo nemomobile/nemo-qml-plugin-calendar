@@ -93,15 +93,15 @@ void NemoCalendarEvent::setDescription(const QString &description)
 
 QDateTime NemoCalendarEvent::startTime() const
 {
-    return mEvent?mEvent->dtStart().dateTime():QDateTime();
+    return mEvent?mEvent->dtStart().toLocalZone().dateTime():QDateTime();
 }
 
 void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
 {
-    if (!mEvent || mEvent->dtStart().dateTime() == startTime)
+    if (!mEvent || mEvent->dtStart().toLocalZone().dateTime() == startTime)
         return;
 
-    mEvent->setDtStart(KDateTime(startTime));
+    mEvent->setDtStart(KDateTime(startTime, KDateTime::Spec(KDateTime::LocalZone)));
 
     foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
         emit event->startTimeChanged();
@@ -109,15 +109,15 @@ void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
 
 QDateTime NemoCalendarEvent::endTime() const
 {
-    return mEvent?mEvent->dtEnd().dateTime():QDateTime();
+    return mEvent?mEvent->dtEnd().toLocalZone().dateTime():QDateTime();
 }
 
 void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
 {
-    if (!mEvent || mEvent->dtEnd().dateTime() == endTime)
+    if (!mEvent || mEvent->dtEnd().toLocalZone().dateTime() == endTime)
         return;
 
-    mEvent->setDtEnd(KDateTime(endTime));
+    mEvent->setDtEnd(KDateTime(endTime, KDateTime::Spec(KDateTime::LocalZone)));
 
     foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
         emit event->endTimeChanged();
@@ -252,7 +252,7 @@ QDateTime NemoCalendarEvent::recurException(int index) const
     if (mEvent->recurs()) {
         KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
         if (list.count() > index)
-            return list.at(index).dateTime();
+            return list.at(index).toLocalZone().dateTime();
     }
     return QDateTime();
 }

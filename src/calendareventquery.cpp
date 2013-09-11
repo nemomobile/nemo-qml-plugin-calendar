@@ -116,23 +116,24 @@ void NemoCalendarEventQuery::refresh()
         }
 
         mKCal::ExtendedCalendar::ExpandedIncidenceValidity eiv = {
-            event->dtStart().dateTime(), event->dtEnd().dateTime()
+            event->dtStart().toLocalZone().dateTime(),
+            event->dtEnd().toLocalZone().dateTime()
         };
 
         if (!mStartTime.isNull() && event->recurs()) {
             KDateTime startTime = KDateTime(mStartTime, KDateTime::Spec(KDateTime::LocalZone));
             KCalCore::Recurrence *recurrence = event->recurrence();
             if (recurrence->recursAt(startTime)) {
-                eiv.dtStart = startTime.dateTime();
-                eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(startTime).dateTime();
+                eiv.dtStart = startTime.toLocalZone().dateTime();
+                eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(startTime).toLocalZone().dateTime();
             } else {
                 KDateTime match = recurrence->getNextDateTime(startTime);
                 if (match.isNull())
                     match = recurrence->getPreviousDateTime(startTime);
 
                 if (!match.isNull()) {
-                    eiv.dtStart = match.dateTime();
-                    eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(match).dateTime();
+                    eiv.dtStart = match.toLocalZone().dateTime();
+                    eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(match).toLocalZone().dateTime();
                 }
             }
         }
