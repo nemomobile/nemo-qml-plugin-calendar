@@ -312,9 +312,6 @@ void NemoCalendarEvent::setReminder(Reminder r)
         mEvent->removeAlarm(alarms.at(ii));
     }
 
-    if (r == old)
-        return;
-
     KCalCore::Duration offset(0);
 
     switch (r) {
@@ -346,9 +343,11 @@ void NemoCalendarEvent::setReminder(Reminder r)
         break;
     }
 
-    KCalCore::Alarm::Ptr alarm = mEvent->newAlarm();
-    alarm->setEnabled(true);
-    alarm->setStartOffset(offset);
+    if (r != ReminderNone) {
+        KCalCore::Alarm::Ptr alarm = mEvent->newAlarm();
+        alarm->setEnabled(true);
+        alarm->setStartOffset(offset);
+    }
 
     if (r != old) {
         foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
