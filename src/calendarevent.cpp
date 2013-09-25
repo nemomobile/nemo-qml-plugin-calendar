@@ -42,6 +42,10 @@
 #include "calendardb.h"
 #include "calendareventcache.h"
 
+#include <vcalformat.h>
+#include <libical/vobject.h>
+#include <libical/vcaltmp.h>
+
 NemoCalendarEvent::NemoCalendarEvent(QObject *parent)
 : QObject(parent), mNewEvent(true), mEvent(KCalCore::Event::Ptr(new KCalCore::Event))
 {
@@ -431,6 +435,39 @@ void NemoCalendarEvent::remove()
         // TODO: this sucks
         NemoCalendarDb::storage()->save();
     }
+}
+
+// eventToVEvent() is protected
+class NemoCalendarVCalFormat : public KCalCore::VCalFormat
+{
+public:
+    QString convertEventToVEvent(const KCalCore::Event::Ptr &event, const QString &prodId)
+    {
+        VObject *vCalObj = vcsCreateVCal(
+            QDateTime::currentDateTime().toString(Qt::ISODate).toLatin1().data(),
+            NULL,
+            prodId.toLatin1().data(),
+            NULL,
+            "1.0");
+        VObject *vEventObj = eventToVEvent(event);
+        addVObjectProp(vCalObj, vEventObj);
+        char *memVObject = writeMemVObject(0, 0, vCalObj);
+        QString retn = QLatin1String(memVObject);
+        free(memVObject);
+        free(vEventObj);
+        free(vCalObj);
+        return retn;
+    }
+};
+
+// Returns the event as a VCalendar string
+QString NemoCalendarEvent::vCalendar(const QString &prodId) const
+{
+    NemoCalendarVCalFormat fmt;
+    return fmt.convertEventToVEvent(mEvent,
+            prodId.isEmpty() ?
+            QLatin1String("-//NemoMobile.org/Nemo//NONSGML v1.0//EN") :
+            prodId);
 }
 
 void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)

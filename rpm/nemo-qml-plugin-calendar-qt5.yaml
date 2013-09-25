@@ -15,6 +15,7 @@ PkgConfigBR:
     - Qt5Qml
     - libmkcal-qt5
     - libkcalcoren-qt5
+    - libical
 Files:
     - "%{_libdir}/qt5/qml/org/nemomobile/calendar/libnemocalendar.so"
     - "%{_libdir}/qt5/qml/org/nemomobile/calendar/qmldir"

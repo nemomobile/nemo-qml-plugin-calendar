@@ -19,6 +19,7 @@ Source100:  nemo-qml-plugin-calendar.yaml
 BuildRequires:  pkgconfig(QtCore) >= 4.7.0
 BuildRequires:  pkgconfig(QtDeclarative)
 BuildRequires:  pkgconfig(libmkcal)
+BuildRequires:  pkgconfig(libical)
 Provides:   nemo-qml-plugins-calendar > 0.3.14
 Obsoletes:   nemo-qml-plugins-calendar <= 0.3.14
 

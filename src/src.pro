@@ -7,13 +7,13 @@ CONFIG += qt plugin hide_symbols
 equals(QT_MAJOR_VERSION, 4) {
     QT += declarative
     target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
-    PKGCONFIG += libkcalcoren libmkcal
+    PKGCONFIG += libkcalcoren libmkcal libical
 }
 
 equals(QT_MAJOR_VERSION, 5) {
     QT += qml
     target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
-    PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5
+    PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical
 
     SOURCES += \
         calendarapi.cpp \
