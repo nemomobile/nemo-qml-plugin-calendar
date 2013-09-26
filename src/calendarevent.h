@@ -123,6 +123,7 @@ public:
 
     Q_INVOKABLE void save();
     Q_INVOKABLE void remove();
+    Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
     inline KCalCore::Event::Ptr event();
     inline const KCalCore::Event::Ptr &event() const;
