@@ -42,6 +42,7 @@
 #include <extendedstorage.h>
 
 class NemoCalendarEvent;
+class NemoCalendarAgendaModel;
 class NemoCalendarEventOccurrence;
 class NemoCalendarEventCache : public QObject, public mKCal::ExtendedStorageObserver
 {
@@ -63,15 +64,21 @@ public:
 
     static QList<NemoCalendarEvent *> events(const KCalCore::Event::Ptr &event);
 
+protected:
+    virtual bool event(QEvent *);
+
 signals:
     void modelReset();
 
 private:
-
     friend class NemoCalendarApi;
     friend class NemoCalendarEvent;
     friend class NemoCalendarAgendaModel;
     friend class NemoCalendarEventOccurrence;
+
+    void scheduleAgendaRefresh(NemoCalendarAgendaModel *);
+    void cancelAgendaRefresh(NemoCalendarAgendaModel *);
+    void doAgendaRefresh();
 
     QStringList mDefaultNotebookColors;
 
@@ -79,6 +86,9 @@ private:
     QHash<QString, QString> mNotebookColors;
     QSet<NemoCalendarEvent *> mEvents;
     QSet<NemoCalendarEventOccurrence *> mEventOccurrences;
+
+    bool mRefreshEventSent;
+    QSet<NemoCalendarAgendaModel *> mRefreshModels;
 };
 
 #endif // CALENDAREVENTCACHE_H
