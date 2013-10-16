@@ -34,6 +34,7 @@
 #define CALENDARAGENDAMODEL_H
 
 #include <QDate>
+#include <extendedcalendar.h>
 #include <QAbstractListModel>
 
 #ifdef NEMO_USE_QT5
@@ -85,9 +86,10 @@ public:
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
+    Q_INVOKABLE bool dateHasEvents(QDate) const;
+
     virtual void classBegin();
     virtual void componentComplete();
-
 signals:
     void countChanged();
     void startDateChanged();
@@ -104,7 +106,8 @@ private slots:
     void refresh();
 
 private:
-    void doRefresh(bool reset = false);
+    friend class NemoCalendarEventCache;
+    void doRefresh(mKCal::ExtendedCalendar::ExpandedIncidenceList, bool reset = false);
 
     QDate mStartDate;
     QDate mEndDate;
@@ -112,8 +115,6 @@ private:
     QList<NemoCalendarEventOccurrence *> mEvents;
     QHash<int,QByteArray> mRoleNames;
 
-    bool mRefreshingModel:1;
-    bool mRerefreshNeeded:1;
     bool mIsComplete:1;
 };
 

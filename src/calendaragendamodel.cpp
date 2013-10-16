@@ -42,8 +42,7 @@
 #include "calendardb.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
-: QAbstractListModel(parent), mBuffer(0), mRefreshingModel(false),
-  mRerefreshNeeded(false), mIsComplete(true)
+: QAbstractListModel(parent), mBuffer(0), mIsComplete(true)
 {
     mRoleNames[EventObjectRole] = "event";
     mRoleNames[OccurrenceObjectRole] = "occurrence";
@@ -58,6 +57,7 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
 
 NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
 {
+    NemoCalendarEventCache::instance()->cancelAgendaRefresh(this);
     qDeleteAll(mEvents);
 }
 
@@ -105,18 +105,7 @@ void NemoCalendarAgendaModel::refresh()
     if (!mIsComplete)
         return;
 
-    if (mRefreshingModel) {
-        mRerefreshNeeded = true;
-        return;
-    }
-
-    mRefreshingModel = true;
-    doRefresh();
-    mRefreshingModel = false;
-    if (mRerefreshNeeded) {
-        mRerefreshNeeded = false;
-        refresh();
-    }
+    NemoCalendarEventCache::instance()->scheduleAgendaRefresh(this);
 }
 
 static bool eventsEqual(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
@@ -141,15 +130,8 @@ static bool eventsLessThan(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
     }
 }
 
-void NemoCalendarAgendaModel::doRefresh(bool reset)
+void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents, bool reset)
 {
-    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
-
-    QDate endDate = mEndDate.isValid()?mEndDate:mStartDate;
-
-    mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents =
-        calendar->rawExpandedEvents(mStartDate, endDate, false, false, KDateTime::Spec(KDateTime::LocalZone));
-
     // Filter out excluded notebooks
     for (int ii = 0; ii < newEvents.count(); ++ii) {
         if (!NemoCalendarEventCache::instance()->mNotebooks.contains(NemoCalendarDb::calendar()->notebook(newEvents.at(ii).second))) {

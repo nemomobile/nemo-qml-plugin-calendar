@@ -33,6 +33,7 @@
 // Qt
 #include <QDebug>
 #include <QSettings>
+#include <QCoreApplication>
 
 // mkcal
 #include <event.h>
@@ -40,10 +41,12 @@
 #include "calendardb.h"
 #include "calendarevent.h"
 #include "calendareventcache.h"
+#include "calendaragendamodel.h"
 
 NemoCalendarEventCache::NemoCalendarEventCache()
     : QObject(0)
     , mKCal::ExtendedStorageObserver()
+    , mRefreshEventSent(false)
 {
     NemoCalendarDb::storage()->registerObserver(this);
 
@@ -160,5 +163,98 @@ QList<NemoCalendarEvent *> NemoCalendarEventCache::events(const KCalCore::Event:
             rv.append(*iter);
     }
     return rv;
+}
+
+bool NemoCalendarEventCache::event(QEvent *e)
+{
+    if (e->type() == QEvent::User)
+        doAgendaRefresh();
+    return QObject::event(e);
+}
+
+void NemoCalendarEventCache::scheduleAgendaRefresh(NemoCalendarAgendaModel *m)
+{
+    mRefreshModels.insert(m);
+    if (!mRefreshEventSent) {
+        QCoreApplication::postEvent(this, new QEvent(QEvent::User));
+        mRefreshEventSent = true;
+    }
+}
+
+void NemoCalendarEventCache::cancelAgendaRefresh(NemoCalendarAgendaModel *m)
+{
+    mRefreshModels.remove(m);
+}
+
+static bool agenda_startdate_lessThan(NemoCalendarAgendaModel *lhs, NemoCalendarAgendaModel *rhs)
+{
+    return lhs->startDate() < rhs->startDate();
+}
+
+static QDate agenda_endDate(NemoCalendarAgendaModel *a)
+{
+    QDate e = a->endDate();
+    return e.isValid()?e:a->startDate();
+}
+
+struct AgendaDateRange
+{
+    QDate start;
+    QDate end;
+    QList<NemoCalendarAgendaModel *> models;
+};
+
+void NemoCalendarEventCache::doAgendaRefresh()
+{
+    if (mRefreshModels.isEmpty())
+        return;
+
+    QList<NemoCalendarAgendaModel *> models = mRefreshModels.toList();
+    mRefreshModels.clear();
+    mRefreshEventSent = false;
+
+    qSort(models.begin(), models.end(), agenda_startdate_lessThan);
+
+    QList<AgendaDateRange> ranges;
+    ranges << AgendaDateRange();
+    ranges.last().start = models.at(0)->startDate();
+    ranges.last().end = agenda_endDate(models.at(0));
+    ranges.last().models << models.at(0);
+
+    for (int ii = 1; ii < models.count(); ++ii) {
+        NemoCalendarAgendaModel *m = models.at(ii);
+        if (ranges.last().end.addDays(1) >= m->startDate()) {
+            ranges.last().end = qMax(ranges.last().end, agenda_endDate(m));
+            ranges.last().models << m;
+        } else {
+            ranges << AgendaDateRange();
+            ranges.last().start = m->startDate();
+            ranges.last().end = agenda_endDate(m);
+            ranges.last().models << m;
+        }
+    }
+
+    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
+
+    for (int ii = 0; ii < ranges.count(); ++ii) {
+        const AgendaDateRange &r = ranges.at(ii);
+
+        mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents =
+            calendar->rawExpandedEvents(r.start, r.end, false, false, KDateTime::Spec(KDateTime::LocalZone));
+
+        for (int jj = 0; jj < r.models.count(); ++jj) {
+            NemoCalendarAgendaModel *m = r.models.at(jj);
+            QDate start = m->startDate();
+            QDate end = agenda_endDate(m);
+            mKCal::ExtendedCalendar::ExpandedIncidenceList filtered;
+            for (int kk = 0; kk < newEvents.count(); ++kk) {
+                if (newEvents.at(kk).first.dtStart.date() <= start &&
+                    newEvents.at(kk).first.dtEnd.date() >= end)
+                    filtered.append(newEvents.at(kk));
+            }
+
+            m->doRefresh(filtered);
+        }
+    }
 }
 
