@@ -41,6 +41,7 @@ NemoCalendarNotebookModel::NemoCalendarNotebookModel()
     mRoleNames[UidRole] = "uid";
     mRoleNames[DescriptionRole] = "description";
     mRoleNames[ColorRole] = "color";
+    mRoleNames[DefaultRole] = "isDefault";
 }
 
 int NemoCalendarNotebookModel::rowCount(const QModelIndex &index) const
@@ -67,6 +68,8 @@ QVariant NemoCalendarNotebookModel::data(const QModelIndex &index, int role) con
         return notebook->description();
     case ColorRole:
         return NemoCalendarEventCache::instance()->notebookColor(notebook->uid());
+    case DefaultRole:
+        return notebook->isDefault();
     default:
         return QVariant();
     }
