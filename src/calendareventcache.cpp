@@ -254,8 +254,9 @@ void NemoCalendarEventCache::doAgendaRefresh()
             QDate end = agenda_endDate(m);
             mKCal::ExtendedCalendar::ExpandedIncidenceList filtered;
             for (int kk = 0; kk < newEvents.count(); ++kk) {
-                if (newEvents.at(kk).first.dtStart.date() <= start &&
-                    newEvents.at(kk).first.dtEnd.date() >= end)
+                mKCal::ExtendedCalendar::ExpandedIncidenceValidity validity = newEvents.at(kk).first;
+                if ((validity.dtStart.date() < start && validity.dtEnd.date() >= start)
+                        || (validity.dtStart.date() >= start && validity.dtStart.date() <= end))
                     filtered.append(newEvents.at(kk));
             }
 
