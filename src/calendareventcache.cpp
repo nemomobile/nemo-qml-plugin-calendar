@@ -109,6 +109,9 @@ NemoCalendarEventCache *NemoCalendarEventCache::instance()
 
 void NemoCalendarEventCache::storageModified(mKCal::ExtendedStorage *storage, const QString &info)
 {
+    Q_UNUSED(storage)
+    Q_UNUSED(info)
+
     // 'info' is either a path to the database (in which case we're screwed, we
     // have no idea what changed, so tell all interested models to reload) or a
     // space-seperated list of event UIDs.
@@ -124,12 +127,15 @@ void NemoCalendarEventCache::storageModified(mKCal::ExtendedStorage *storage, co
 
 void NemoCalendarEventCache::storageProgress(mKCal::ExtendedStorage *storage, const QString &info)
 {
-
+    Q_UNUSED(storage)
+    Q_UNUSED(info)
 }
 
 void NemoCalendarEventCache::storageFinished(mKCal::ExtendedStorage *storage, bool error, const QString &info)
 {
-
+    Q_UNUSED(storage)
+    Q_UNUSED(error)
+    Q_UNUSED(info)
 }
 
 QString NemoCalendarEventCache::notebookColor(const QString &notebook) const
@@ -248,8 +254,9 @@ void NemoCalendarEventCache::doAgendaRefresh()
             QDate end = agenda_endDate(m);
             mKCal::ExtendedCalendar::ExpandedIncidenceList filtered;
             for (int kk = 0; kk < newEvents.count(); ++kk) {
-                if (newEvents.at(kk).first.dtStart.date() <= start &&
-                    newEvents.at(kk).first.dtEnd.date() >= end)
+                mKCal::ExtendedCalendar::ExpandedIncidenceValidity validity = newEvents.at(kk).first;
+                if ((validity.dtStart.date() < start && validity.dtEnd.date() >= start)
+                        || (validity.dtStart.date() >= start && validity.dtStart.date() <= end))
                     filtered.append(newEvents.at(kk));
             }
 
