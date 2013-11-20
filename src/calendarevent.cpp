@@ -321,7 +321,6 @@ void NemoCalendarEvent::setReminder(Reminder r)
     switch (r) {
     default:
     case ReminderNone:
-        return;
     case ReminderTime:
         break;
     case Reminder5Min:
