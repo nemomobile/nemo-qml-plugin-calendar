@@ -286,19 +286,19 @@ NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
     switch (sec) {
     case 0:
         return ReminderTime;
-    case 5 * 60:
+    case -5 * 60:
         return Reminder5Min;
-    case 15 * 60:
+    case -15 * 60:
         return Reminder15Min;
-    case 30 * 60:
+    case -30 * 60:
         return Reminder30Min;
-    case 60 * 60:
+    case -60 * 60:
         return Reminder1Hour;
-    case 2 * 60 * 60:
+    case -2 * 60 * 60:
         return Reminder2Hour;
-    case 24 * 60 * 60:
+    case -24 * 60 * 60:
         return Reminder1Day;
-    case 2 * 24 * 60 * 60:
+    case -2 * 24 * 60 * 60:
         return Reminder2Day;
     default:
         return ReminderNone;
@@ -325,25 +325,25 @@ void NemoCalendarEvent::setReminder(Reminder r)
     case ReminderTime:
         break;
     case Reminder5Min:
-        offset = KCalCore::Duration(5 * 60);
+        offset = KCalCore::Duration(-5 * 60);
         break;
     case Reminder15Min:
-        offset = KCalCore::Duration(15 * 60);
+        offset = KCalCore::Duration(-15 * 60);
         break;
     case Reminder30Min:
-        offset = KCalCore::Duration(30 * 60);
+        offset = KCalCore::Duration(-30 * 60);
         break;
     case Reminder1Hour:
-        offset = KCalCore::Duration(60 * 60);
+        offset = KCalCore::Duration(-60 * 60);
         break;
     case Reminder2Hour:
-        offset = KCalCore::Duration(2 * 60 * 60);
+        offset = KCalCore::Duration(-2 * 60 * 60);
         break;
     case Reminder1Day:
-        offset = KCalCore::Duration(24 * 60 * 60);
+        offset = KCalCore::Duration(-24 * 60 * 60);
         break;
     case Reminder2Day:
-        offset = KCalCore::Duration(2 * 24 * 60 * 60);
+        offset = KCalCore::Duration(-2 * 24 * 60 * 60);
         break;
     }
 
