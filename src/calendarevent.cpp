@@ -65,7 +65,7 @@ NemoCalendarEvent::~NemoCalendarEvent()
 
 QString NemoCalendarEvent::displayLabel() const
 {
-    return mEvent?mEvent->summary():QString();
+    return mEvent ? mEvent->summary() : QString();
 }
 
 void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
@@ -81,7 +81,7 @@ void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
 
 QString NemoCalendarEvent::description() const
 {
-    return mEvent?mEvent->description():QString();
+    return mEvent ? mEvent->description() : QString();
 }
 
 void NemoCalendarEvent::setDescription(const QString &description)
@@ -97,7 +97,7 @@ void NemoCalendarEvent::setDescription(const QString &description)
 
 QDateTime NemoCalendarEvent::startTime() const
 {
-    return mEvent?mEvent->dtStart().toLocalZone().dateTime():QDateTime();
+    return mEvent ? mEvent->dtStart().toLocalZone().dateTime() : QDateTime();
 }
 
 void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
@@ -113,7 +113,7 @@ void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
 
 QDateTime NemoCalendarEvent::endTime() const
 {
-    return mEvent?mEvent->dtEnd().toLocalZone().dateTime():QDateTime();
+    return mEvent ? mEvent->dtEnd().toLocalZone().dateTime() : QDateTime();
 }
 
 void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
@@ -129,7 +129,7 @@ void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
 
 bool NemoCalendarEvent::allDay() const
 {
-    return mEvent?mEvent->allDay():false;
+    return mEvent ? mEvent->allDay() : false;
 }
 
 void NemoCalendarEvent::setAllDay(bool a)
@@ -222,7 +222,7 @@ void NemoCalendarEvent::setRecur(Recur r)
 
 int NemoCalendarEvent::recurExceptions() const
 {
-    return mEvent->recurs()?mEvent->recurrence()->exDateTimes().count():0;
+    return mEvent->recurs() ? mEvent->recurrence()->exDateTimes().count() : 0;
 }
 
 void NemoCalendarEvent::removeException(int index)
@@ -464,9 +464,9 @@ QString NemoCalendarEvent::vCalendar(const QString &prodId) const
 {
     NemoCalendarVCalFormat fmt;
     return fmt.convertEventToVEvent(mEvent,
-            prodId.isEmpty() ?
-            QLatin1String("-//NemoMobile.org/Nemo//NONSGML v1.0//EN") :
-            prodId);
+                                    prodId.isEmpty() ?
+                                        QLatin1String("-//NemoMobile.org/Nemo//NONSGML v1.0//EN") :
+                                        prodId);
 }
 
 void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)

@@ -160,11 +160,12 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
     while (newEventsCounter < newEvents.count() || eventsCounter < events.count()) {
         // Remove old events
         int removeCount = 0;
-        while ((eventsCounter + removeCount) < events.count() &&
-               (newEventsCounter >= newEvents.count() ||
-                eventsLessThan(events.at(eventsCounter + removeCount)->expandedEvent(),
-                               newEvents.at(newEventsCounter))))
+        while ((eventsCounter + removeCount) < events.count()
+                && (newEventsCounter >= newEvents.count()
+                    || eventsLessThan(events.at(eventsCounter + removeCount)->expandedEvent(),
+                                      newEvents.at(newEventsCounter)))) {
             removeCount++;
+        }
 
         if (removeCount) {
             Q_ASSERT(false == reset);
@@ -187,11 +188,12 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
 
         // Insert new events
         int insertCount = 0;
-        while ((newEventsCounter + insertCount) < newEvents.count() && 
-               (eventsCounter >= events.count() ||
-                eventsLessThan(newEvents.at(newEventsCounter + insertCount),
-                               events.at(eventsCounter)->expandedEvent())))
+        while ((newEventsCounter + insertCount) < newEvents.count()
+               && (eventsCounter >= events.count()
+                   || !(eventsLessThan(events.at(eventsCounter)->expandedEvent(),
+                                       newEvents.at(newEventsCounter + insertCount))))) {
             insertCount++;
+        }
 
         if (insertCount) {
             if (!reset) beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
