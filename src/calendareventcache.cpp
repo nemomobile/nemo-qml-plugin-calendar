@@ -255,9 +255,13 @@ void NemoCalendarEventCache::doAgendaRefresh()
             mKCal::ExtendedCalendar::ExpandedIncidenceList filtered;
             for (int kk = 0; kk < newEvents.count(); ++kk) {
                 mKCal::ExtendedCalendar::ExpandedIncidenceValidity validity = newEvents.at(kk).first;
-                if ((validity.dtStart.date() < start && validity.dtEnd.date() >= start)
-                        || (validity.dtStart.date() >= start && validity.dtStart.date() <= end))
+                // current sqlite backend has braindead convention of saving all day event from 0:00 to 0:00 next day.
+                if ((validity.dtStart.date() < start
+                     && (validity.dtEnd.date() > start
+                         || (validity.dtEnd.date() == start && validity.dtEnd.time() > QTime(0, 0))))
+                    || (validity.dtStart.date() >= start && validity.dtStart.date() <= end)) {
                     filtered.append(newEvents.at(kk));
+                }
             }
 
             m->doRefresh(filtered);
