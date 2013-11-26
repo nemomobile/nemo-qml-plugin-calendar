@@ -41,6 +41,7 @@
 #include "calendarapi.h"
 #include "calendareventquery.h"
 #include "calendarnotebookmodel.h"
+#include "calendardb.h"
 #else
 # include <QtDeclarative/qdeclarative.h>
 # include <QtDeclarative/QDeclarativeExtensionPlugin>
@@ -82,7 +83,27 @@ QObject *QtDate::New(QQmlEngine *e, QJSEngine *)
 {
     return new QtDate(e);
 }
+
+
+class DbReleaser: public QObject
+{
+    Q_OBJECT
+
+public:
+    DbReleaser(QObject *parent)
+        : QObject(parent)
+    {
+    }
+
+    ~DbReleaser()
+    {
+        // mkcal uses internally some static KTimeZone instances. Need to explicitly
+        // drop references so shutting down application has deterministic order for deletions.
+        NemoCalendarDb::dropReferences();
+    }
+};
 #endif
+
 
 class Q_DECL_EXPORT NemoCalendarPlugin : public QDeclarativeExtensionPlugin
 {
@@ -91,6 +112,15 @@ class Q_DECL_EXPORT NemoCalendarPlugin : public QDeclarativeExtensionPlugin
     Q_PLUGIN_METADATA(IID "org.nemomobile.calendar")
 #endif
 public:
+
+#ifdef NEMO_USE_QT5
+    void initializeEngine(QQmlEngine *engine, const char *uri)
+    {
+        Q_UNUSED(uri)
+        new DbReleaser(engine);
+    }
+#endif
+
     void registerTypes(const char *uri)
     {
         Q_ASSERT(uri == QLatin1String("org.nemomobile.calendar"));

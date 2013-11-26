@@ -34,24 +34,32 @@
 
 #include <notebook.h>
 #include <QDebug>
+
+mKCal::ExtendedCalendar::Ptr NemoCalendarDb::s_calendar;
+mKCal::ExtendedStorage::Ptr NemoCalendarDb::s_storage;
+
 mKCal::ExtendedCalendar::Ptr &NemoCalendarDb::calendar()
 {
-    static mKCal::ExtendedCalendar::Ptr ptr;
-    if (ptr)
-        return ptr;
+    if (s_calendar)
+        return s_calendar;
 
-    ptr = mKCal::ExtendedCalendar::Ptr(new mKCal::ExtendedCalendar(KDateTime::Spec::LocalZone()));
-    return ptr;
+    s_calendar = mKCal::ExtendedCalendar::Ptr(new mKCal::ExtendedCalendar(KDateTime::Spec::LocalZone()));
+    return s_calendar;
 }
 
 mKCal::ExtendedStorage::Ptr &NemoCalendarDb::storage()
 {
-    static mKCal::ExtendedStorage::Ptr ptr;
-    if (ptr)
-        return ptr;
+    if (s_storage)
+        return s_storage;
 
-    ptr = calendar()->defaultStorage(calendar());
-    ptr->open();
+    s_storage = calendar()->defaultStorage(calendar());
+    s_storage->open();
 
-    return ptr;
+    return s_storage;
+}
+
+void NemoCalendarDb::dropReferences()
+{
+    s_calendar.clear();
+    s_storage.clear();
 }
