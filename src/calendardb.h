@@ -41,6 +41,12 @@ class NemoCalendarDb
 public:
     static mKCal::ExtendedCalendar::Ptr &calendar();
     static mKCal::ExtendedStorage::Ptr &storage();
+
+    static void dropReferences();
+
+private:
+    static mKCal::ExtendedCalendar::Ptr s_calendar;
+    static mKCal::ExtendedStorage::Ptr s_storage;
 };
 
 #endif // CALENDARDB_H
