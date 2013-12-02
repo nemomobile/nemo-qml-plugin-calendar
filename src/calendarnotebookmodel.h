@@ -44,7 +44,9 @@ public:
         UidRole,
         DescriptionRole,
         ColorRole,
-        DefaultRole
+        DefaultRole,
+        ReadOnlyRole,
+        LocalCalendarRole
     };
 
     NemoCalendarNotebookModel();

@@ -64,7 +64,7 @@ public:
     enum {
         EventObjectRole = Qt::UserRole,
         OccurrenceObjectRole,
-        SectionBucketRole,
+        SectionBucketRole
     };
 
     explicit NemoCalendarAgendaModel(QObject *parent = 0);

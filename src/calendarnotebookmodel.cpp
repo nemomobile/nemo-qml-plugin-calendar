@@ -42,6 +42,8 @@ NemoCalendarNotebookModel::NemoCalendarNotebookModel()
     mRoleNames[DescriptionRole] = "description";
     mRoleNames[ColorRole] = "color";
     mRoleNames[DefaultRole] = "isDefault";
+    mRoleNames[ReadOnlyRole] = "readOnly";
+    mRoleNames[LocalCalendarRole] = "localCalendar";
 }
 
 int NemoCalendarNotebookModel::rowCount(const QModelIndex &index) const
@@ -70,6 +72,10 @@ QVariant NemoCalendarNotebookModel::data(const QModelIndex &index, int role) con
         return NemoCalendarEventCache::instance()->notebookColor(notebook->uid());
     case DefaultRole:
         return notebook->isDefault();
+    case ReadOnlyRole:
+        return notebook->isReadOnly();
+    case LocalCalendarRole:
+        return (notebook->isMaster() && !notebook->isShared() && notebook->pluginName().isEmpty());
     default:
         return QVariant();
     }
@@ -77,13 +83,20 @@ QVariant NemoCalendarNotebookModel::data(const QModelIndex &index, int role) con
 
 bool NemoCalendarNotebookModel::setData(const QModelIndex &index, const QVariant &data, int role)
 {
-    if (!index.isValid() || index.row() >= NemoCalendarDb::storage()->notebooks().count() || role != ColorRole)
+    if (!index.isValid()
+     || index.row() >= NemoCalendarDb::storage()->notebooks().count()
+     || (role != ColorRole && role != DefaultRole))
        return false; 
 
     mKCal::Notebook::Ptr notebook = NemoCalendarDb::storage()->notebooks().at(index.row());
-    NemoCalendarEventCache::instance()->setNotebookColor(notebook->uid(), data.toString());
 
-    emit dataChanged(index, index, QVector<int>() << role);
+    if (role == ColorRole) {
+        NemoCalendarEventCache::instance()->setNotebookColor(notebook->uid(), data.toString());
+        emit dataChanged(index, index, QVector<int>() << role);
+    } else if (role == DefaultRole) {
+        NemoCalendarDb::storage()->setDefaultNotebook(notebook);
+        emit dataChanged(this->index(0, 0), this->index(NemoCalendarDb::storage()->notebooks().count() - 1, 0), QVector<int>() << role);
+    }
 
     return true;
 }
