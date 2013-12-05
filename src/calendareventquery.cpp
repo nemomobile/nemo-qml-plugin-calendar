@@ -83,7 +83,7 @@ void NemoCalendarEventQuery::resetStartTime()
 
 QObject *NemoCalendarEventQuery::event() const
 {
-    return mOccurrence?mOccurrence->eventObject():0;
+    return mOccurrence ? mOccurrence->eventObject() : 0;
 }
 
 QObject *NemoCalendarEventQuery::occurrence() const
@@ -108,7 +108,7 @@ void NemoCalendarEventQuery::refresh()
         return;
 
     mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
-    KCalCore::Event::Ptr event = mUid.isEmpty()?KCalCore::Event::Ptr():calendar->event(mUid);
+    KCalCore::Event::Ptr event = mUid.isEmpty() ? KCalCore::Event::Ptr() : calendar->event(mUid);
     if (event) {
         if (mOccurrence) {
             delete mOccurrence;
