@@ -83,16 +83,31 @@ void NemoCalendarEventCache::load()
     mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
 
     for (QSet<NemoCalendarEvent *>::Iterator iter = mEvents.begin(); iter != mEvents.end(); ++iter) {
-        QString uid = (*iter)->event()->uid();
+        const KCalCore::Event::Ptr eventPtr = (*iter)->event();
+        if (eventPtr.isNull()) {
+            qWarning() << "Calendar event cache encountered instance with null kcalcore event";
+            continue;
+        }
+        QString uid = eventPtr->uid();
         KCalCore::Event::Ptr event = calendar->event(uid);
-        (*iter)->setEvent(event);
+        // calendar might not contain event if it's in a notebook that wasn't loaded above
+        if (!event.isNull()) {
+            (*iter)->setEvent(event);
+        }
     }
 
     for (QSet<NemoCalendarEventOccurrence *>::Iterator iter = mEventOccurrences.begin();
          iter != mEventOccurrences.end(); ++iter) {
-        QString uid = (*iter)->event()->uid();
+        const KCalCore::Event::Ptr eventPtr = (*iter)->event();
+        if (eventPtr.isNull()) {
+            qWarning() << "Calendar event cache encountered occurrence instance with null kcalcore event";
+            continue;
+        }
+        QString uid = eventPtr->uid();
         KCalCore::Event::Ptr event = calendar->event(uid);
-        (*iter)->setEvent(event);
+        if (!event.isNull()) {
+            (*iter)->setEvent(event);
+        }
     }
 
     emit modelReset();
