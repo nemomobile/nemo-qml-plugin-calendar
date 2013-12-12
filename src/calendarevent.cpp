@@ -409,14 +409,36 @@ void NemoCalendarEvent::setAlarmProgram(const QString &program)
 bool NemoCalendarEvent::readonly() const
 {
     QString eventNotebook = NemoCalendarDb::calendar()->notebook(mEvent);
-    return eventNotebook != NemoCalendarDb::storage()->defaultNotebook()->uid();
+    return NemoCalendarDb::storage()->notebook(eventNotebook)->isReadOnly();
 }
 
-void NemoCalendarEvent::save()
+QString NemoCalendarEvent::calendarUid() const
 {
-    if (mNewEvent) {
-        mNewEvent = false;
-        NemoCalendarDb::calendar()->addEvent(mEvent, NemoCalendarDb::storage()->defaultNotebook()->uid());
+    return NemoCalendarDb::calendar()->notebook(mEvent);
+}
+
+void NemoCalendarEvent::save(const QString &calendarUid)
+{
+    QString uid = calendarUid.isEmpty() ? mNewEvent ? NemoCalendarDb::storage()->defaultNotebook()->uid()
+                                                    : this->calendarUid()
+                                        : calendarUid;
+
+    mKCal::Notebook::Ptr notebook = NemoCalendarDb::storage()->notebook(uid);
+
+    if (notebook == 0) {
+        return;
+    }
+
+    if (mNewEvent || this->calendarUid() != uid) {
+
+        if (mNewEvent) {
+            mNewEvent = false;
+        } else if (this->calendarUid() != uid) {
+            remove();
+        }
+
+        NemoCalendarDb::calendar()->addEvent(mEvent, uid);
+        emit calendarUidChanged();
     }
 
     mEvent->setRevision(mEvent->revision() + 1);
@@ -489,6 +511,7 @@ void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)
     if (endTime() != et) emit endTimeChanged();
     if (allDay() != ad) emit allDayChanged();
     if (recur() != re) emit recurChanged();
+    emit colorChanged();
 }
 
 NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &o,

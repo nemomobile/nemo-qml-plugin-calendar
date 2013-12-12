@@ -58,6 +58,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
+    Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
 
 public:
     enum Recur {
@@ -120,8 +121,9 @@ public:
     void setAlarmProgram(const QString &);
 
     bool readonly() const;
+    QString calendarUid() const;
 
-    Q_INVOKABLE void save();
+    Q_INVOKABLE void save(const QString &calendarUid = QString());
     Q_INVOKABLE void remove();
     Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
@@ -140,6 +142,7 @@ signals:
     void reminderChanged();
     void alarmProgramChanged();
     void colorChanged();
+    void calendarUidChanged();
 
 private:
     friend class NemoCalendarEventCache;
