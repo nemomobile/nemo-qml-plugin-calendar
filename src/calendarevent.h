@@ -59,6 +59,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
     Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
+    Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY locationChanged)
 
 public:
     enum Recur {
@@ -131,6 +132,9 @@ public:
     inline const KCalCore::Event::Ptr &event() const;
     void setEvent(const KCalCore::Event::Ptr &);
 
+    QString location() const;
+    void setLocation(const QString &newLocation);
+
 signals:
     void displayLabelChanged();
     void descriptionChanged();
@@ -143,6 +147,7 @@ signals:
     void alarmProgramChanged();
     void colorChanged();
     void calendarUidChanged();
+    void locationChanged();
 
 private:
     friend class NemoCalendarEventCache;
