@@ -514,6 +514,19 @@ void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)
     emit colorChanged();
 }
 
+QString NemoCalendarEvent::location() const
+{
+    return mEvent ? mEvent->location() : QString();
+}
+
+void NemoCalendarEvent::setLocation(const QString &newLocation)
+{
+    if (newLocation != location() && mEvent) {
+        mEvent->setLocation(newLocation);
+        emit locationChanged();
+    }
+}
+
 NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &o,
                                                          QObject *parent)
 : QObject(parent), mOccurrence(o), mEvent(0)
