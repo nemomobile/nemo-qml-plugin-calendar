@@ -21,7 +21,6 @@ equals(QT_MAJOR_VERSION, 5) {
         calendarnotebookmodel.cpp \
 
     HEADERS += \
-        calendarapi.cpp \
         calendarapi.h \
         calendareventquery.h \
         calendarnotebookmodel.h \
