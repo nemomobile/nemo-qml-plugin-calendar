@@ -521,9 +521,11 @@ QString NemoCalendarEvent::location() const
 
 void NemoCalendarEvent::setLocation(const QString &newLocation)
 {
-    if (newLocation != location() && mEvent) {
+    if (newLocation != location()) {
         mEvent->setLocation(newLocation);
-        emit locationChanged();
+
+        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
+            emit event->locationChanged();
     }
 }
 
