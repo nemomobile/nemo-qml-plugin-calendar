@@ -4,31 +4,11 @@ PLUGIN_IMPORT_PATH = org/nemomobile/calendar
 TEMPLATE = lib
 CONFIG += qt plugin hide_symbols
 
-equals(QT_MAJOR_VERSION, 4) {
-    QT += declarative
-    target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
-    PKGCONFIG += libkcalcoren libmkcal libical
-}
-
-equals(QT_MAJOR_VERSION, 5) {
-    QT += qml
-    target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
-    PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical
-
-    SOURCES += \
-        calendarapi.cpp \
-        calendareventquery.cpp \
-        calendarnotebookmodel.cpp \
-
-    HEADERS += \
-        calendarapi.h \
-        calendareventquery.h \
-        calendarnotebookmodel.h \
-
-    DEFINES += NEMO_USE_QT5
-}
-
+QT += qml
 QT -= gui
+
+target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
+PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical
 
 INSTALLS += target
 
@@ -44,12 +24,18 @@ SOURCES += \
     calendaragendamodel.cpp \
     calendardb.cpp \
     calendareventcache.cpp \
+    calendarapi.cpp \
+    calendareventquery.cpp \
+    calendarnotebookmodel.cpp \
 
 HEADERS += \
     calendarevent.h \
     calendaragendamodel.h \
     calendardb.h \
     calendareventcache.h \
+    calendarapi.h \
+    calendareventquery.h \
+    calendarnotebookmodel.h \
 
 MOC_DIR = $$PWD/.moc
 OBJECTS_DIR = $$PWD/.obj

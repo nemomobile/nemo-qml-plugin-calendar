@@ -32,12 +32,7 @@
 
 #include "calendarevent.h"
 
-
-#ifdef NEMO_USE_QT5
 #include <QQmlInfo>
-#else
-#include <QDeclarativeInfo>
-#endif
 
 #include "calendardb.h"
 #include "calendareventcache.h"

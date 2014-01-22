@@ -36,13 +36,7 @@
 #include <QDate>
 #include <extendedcalendar.h>
 #include <QAbstractListModel>
-
-#ifdef NEMO_USE_QT5
 #include <QQmlParserStatus>
-#else
-#include <QDeclarativeParserStatus>
-#define QQmlParserStatus QDeclarativeParserStatus
-#endif
 
 class NemoCalendarEvent;
 class NemoCalendarEventOccurrence;
@@ -50,9 +44,7 @@ class NemoCalendarEventOccurrence;
 class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStatus
 {
     Q_OBJECT
-#ifdef NEMO_USE_QT5
     Q_INTERFACES(QQmlParserStatus)
-#endif
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
@@ -97,10 +89,8 @@ signals:
     void startDateIndexChanged();
     void endDateChanged();
 
-#ifdef NEMO_USE_QT5
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
-#endif
 
 private slots:
     void refresh();
