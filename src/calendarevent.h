@@ -45,11 +45,12 @@ class NemoCalendarEvent : public QObject
     Q_OBJECT
     Q_ENUMS(Recur)
     Q_ENUMS(Reminder)
+    Q_ENUMS(TimeSpec)
 
     Q_PROPERTY(QString displayLabel READ displayLabel WRITE setDisplayLabel NOTIFY displayLabelChanged)
     Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY descriptionChanged)
-    Q_PROPERTY(QDateTime startTime READ startTime WRITE setStartTime NOTIFY startTimeChanged)
-    Q_PROPERTY(QDateTime endTime READ endTime WRITE setEndTime NOTIFY endTimeChanged)
+    Q_PROPERTY(QDateTime startTime READ startTime NOTIFY startTimeChanged)
+    Q_PROPERTY(QDateTime endTime READ endTime NOTIFY endTimeChanged)
     Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
     Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
     Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
@@ -84,6 +85,11 @@ public:
         Reminder2Day
     };
 
+    enum TimeSpec {
+        SpecLocalZone,
+        SpecClockTime
+    };
+
     explicit NemoCalendarEvent(QObject *parent = 0);
     NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent = 0);
     ~NemoCalendarEvent();
@@ -95,10 +101,10 @@ public:
     void setDescription(const QString &description);
 
     QDateTime startTime() const;
-    void setStartTime(const QDateTime &startTime);
+    Q_INVOKABLE void setStartTime(const QDateTime &startTime, int spec);
 
     QDateTime endTime() const;
-    void setEndTime(const QDateTime &endTime);
+    Q_INVOKABLE void setEndTime(const QDateTime &endTime, int spec);
 
     bool allDay() const;
     void setAllDay(bool);
@@ -155,6 +161,8 @@ private:
     bool mNewEvent:1;
     KCalCore::Event::Ptr mEvent;
 };
+
+
 
 class NemoCalendarEventOccurrence : public QObject
 {

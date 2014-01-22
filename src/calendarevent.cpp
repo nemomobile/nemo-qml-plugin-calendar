@@ -100,12 +100,22 @@ QDateTime NemoCalendarEvent::startTime() const
     return mEvent ? mEvent->dtStart().toLocalZone().dateTime() : QDateTime();
 }
 
-void NemoCalendarEvent::setStartTime(const QDateTime &startTime)
+void NemoCalendarEvent::setStartTime(const QDateTime &startTime, int spec)
 {
-    if (!mEvent || mEvent->dtStart().toLocalZone().dateTime() == startTime)
+    if (!mEvent)
         return;
 
-    mEvent->setDtStart(KDateTime(startTime, KDateTime::Spec(KDateTime::LocalZone)));
+    KDateTime::SpecType kSpec = KDateTime::LocalZone;
+    if (spec == SpecClockTime) {
+        kSpec = KDateTime::ClockTime;
+    }
+
+    KDateTime kStart(startTime, kSpec);
+    if (kStart == mEvent->dtStart()) {
+        return;
+    }
+
+    mEvent->setDtStart(kStart);
 
     foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
         emit event->startTimeChanged();
@@ -116,12 +126,22 @@ QDateTime NemoCalendarEvent::endTime() const
     return mEvent ? mEvent->dtEnd().toLocalZone().dateTime() : QDateTime();
 }
 
-void NemoCalendarEvent::setEndTime(const QDateTime &endTime)
+void NemoCalendarEvent::setEndTime(const QDateTime &endTime, int spec)
 {
-    if (!mEvent || mEvent->dtEnd().toLocalZone().dateTime() == endTime)
+    if (!mEvent)
         return;
 
-    mEvent->setDtEnd(KDateTime(endTime, KDateTime::Spec(KDateTime::LocalZone)));
+    KDateTime::SpecType kSpec = KDateTime::LocalZone;
+    if (spec == SpecClockTime) {
+        kSpec = KDateTime::ClockTime;
+    }
+
+    KDateTime kEnd(endTime, kSpec);
+    if (kEnd == mEvent->dtEnd()) {
+        return;
+    }
+
+    mEvent->setDtEnd(kEnd);
 
     foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
         emit event->endTimeChanged();
@@ -528,6 +548,8 @@ void NemoCalendarEvent::setLocation(const QString &newLocation)
             emit event->locationChanged();
     }
 }
+
+
 
 NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &o,
                                                          QObject *parent)
