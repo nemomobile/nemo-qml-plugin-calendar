@@ -42,7 +42,7 @@
 #include "calendardb.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
-: QAbstractListModel(parent), mBuffer(0), mIsComplete(true)
+: QAbstractListModel(parent), mIsComplete(true)
 {
     mRoleNames[EventObjectRole] = "event";
     mRoleNames[OccurrenceObjectRole] = "occurrence";
@@ -211,20 +211,6 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
 int NemoCalendarAgendaModel::count() const
 {
     return mEvents.size();
-}
-
-int NemoCalendarAgendaModel::minimumBuffer() const
-{
-    return mBuffer;
-}
-
-void NemoCalendarAgendaModel::setMinimumBuffer(int b)
-{
-    if (mBuffer == b)
-        return;
-
-    mBuffer = b;
-    emit minimumBufferChanged();
 }
 
 int NemoCalendarAgendaModel::startDateIndex() const

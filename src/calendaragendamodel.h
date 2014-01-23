@@ -48,8 +48,6 @@ class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStat
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
-
-    Q_PROPERTY(int minimumBuffer READ minimumBuffer WRITE setMinimumBuffer NOTIFY minimumBufferChanged)
     Q_PROPERTY(int startDateIndex READ startDateIndex NOTIFY startDateIndexChanged)
 
 public:
@@ -70,9 +68,6 @@ public:
 
     int count() const;
 
-    int minimumBuffer() const;
-    void setMinimumBuffer(int);
-
     int startDateIndex() const;
 
     int rowCount(const QModelIndex &index) const;
@@ -83,7 +78,6 @@ public:
 signals:
     void countChanged();
     void startDateChanged();
-    void minimumBufferChanged();
     void startDateIndexChanged();
     void endDateChanged();
 
@@ -99,7 +93,6 @@ private:
 
     QDate mStartDate;
     QDate mEndDate;
-    int mBuffer;
     QList<NemoCalendarEventOccurrence *> mEvents;
     QHash<int,QByteArray> mRoleNames;
 
