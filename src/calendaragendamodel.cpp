@@ -213,11 +213,6 @@ int NemoCalendarAgendaModel::count() const
     return mEvents.size();
 }
 
-int NemoCalendarAgendaModel::startDateIndex() const
-{
-    return 0;
-}
-
 int NemoCalendarAgendaModel::rowCount(const QModelIndex &index) const
 {
     if (index != QModelIndex())

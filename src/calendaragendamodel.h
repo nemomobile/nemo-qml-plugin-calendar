@@ -48,7 +48,6 @@ class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStat
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
-    Q_PROPERTY(int startDateIndex READ startDateIndex NOTIFY startDateIndexChanged)
 
 public:
     enum {
@@ -68,8 +67,6 @@ public:
 
     int count() const;
 
-    int startDateIndex() const;
-
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
@@ -78,7 +75,6 @@ public:
 signals:
     void countChanged();
     void startDateChanged();
-    void startDateIndexChanged();
     void endDateChanged();
 
 protected:
