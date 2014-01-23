@@ -78,8 +78,6 @@ public:
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
-    Q_INVOKABLE bool dateHasEvents(QDate) const;
-
     virtual void classBegin();
     virtual void componentComplete();
 signals:
