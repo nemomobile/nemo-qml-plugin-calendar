@@ -90,7 +90,6 @@ private:
     QDate mStartDate;
     QDate mEndDate;
     QList<NemoCalendarEventOccurrence *> mEvents;
-    QHash<int,QByteArray> mRoleNames;
 
     bool mIsComplete:1;
 };

@@ -44,10 +44,6 @@
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
 : QAbstractListModel(parent), mIsComplete(true)
 {
-    mRoleNames[EventObjectRole] = "event";
-    mRoleNames[OccurrenceObjectRole] = "occurrence";
-    mRoleNames[SectionBucketRole] = "sectionBucket";
-
     connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(refresh()));
 }
 
@@ -59,7 +55,11 @@ NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
 
 QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
 {
-    return mRoleNames;
+    QHash<int,QByteArray> roleNames;
+    roleNames[EventObjectRole] = "event";
+    roleNames[OccurrenceObjectRole] = "occurrence";
+    roleNames[SectionBucketRole] = "sectionBucket";
+    return roleNames;
 }
 
 QDate NemoCalendarAgendaModel::startDate() const

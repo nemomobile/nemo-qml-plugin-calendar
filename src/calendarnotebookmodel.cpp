@@ -37,13 +37,6 @@
 
 NemoCalendarNotebookModel::NemoCalendarNotebookModel()
 {
-    mRoleNames[NameRole] = "name";
-    mRoleNames[UidRole] = "uid";
-    mRoleNames[DescriptionRole] = "description";
-    mRoleNames[ColorRole] = "color";
-    mRoleNames[DefaultRole] = "isDefault";
-    mRoleNames[ReadOnlyRole] = "readOnly";
-    mRoleNames[LocalCalendarRole] = "localCalendar";
 }
 
 int NemoCalendarNotebookModel::rowCount(const QModelIndex &index) const
@@ -103,5 +96,14 @@ bool NemoCalendarNotebookModel::setData(const QModelIndex &index, const QVariant
 
 QHash<int, QByteArray> NemoCalendarNotebookModel::roleNames() const
 {
-    return mRoleNames;
+    QHash<int, QByteArray> roleNames;
+    roleNames[NameRole] = "name";
+    roleNames[UidRole] = "uid";
+    roleNames[DescriptionRole] = "description";
+    roleNames[ColorRole] = "color";
+    roleNames[DefaultRole] = "isDefault";
+    roleNames[ReadOnlyRole] = "readOnly";
+    roleNames[LocalCalendarRole] = "localCalendar";
+
+    return roleNames;
 }
