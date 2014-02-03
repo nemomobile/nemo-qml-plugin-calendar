@@ -48,10 +48,6 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
     mRoleNames[OccurrenceObjectRole] = "occurrence";
     mRoleNames[SectionBucketRole] = "sectionBucket";
 
-#ifndef NEMO_USE_QT5
-    setRoleNames(mRoleNames);
-#endif
-
     connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(refresh()));
 }
 
@@ -61,12 +57,10 @@ NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
     qDeleteAll(mEvents);
 }
 
-#ifdef NEMO_USE_QT5
 QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
 {
     return mRoleNames;
 }
-#endif
 
 QDate NemoCalendarAgendaModel::startDate() const
 {

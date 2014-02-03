@@ -32,25 +32,16 @@
 
 #include <QtGlobal>
 
-#ifdef NEMO_USE_QT5
-# include <QtQml>
-# include <QQmlEngine>
-# include <QQmlExtensionPlugin>
-# define QDeclarativeEngine QQmlEngine
-# define QDeclarativeExtensionPlugin QQmlExtensionPlugin
+#include <QtQml>
+#include <QQmlEngine>
+#include <QQmlExtensionPlugin>
 #include "calendarapi.h"
 #include "calendareventquery.h"
 #include "calendarnotebookmodel.h"
 #include "calendardb.h"
-#else
-# include <QtDeclarative/qdeclarative.h>
-# include <QtDeclarative/QDeclarativeExtensionPlugin>
-#endif
-
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
 
-#ifdef NEMO_USE_QT5
 class QtDate : public QObject
 {
     Q_OBJECT
@@ -102,43 +93,30 @@ public:
         NemoCalendarDb::dropReferences();
     }
 };
-#endif
 
 
-class Q_DECL_EXPORT NemoCalendarPlugin : public QDeclarativeExtensionPlugin
+class Q_DECL_EXPORT NemoCalendarPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
-#ifdef NEMO_USE_QT5
     Q_PLUGIN_METADATA(IID "org.nemomobile.calendar")
-#endif
-public:
 
-#ifdef NEMO_USE_QT5
+public:
     void initializeEngine(QQmlEngine *engine, const char *uri)
     {
         Q_UNUSED(uri)
         new DbReleaser(engine);
     }
-#endif
 
     void registerTypes(const char *uri)
     {
         Q_ASSERT(uri == QLatin1String("org.nemomobile.calendar"));
         qmlRegisterUncreatableType<NemoCalendarEvent>(uri, 1, 0, "CalendarEvent", "Create CalendarEvent instances through a model");
         qmlRegisterType<NemoCalendarAgendaModel>(uri, 1, 0, "AgendaModel");
-#ifdef NEMO_USE_QT5
         qmlRegisterType<NemoCalendarEventQuery>(uri, 1, 0, "EventQuery");
         qmlRegisterType<NemoCalendarNotebookModel>(uri, 1, 0, "NotebookModel");
         qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);
         qmlRegisterSingletonType<NemoCalendarApi>(uri, 1, 0, "Calendar", NemoCalendarApi::New);
-#endif
     }
 };
 
-#ifndef NEMO_USE_QT5
-Q_EXPORT_PLUGIN2(nemocalendar, NemoCalendarPlugin);
-#endif
-
-#ifdef NEMO_USE_QT5
 #include "plugin.moc"
-#endif
