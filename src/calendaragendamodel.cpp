@@ -42,12 +42,8 @@
 #include "calendardb.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
-: QAbstractListModel(parent), mBuffer(0), mIsComplete(true)
+: QAbstractListModel(parent), mIsComplete(true)
 {
-    mRoleNames[EventObjectRole] = "event";
-    mRoleNames[OccurrenceObjectRole] = "occurrence";
-    mRoleNames[SectionBucketRole] = "sectionBucket";
-
     connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(refresh()));
 }
 
@@ -59,7 +55,11 @@ NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
 
 QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
 {
-    return mRoleNames;
+    QHash<int,QByteArray> roleNames;
+    roleNames[EventObjectRole] = "event";
+    roleNames[OccurrenceObjectRole] = "occurrence";
+    roleNames[SectionBucketRole] = "sectionBucket";
+    return roleNames;
 }
 
 QDate NemoCalendarAgendaModel::startDate() const
@@ -211,25 +211,6 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
 int NemoCalendarAgendaModel::count() const
 {
     return mEvents.size();
-}
-
-int NemoCalendarAgendaModel::minimumBuffer() const
-{
-    return mBuffer;
-}
-
-void NemoCalendarAgendaModel::setMinimumBuffer(int b)
-{
-    if (mBuffer == b)
-        return;
-
-    mBuffer = b;
-    emit minimumBufferChanged();
-}
-
-int NemoCalendarAgendaModel::startDateIndex() const
-{
-    return 0;
 }
 
 int NemoCalendarAgendaModel::rowCount(const QModelIndex &index) const

@@ -57,9 +57,6 @@ public:
 
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
-
-private:
-    QHash<int, QByteArray> mRoleNames;
 };
 
 #endif // CALENDARNOTEBOOKMODEL_H
