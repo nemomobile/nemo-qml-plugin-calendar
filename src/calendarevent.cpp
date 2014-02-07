@@ -506,6 +506,11 @@ QString NemoCalendarEvent::vCalendar(const QString &prodId) const
                                         prodId);
 }
 
+const KCalCore::Event::Ptr& NemoCalendarEvent::event() const
+{
+    return mEvent;
+}
+
 void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)
 {
     if (mEvent == event)
@@ -572,6 +577,16 @@ NemoCalendarEvent *NemoCalendarEventOccurrence::eventObject()
 {
     if (!mEvent) mEvent = new NemoCalendarEvent(mOccurrence.second.dynamicCast<KCalCore::Event>(), this);
     return mEvent;
+}
+
+const mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent() const
+{
+    return mOccurrence;
+}
+
+const KCalCore::Event::Ptr NemoCalendarEventOccurrence::event() const
+{
+    return mOccurrence.second.dynamicCast<KCalCore::Event>();
 }
 
 void NemoCalendarEventOccurrence::setEvent(const KCalCore::Event::Ptr &event)

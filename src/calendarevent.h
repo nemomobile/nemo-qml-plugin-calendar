@@ -134,8 +134,7 @@ public:
     Q_INVOKABLE void remove();
     Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
-    inline KCalCore::Event::Ptr event();
-    inline const KCalCore::Event::Ptr &event() const;
+    const KCalCore::Event::Ptr &event() const;
     void setEvent(const KCalCore::Event::Ptr &);
 
     QString location() const;
@@ -178,11 +177,9 @@ public:
     QDateTime endTime() const;
     NemoCalendarEvent *eventObject();
 
-    inline mKCal::ExtendedCalendar::ExpandedIncidence expandedEvent();
-    inline const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
+    const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
 
-    inline KCalCore::Event::Ptr event();
-    inline const KCalCore::Event::Ptr event() const;
+    const KCalCore::Event::Ptr event() const;
     void setEvent(const KCalCore::Event::Ptr &);
 
     Q_INVOKABLE void remove();
@@ -190,35 +187,5 @@ private:
     mKCal::ExtendedCalendar::ExpandedIncidence mOccurrence;
     NemoCalendarEvent *mEvent;
 };
-
-KCalCore::Event::Ptr NemoCalendarEvent::event()
-{
-    return mEvent;
-}
-
-const KCalCore::Event::Ptr &NemoCalendarEvent::event() const
-{
-    return mEvent;
-}
-
-KCalCore::Event::Ptr NemoCalendarEventOccurrence::event()
-{
-    return mOccurrence.second.dynamicCast<KCalCore::Event>();
-}
-
-const KCalCore::Event::Ptr NemoCalendarEventOccurrence::event() const
-{
-    return mOccurrence.second.dynamicCast<KCalCore::Event>();
-}
-
-mKCal::ExtendedCalendar::ExpandedIncidence NemoCalendarEventOccurrence::expandedEvent()
-{
-    return mOccurrence;
-}
-
-const mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent() const
-{
-    return mOccurrence;
-}
 
 #endif // CALENDAREVENT_H
