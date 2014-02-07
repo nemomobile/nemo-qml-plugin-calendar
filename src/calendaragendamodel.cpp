@@ -128,7 +128,7 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
 {
     // Filter out excluded notebooks
     for (int ii = 0; ii < newEvents.count(); ++ii) {
-        if (!NemoCalendarEventCache::instance()->mNotebooks.contains(NemoCalendarDb::calendar()->notebook(newEvents.at(ii).second))) {
+        if (!NemoCalendarEventCache::instance()->notebooks().contains(NemoCalendarDb::calendar()->notebook(newEvents.at(ii).second))) {
             newEvents.remove(ii);
             --ii;
         }

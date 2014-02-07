@@ -80,7 +80,7 @@ QStringList NemoCalendarApi::excludedNotebooks() const
     QStringList rv;
 
     for (int ii = 0; ii < notebooks.count(); ++ii) {
-        if (!NemoCalendarEventCache::instance()->mNotebooks.contains(notebooks.at(ii)->uid()))
+        if (!NemoCalendarEventCache::instance()->notebooks().contains(notebooks.at(ii)->uid()))
             rv.append(notebooks.at(ii)->uid());
     }
 

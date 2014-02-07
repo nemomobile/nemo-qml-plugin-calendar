@@ -67,6 +67,8 @@ public:
 
     int count() const;
 
+    void doRefresh(mKCal::ExtendedCalendar::ExpandedIncidenceList, bool reset = false);
+
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
 
@@ -84,9 +86,6 @@ private slots:
     void refresh();
 
 private:
-    friend class NemoCalendarEventCache;
-    void doRefresh(mKCal::ExtendedCalendar::ExpandedIncidenceList, bool reset = false);
-
     QDate mStartDate;
     QDate mEndDate;
     QList<NemoCalendarEventOccurrence *> mEvents;

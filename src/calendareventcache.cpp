@@ -153,6 +153,31 @@ void NemoCalendarEventCache::storageFinished(mKCal::ExtendedStorage *storage, bo
     Q_UNUSED(info)
 }
 
+void NemoCalendarEventCache::addEvent(NemoCalendarEvent *event)
+{
+    mEvents.insert(event);
+}
+
+void NemoCalendarEventCache::removeEvent(NemoCalendarEvent *event)
+{
+    mEvents.remove(event);
+}
+
+void NemoCalendarEventCache::addEventOccurrence(NemoCalendarEventOccurrence *eventOccurrence)
+{
+    mEventOccurrences.insert(eventOccurrence);
+}
+
+void NemoCalendarEventCache::removeEventOccurrence(NemoCalendarEventOccurrence *eventOccurrence)
+{
+    mEventOccurrences.remove(eventOccurrence);
+}
+
+QSet<QString> NemoCalendarEventCache::notebooks() const
+{
+    return mNotebooks;
+}
+
 QString NemoCalendarEventCache::notebookColor(const QString &notebook) const
 {
     return mNotebookColors.value(notebook, "black");

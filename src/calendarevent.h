@@ -156,8 +156,6 @@ signals:
     void locationChanged();
 
 private:
-    friend class NemoCalendarEventCache;
-
     bool mNewEvent:1;
     KCalCore::Event::Ptr mEvent;
 };

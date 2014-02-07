@@ -59,10 +59,21 @@ public:
     void storageProgress(mKCal::ExtendedStorage *storage, const QString &info);
     void storageFinished(mKCal::ExtendedStorage *storage, bool error, const QString &info);
 
+    void addEvent(NemoCalendarEvent* event);
+    void removeEvent(NemoCalendarEvent* event);
+
+    void addEventOccurrence(NemoCalendarEventOccurrence* eventOccurrence);
+    void removeEventOccurrence(NemoCalendarEventOccurrence* eventOccurrence);
+
+    QSet<QString> notebooks() const;
+
     QString notebookColor(const QString &) const;
     void setNotebookColor(const QString &, const QString &);
 
     static QList<NemoCalendarEvent *> events(const KCalCore::Event::Ptr &event);
+
+    void scheduleAgendaRefresh(NemoCalendarAgendaModel *);
+    void cancelAgendaRefresh(NemoCalendarAgendaModel *);
 
 protected:
     virtual bool event(QEvent *);
@@ -71,13 +82,6 @@ signals:
     void modelReset();
 
 private:
-    friend class NemoCalendarApi;
-    friend class NemoCalendarEvent;
-    friend class NemoCalendarAgendaModel;
-    friend class NemoCalendarEventOccurrence;
-
-    void scheduleAgendaRefresh(NemoCalendarAgendaModel *);
-    void cancelAgendaRefresh(NemoCalendarAgendaModel *);
     void doAgendaRefresh();
 
     QStringList mDefaultNotebookColors;

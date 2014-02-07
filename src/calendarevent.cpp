@@ -44,18 +44,18 @@
 NemoCalendarEvent::NemoCalendarEvent(QObject *parent)
 : QObject(parent), mNewEvent(true), mEvent(KCalCore::Event::Ptr(new KCalCore::Event))
 {
-    NemoCalendarEventCache::instance()->mEvents.insert(this);
+    NemoCalendarEventCache::instance()->addEvent(this);
 }
 
 NemoCalendarEvent::NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent)
 : QObject(parent), mNewEvent(false), mEvent(event)
 {
-    NemoCalendarEventCache::instance()->mEvents.insert(this);
+    NemoCalendarEventCache::instance()->addEvent(this);
 }
 
 NemoCalendarEvent::~NemoCalendarEvent()
 {
-    NemoCalendarEventCache::instance()->mEvents.remove(this);
+    NemoCalendarEventCache::instance()->removeEvent(this);
 }
 
 QString NemoCalendarEvent::displayLabel() const
@@ -550,12 +550,12 @@ NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCa
                                                          QObject *parent)
 : QObject(parent), mOccurrence(o), mEvent(0)
 {
-    NemoCalendarEventCache::instance()->mEventOccurrences.insert(this);
+    NemoCalendarEventCache::instance()->addEventOccurrence(this);
 }
 
 NemoCalendarEventOccurrence::~NemoCalendarEventOccurrence()
 {
-    NemoCalendarEventCache::instance()->mEventOccurrences.remove(this);
+    NemoCalendarEventCache::instance()->removeEventOccurrence(this);
 }
 
 QDateTime NemoCalendarEventOccurrence::startTime() const
