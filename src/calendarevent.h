@@ -38,7 +38,6 @@
 
 // mkcal
 #include <event.h>
-#include <extendedcalendar.h>
 
 class NemoCalendarEvent : public QObject
 {
@@ -157,35 +156,6 @@ signals:
 private:
     bool mNewEvent;
     KCalCore::Event::Ptr mEvent;
-};
-
-
-
-class NemoCalendarEventOccurrence : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(QDateTime startTime READ startTime CONSTANT)
-    Q_PROPERTY(QDateTime endTime READ endTime CONSTANT)
-    Q_PROPERTY(NemoCalendarEvent *event READ eventObject CONSTANT)
-
-public:
-    NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &,
-                                QObject *parent = 0);
-    ~NemoCalendarEventOccurrence();
-
-    QDateTime startTime() const;
-    QDateTime endTime() const;
-    NemoCalendarEvent *eventObject();
-
-    const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
-
-    const KCalCore::Event::Ptr event() const;
-    void setEvent(const KCalCore::Event::Ptr &);
-
-    Q_INVOKABLE void remove();
-private:
-    mKCal::ExtendedCalendar::ExpandedIncidence mOccurrence;
-    NemoCalendarEvent *mEvent;
 };
 
 #endif // CALENDAREVENT_H

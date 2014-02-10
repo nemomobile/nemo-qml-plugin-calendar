@@ -34,6 +34,7 @@
 
 #include "calendardb.h"
 #include "calendarevent.h"
+#include "calendareventoccurrence.h"
 #include "calendareventcache.h"
 
 NemoCalendarEventQuery::NemoCalendarEventQuery()

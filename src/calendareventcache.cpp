@@ -40,6 +40,7 @@
 
 #include "calendardb.h"
 #include "calendarevent.h"
+#include "calendareventoccurrence.h"
 #include "calendareventcache.h"
 #include "calendaragendamodel.h"
 
