@@ -156,7 +156,7 @@ signals:
     void locationChanged();
 
 private:
-    bool mNewEvent:1;
+    bool mNewEvent;
     KCalCore::Event::Ptr mEvent;
 };
 
