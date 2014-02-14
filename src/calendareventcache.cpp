@@ -260,8 +260,9 @@ void NemoCalendarEventCache::doAgendaRefresh()
     for (int ii = 0; ii < ranges.count(); ++ii) {
         const AgendaDateRange &r = ranges.at(ii);
 
+        // mkcal fails to consider all day event end time inclusivity on this
         mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents =
-            calendar->rawExpandedEvents(r.start, r.end, false, false, KDateTime::Spec(KDateTime::LocalZone));
+            calendar->rawExpandedEvents(r.start.addDays(-1), r.end, false, false, KDateTime::Spec(KDateTime::LocalZone));
 
         for (int jj = 0; jj < r.models.count(); ++jj) {
             NemoCalendarAgendaModel *m = r.models.at(jj);
@@ -270,10 +271,11 @@ void NemoCalendarEventCache::doAgendaRefresh()
             mKCal::ExtendedCalendar::ExpandedIncidenceList filtered;
             for (int kk = 0; kk < newEvents.count(); ++kk) {
                 mKCal::ExtendedCalendar::ExpandedIncidenceValidity validity = newEvents.at(kk).first;
-                // current sqlite backend has braindead convention of saving all day event from 0:00 to 0:00 next day.
+                // on all day events the end time is inclusive, otherwise not
                 if ((validity.dtStart.date() < start
                      && (validity.dtEnd.date() > start
-                         || (validity.dtEnd.date() == start && validity.dtEnd.time() > QTime(0, 0))))
+                         || (validity.dtEnd.date() == start && (newEvents.at(kk).second->allDay()
+                                                                || validity.dtEnd.time() > QTime(0, 0)))))
                     || (validity.dtStart.date() >= start && validity.dtStart.date() <= end)) {
                     filtered.append(newEvents.at(kk));
                 }
