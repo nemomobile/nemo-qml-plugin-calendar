@@ -26,6 +26,15 @@ BuildRequires:  pkgconfig(libical)
 %description
 %{summary}.
 
+%package tests
+Summary:    QML calendar plugin tests
+Group:      System/Libraries
+BuildRequires:  pkgconfig(Qt5Test)
+Requires:   %{name} = %{version}-%{release}
+
+%description tests
+%{summary}.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -58,3 +67,9 @@ rm -rf %{buildroot}
 %{_libdir}/qt5/qml/org/nemomobile/calendar/qmldir
 # >> files
 # << files
+
+%files tests
+%defattr(-,root,root,-)
+/opt/tests/nemo-qml-plugins-qt5/calendar/*
+# >> files tests
+# << files tests
