@@ -32,15 +32,13 @@
 
 #include "calendareventquery.h"
 
-#include "calendardb.h"
-#include "calendarevent.h"
+#include "calendarmanager.h"
 #include "calendareventoccurrence.h"
-#include "calendareventcache.h"
 
 NemoCalendarEventQuery::NemoCalendarEventQuery()
 : mIsComplete(true), mOccurrence(0)
 {
-    connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(refresh()));
+    connect(NemoCalendarManager::instance(), SIGNAL(dataUpdated()), this, SLOT(refresh()));
 }
 
 // The uid of the matched event
@@ -84,7 +82,10 @@ void NemoCalendarEventQuery::resetStartTime()
 
 QObject *NemoCalendarEventQuery::event() const
 {
-    return mOccurrence ? mOccurrence->eventObject() : 0;
+    if (mUid.isEmpty())
+        return 0;
+
+    return NemoCalendarManager::instance()->eventObject(mUid);
 }
 
 QObject *NemoCalendarEventQuery::occurrence() const
@@ -105,51 +106,16 @@ void NemoCalendarEventQuery::componentComplete()
 
 void NemoCalendarEventQuery::refresh()
 {
-    if (!mIsComplete)
+    if (!mIsComplete || mUid.isEmpty() || !mStartTime.isValid())
         return;
 
-    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
-    KCalCore::Event::Ptr event = mUid.isEmpty() ? KCalCore::Event::Ptr() : calendar->event(mUid);
-    if (event) {
-        if (mOccurrence) {
-            delete mOccurrence;
-            mOccurrence = 0;
-        }
+    NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurence(mUid, mStartTime);
 
-        mKCal::ExtendedCalendar::ExpandedIncidenceValidity eiv = {
-            event->dtStart().toLocalZone().dateTime(),
-            event->dtEnd().toLocalZone().dateTime()
-        };
-
-        if (!mStartTime.isNull() && event->recurs()) {
-            KDateTime startTime = KDateTime(mStartTime, KDateTime::Spec(KDateTime::LocalZone));
-            KCalCore::Recurrence *recurrence = event->recurrence();
-            if (recurrence->recursAt(startTime)) {
-                eiv.dtStart = startTime.toLocalZone().dateTime();
-                eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(startTime).toLocalZone().dateTime();
-            } else {
-                KDateTime match = recurrence->getNextDateTime(startTime);
-                if (match.isNull())
-                    match = recurrence->getPreviousDateTime(startTime);
-
-                if (!match.isNull()) {
-                    eiv.dtStart = match.toLocalZone().dateTime();
-                    eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(match).toLocalZone().dateTime();
-                }
-            }
-        }
-
-        mOccurrence = new NemoCalendarEventOccurrence(qMakePair(eiv, event.dynamicCast<KCalCore::Incidence>()), 
-                                                      this);
+    if (occurrence) {
+        mOccurrence = occurrence;
+        mOccurrence->setParent(this);
         emit occurrenceChanged();
         emit eventChanged();
-    } else {
-        if (mOccurrence) {
-            delete mOccurrence;
-            mOccurrence = 0;
-            emit occurrenceChanged();
-            emit eventChanged();
-        }
     }
 }
 

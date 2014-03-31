@@ -30,28 +30,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-// Qt
-#include <QDebug>
 
-// mkcal
-#include <event.h>
-
-#include "calendareventcache.h"
 #include "calendaragendamodel.h"
+
 #include "calendarevent.h"
 #include "calendareventoccurrence.h"
-#include "calendardb.h"
+#include "calendarmanager.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
 : QAbstractListModel(parent), mIsComplete(true)
 {
-    connect(NemoCalendarEventCache::instance(), SIGNAL(modelReset()), this, SLOT(refresh()));
+    connect(NemoCalendarManager::instance(), SIGNAL(storageModified()), this, SLOT(refresh()));
+    connect(NemoCalendarManager::instance(), SIGNAL(dataUpdated()), this, SLOT(refresh()));
 }
 
 NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
 {
-    NemoCalendarEventCache::instance()->cancelAgendaRefresh(this);
-    qDeleteAll(mEvents);
+    NemoCalendarManager::instance()->cancelAgendaRefresh(this);
 }
 
 QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
@@ -100,56 +95,43 @@ void NemoCalendarAgendaModel::refresh()
     if (!mIsComplete)
         return;
 
-    NemoCalendarEventCache::instance()->scheduleAgendaRefresh(this);
+    NemoCalendarManager::instance()->scheduleAgendaRefresh(this);
 }
 
-static bool eventsEqual(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
-                        const mKCal::ExtendedCalendar::ExpandedIncidence &e2)
+static bool eventsEqual(const NemoCalendarEventOccurrence *e1,
+                        const NemoCalendarEventOccurrence *e2)
 {
-    return e1.first.dtStart == e2.first.dtStart &&
-           e1.first.dtEnd == e2.first.dtEnd &&
-           (e1.second == e2.second || (e1.second && e2.second && e1.second->uid() == e2.second->uid()));
+    return e1->startTime() == e2->startTime() &&
+           e1->endTime() == e2->endTime() &&
+           (e1->eventObject() && e2->eventObject() && e1->eventObject()->uniqueId() == e2->eventObject()->uniqueId());
 }
 
-static bool eventsLessThan(const mKCal::ExtendedCalendar::ExpandedIncidence &e1,
-                           const mKCal::ExtendedCalendar::ExpandedIncidence &e2)
+static bool eventsLessThan(const NemoCalendarEventOccurrence *e1,
+                           const NemoCalendarEventOccurrence *e2)
 {
-    if (e1.second.isNull() != e2.second.isNull()) {
-        return e1.second.data() < e2.second.data();
-    } else if (e1.first.dtStart == e2.first.dtStart) {
-        int cmp = QString::compare(e1.second->summary(), e2.second->summary(), Qt::CaseInsensitive);
-        if (cmp == 0) return QString::compare(e1.second->uid(), e2.second->uid()) < 0;
-        else return cmp < 0;
+    if (e1->startTime() == e2->startTime()) {
+        int cmp = QString::compare(e1->eventObject()->displayLabel(),
+                                   e2->eventObject()->displayLabel(),
+                                   Qt::CaseInsensitive);
+        if (cmp == 0)
+            return QString::compare(e1->eventObject()->uniqueId(), e2->eventObject()->uniqueId()) < 0;
+        else
+            return cmp < 0;
     } else {
-        return e1.first.dtStart < e2.first.dtStart;
+        return e1->startTime() < e2->startTime();
     }
 }
 
-void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedIncidenceList newEvents, bool reset)
+void NemoCalendarAgendaModel::doRefresh(QList<NemoCalendarEventOccurrence *> newEvents)
 {
-    // Filter out excluded notebooks
-    for (int ii = 0; ii < newEvents.count(); ++ii) {
-        if (!NemoCalendarEventCache::instance()->notebooks().contains(NemoCalendarDb::calendar()->notebook(newEvents.at(ii).second))) {
-            newEvents.remove(ii);
-            --ii;
-        }
-    }
-
     qSort(newEvents.begin(), newEvents.end(), eventsLessThan);
 
-    int oldEventCount = mEvents.count();
-
-    if (reset) {
-        beginResetModel();
-        qDeleteAll(mEvents);
-        mEvents.clear();
-    }
-
     QList<NemoCalendarEventOccurrence *> events = mEvents;
+    QList<NemoCalendarEventOccurrence *> skippedEvents;
 
+    int oldEventCount = mEvents.count();
     int newEventsCounter = 0;
     int eventsCounter = 0;
-
     int mEventsIndex = 0;
 
     while (newEventsCounter < newEvents.count() || eventsCounter < events.count()) {
@@ -157,13 +139,12 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
         int removeCount = 0;
         while ((eventsCounter + removeCount) < events.count()
                 && (newEventsCounter >= newEvents.count()
-                    || eventsLessThan(events.at(eventsCounter + removeCount)->expandedEvent(),
+                    || eventsLessThan(events.at(eventsCounter + removeCount),
                                       newEvents.at(newEventsCounter)))) {
             removeCount++;
         }
 
         if (removeCount) {
-            Q_ASSERT(false == reset);
             beginRemoveRows(QModelIndex(), mEventsIndex, mEventsIndex + removeCount - 1);
             mEvents.erase(mEvents.begin() + mEventsIndex, mEvents.begin() + mEventsIndex + removeCount);
             endRemoveRows();
@@ -174,8 +155,8 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
 
         // Skip matching events
         while (eventsCounter < events.count() && newEventsCounter < newEvents.count() &&
-               eventsEqual(newEvents.at(newEventsCounter), events.at(eventsCounter)->expandedEvent())) {
-            Q_ASSERT(false == reset);
+               eventsEqual(newEvents.at(newEventsCounter), events.at(eventsCounter))) {
+            skippedEvents.append(newEvents.at(newEventsCounter));
             eventsCounter++;
             newEventsCounter++;
             mEventsIndex++;
@@ -185,25 +166,22 @@ void NemoCalendarAgendaModel::doRefresh(mKCal::ExtendedCalendar::ExpandedInciden
         int insertCount = 0;
         while ((newEventsCounter + insertCount) < newEvents.count()
                && (eventsCounter >= events.count()
-                   || !(eventsLessThan(events.at(eventsCounter)->expandedEvent(),
+                   || !(eventsLessThan(events.at(eventsCounter),
                                        newEvents.at(newEventsCounter + insertCount))))) {
             insertCount++;
         }
 
         if (insertCount) {
-            if (!reset) beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
+            beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
             for (int ii = 0; ii < insertCount; ++ii) {
-                NemoCalendarEventOccurrence *event = 
-                    new NemoCalendarEventOccurrence(newEvents.at(newEventsCounter + ii));
-                mEvents.insert(mEventsIndex++, event);
+                mEvents.insert(mEventsIndex++, newEvents.at(newEventsCounter + ii));
             }
             newEventsCounter += insertCount;
-            if (!reset) endInsertRows();
+            endInsertRows();
         }
     }
 
-    if (reset)
-        endResetModel();
+    qDeleteAll(skippedEvents);
 
     if (oldEventCount != mEvents.count())
         emit countChanged();

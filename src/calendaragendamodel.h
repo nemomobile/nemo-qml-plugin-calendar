@@ -34,7 +34,6 @@
 #define CALENDARAGENDAMODEL_H
 
 #include <QDate>
-#include <extendedcalendar.h>
 #include <QAbstractListModel>
 #include <QQmlParserStatus>
 
@@ -67,7 +66,8 @@ public:
 
     int count() const;
 
-    void doRefresh(mKCal::ExtendedCalendar::ExpandedIncidenceList, bool reset = false);
+    // NemoCalendarAgendaModel takes ownership of the NemoCalendarEventOccurrence objects
+    void doRefresh(QList<NemoCalendarEventOccurrence *>);
 
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
@@ -90,7 +90,7 @@ private:
     QDate mEndDate;
     QList<NemoCalendarEventOccurrence *> mEvents;
 
-    bool mIsComplete:1;
+    bool mIsComplete;
 };
 
 #endif // CALENDARAGENDAMODEL_H

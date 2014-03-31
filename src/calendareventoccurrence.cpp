@@ -32,65 +32,40 @@
 
 #include "calendareventoccurrence.h"
 
-#include "calendardb.h"
 #include "calendarevent.h"
-#include "calendareventcache.h"
+#include "calendarmanager.h"
 
-NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &o,
+NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const QString &eventUid,
+                                                         const QDateTime &startTime,
+                                                         const QDateTime &endTime,
                                                          QObject *parent)
-: QObject(parent), mOccurrence(o), mEvent(0)
+    : QObject(parent), mEventUid(eventUid), mStartTime(startTime), mEndTime(endTime)
 {
-    NemoCalendarEventCache::instance()->addEventOccurrence(this);
 }
 
 NemoCalendarEventOccurrence::~NemoCalendarEventOccurrence()
 {
-    NemoCalendarEventCache::instance()->removeEventOccurrence(this);
 }
 
 QDateTime NemoCalendarEventOccurrence::startTime() const
 {
-    return mOccurrence.first.dtStart;
+    return mStartTime;
 }
 
 QDateTime NemoCalendarEventOccurrence::endTime() const
 {
-    return mOccurrence.first.dtEnd;
+    return mEndTime;
 }
 
-NemoCalendarEvent *NemoCalendarEventOccurrence::eventObject()
+NemoCalendarEvent *NemoCalendarEventOccurrence::eventObject() const
 {
-    if (!mEvent) mEvent = new NemoCalendarEvent(mOccurrence.second.dynamicCast<KCalCore::Event>(), this);
-    return mEvent;
-}
-
-const mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent() const
-{
-    return mOccurrence;
-}
-
-const KCalCore::Event::Ptr NemoCalendarEventOccurrence::event() const
-{
-    return mOccurrence.second.dynamicCast<KCalCore::Event>();
-}
-
-void NemoCalendarEventOccurrence::setEvent(const KCalCore::Event::Ptr &event)
-{
-    mOccurrence.second = event;
-    if (mEvent) mEvent->setEvent(event);
+    return NemoCalendarManager::instance()->eventObject(mEventUid);
 }
 
 // Removes just this occurrence of the event.  If this is a recurring event, it adds an exception for
 // this instance
 void NemoCalendarEventOccurrence::remove()
 {
-    if (mOccurrence.second->recurs()) {
-        mOccurrence.second->recurrence()->addExDateTime(KDateTime(mOccurrence.first.dtStart,
-                                                                  KDateTime::Spec(KDateTime::LocalZone)));
-    } else {
-        NemoCalendarDb::calendar()->deleteEvent(mOccurrence.second.dynamicCast<KCalCore::Event>());
-    }
-
-    // TODO: this sucks
-    NemoCalendarDb::storage()->save();
+    NemoCalendarManager::instance()->deleteEvent(mEventUid, mStartTime);
+    NemoCalendarManager::instance()->save();
 }

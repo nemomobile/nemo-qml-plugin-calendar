@@ -34,517 +34,221 @@
 
 #include <QQmlInfo>
 
-#include "calendardb.h"
-#include "calendareventcache.h"
+#include "calendarmanager.h"
 
-#include <vcalformat.h>
-#include <libical/vobject.h>
-#include <libical/vcaltmp.h>
-
-NemoCalendarEvent::NemoCalendarEvent(QObject *parent)
-: QObject(parent), mNewEvent(true), mEvent(KCalCore::Event::Ptr(new KCalCore::Event))
+NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent)
+    : QObject(manager), mManager(manager), mUniqueId(uid), mNewEvent(newEvent)
 {
-    NemoCalendarEventCache::instance()->addEvent(this);
-}
-
-NemoCalendarEvent::NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent)
-: QObject(parent), mNewEvent(false), mEvent(event)
-{
-    NemoCalendarEventCache::instance()->addEvent(this);
+    connect(mManager, SIGNAL(notebookColorChanged(QString)), this, SLOT(notebookColorChanged(QString)));
 }
 
 NemoCalendarEvent::~NemoCalendarEvent()
 {
-    NemoCalendarEventCache::instance()->removeEvent(this);
 }
 
 QString NemoCalendarEvent::displayLabel() const
 {
-    return mEvent ? mEvent->summary() : QString();
+    return mManager->getEvent(mUniqueId).displayLabel;
 }
 
 void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
 {
-    if (!mEvent || mEvent->summary() == displayLabel)
-        return;
-
-    mEvent->setSummary(displayLabel);
-
-    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-        emit event->displayLabelChanged();
+    mManager->setDisplayLabel(mUniqueId, displayLabel);
 }
 
 QString NemoCalendarEvent::description() const
 {
-    return mEvent ? mEvent->description() : QString();
+    return mManager->getEvent(mUniqueId).description;
 }
 
 void NemoCalendarEvent::setDescription(const QString &description)
 {
-    if (!mEvent || mEvent->description() == description)
-        return;
-
-    mEvent->setDescription(description);
-
-    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-        emit event->descriptionChanged();
+    mManager->setDescription(mUniqueId, description);
 }
 
 QDateTime NemoCalendarEvent::startTime() const
 {
-    return mEvent ? mEvent->dtStart().toLocalZone().dateTime() : QDateTime();
+    return mManager->getEvent(mUniqueId).startTime.dateTime();
 }
 
 void NemoCalendarEvent::setStartTime(const QDateTime &startTime, int spec)
 {
-    if (!mEvent)
-        return;
-
     KDateTime::SpecType kSpec = KDateTime::LocalZone;
     if (spec == SpecClockTime) {
         kSpec = KDateTime::ClockTime;
     }
 
     KDateTime kStart(startTime, kSpec);
-    if (kStart == mEvent->dtStart()) {
-        return;
-    }
-
-    mEvent->setDtStart(kStart);
-
-    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-        emit event->startTimeChanged();
+    mManager->setStartTime(mUniqueId, kStart);
 }
 
 QDateTime NemoCalendarEvent::endTime() const
 {
-    return mEvent ? mEvent->dtEnd().toLocalZone().dateTime() : QDateTime();
+    return mManager->getEvent(mUniqueId).endTime.dateTime();
 }
 
 void NemoCalendarEvent::setEndTime(const QDateTime &endTime, int spec)
 {
-    if (!mEvent)
-        return;
-
     KDateTime::SpecType kSpec = KDateTime::LocalZone;
     if (spec == SpecClockTime) {
         kSpec = KDateTime::ClockTime;
     }
 
     KDateTime kEnd(endTime, kSpec);
-    if (kEnd == mEvent->dtEnd()) {
-        return;
-    }
-
-    mEvent->setDtEnd(kEnd);
-
-    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-        emit event->endTimeChanged();
+    mManager->setEndTime(mUniqueId, kEnd);
 }
 
 bool NemoCalendarEvent::allDay() const
 {
-    return mEvent ? mEvent->allDay() : false;
+    return mManager->getEvent(mUniqueId).allDay;
 }
 
-void NemoCalendarEvent::setAllDay(bool a)
+void NemoCalendarEvent::setAllDay(bool allDay)
 {
-    if (!mEvent || allDay() == a)
-        return;
-
-    mEvent->setAllDay(a);
-
-    foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-        emit event->allDayChanged();
+    mManager->setAllDay(mUniqueId, allDay);
 }
 
 NemoCalendarEvent::Recur NemoCalendarEvent::recur() const
 {
-    if (mEvent && mEvent->recurs()) {
-        if (mEvent->recurrence()->rRules().count() != 1) {
-            return RecurCustom;
-        } else {
-            ushort rt = mEvent->recurrence()->recurrenceType();
-            int freq = mEvent->recurrence()->frequency();
-
-            if (rt == KCalCore::Recurrence::rDaily && freq == 1) {
-                return RecurDaily;
-            } else if (rt == KCalCore::Recurrence::rWeekly && freq == 1) {
-                return RecurWeekly;
-            } else if (rt == KCalCore::Recurrence::rWeekly && freq == 2) {
-                return RecurBiweekly;
-            } else if (rt == KCalCore::Recurrence::rMonthlyDay && freq == 1) {
-                return RecurMonthly;
-            } else if (rt == KCalCore::Recurrence::rYearlyMonth && freq == 1) {
-                return RecurYearly;
-            } else {
-                return RecurCustom;
-            }
-        }
-    } else {
-        return RecurOnce;
-    }
+    return mManager->getEvent(mUniqueId).recur;
 }
 
 void NemoCalendarEvent::setRecur(Recur r)
 {
-    if (!mEvent)
-        return;
-
-    Recur oldRecur = recur();
-    int oldExceptions = recurExceptions();
-
-    if (r == RecurCustom) {
-        qmlInfo(this) << "Cannot assign RecurCustom";
-        r = RecurOnce;
-    }
-
-    if (r == RecurOnce)
-        mEvent->recurrence()->clear();
-
-    if (oldRecur != r) {
-        switch (r) {
-            case RecurOnce:
-                break;
-            case RecurDaily:
-                mEvent->recurrence()->setDaily(1);
-                break;
-            case RecurWeekly:
-                mEvent->recurrence()->setWeekly(1);
-                break;
-            case RecurBiweekly:
-                mEvent->recurrence()->setWeekly(2);
-                break;
-            case RecurMonthly:
-                mEvent->recurrence()->setMonthly(1);
-                break;
-            case RecurYearly:
-                mEvent->recurrence()->setYearly(1);
-                break;
-            case RecurCustom:
-                break;
-        }
-
-        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-            emit event->recurChanged();
-    }
-
-    if (recurExceptions() != oldExceptions) {
-        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-            emit event->recurExceptionsChanged();
-    }
-}
-
-int NemoCalendarEvent::recurExceptions() const
-{
-    return mEvent->recurs() ? mEvent->recurrence()->exDateTimes().count() : 0;
+    mManager->setRecurrence(mUniqueId, r);
 }
 
 void NemoCalendarEvent::removeException(int index)
 {
-    if (mEvent->recurs()) {
-        KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
-        if (list.count() > index) {
-            list.removeAt(index);
-            mEvent->recurrence()->setExDateTimes(list);
-            foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-                emit event->recurExceptionsChanged();
-        }
-    }
+    if (recur() == RecurOnce)
+        return;
+
+    QList<KDateTime> exceptionDates = mManager->getEvent(mUniqueId).recurExceptionDates;
+    if (index < 0 && exceptionDates.count() <= index)
+        return;
+
+    exceptionDates.removeAt(index);
+    mManager->setExceptions(mUniqueId, exceptionDates);
 }
 
 void NemoCalendarEvent::addException(const QDateTime &date)
 {
-    if (mEvent->recurs()) {
-        KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
-        list.append(KDateTime(date, KDateTime::Spec(KDateTime::LocalZone)));
-        mEvent->recurrence()->setExDateTimes(list);
-        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-            emit event->recurExceptionsChanged();
-    } else {
+    if (!date.isValid())
+        return;
+
+    if (recur() == RecurOnce) {
         qmlInfo(this) << "Cannot add exception to non-recurring event";
+        return;
     }
+
+    KDateTime kDate = KDateTime(date, KDateTime::Spec(KDateTime::LocalZone));
+    QList<KDateTime> exceptionDates = mManager->getEvent(mUniqueId).recurExceptionDates;
+    if (exceptionDates.contains(kDate))
+        return;
+
+    exceptionDates.append(kDate);
+    mManager->setExceptions(mUniqueId, exceptionDates);
 }
 
 QDateTime NemoCalendarEvent::recurException(int index) const
 {
-    if (mEvent->recurs()) {
-        KCalCore::DateTimeList list = mEvent->recurrence()->exDateTimes();
-        if (list.count() > index)
-            return list.at(index).toLocalZone().dateTime();
+    if (recur() != RecurOnce) {
+        QList<KDateTime> list = mManager->getEvent(mUniqueId).recurExceptionDates;
+        if (index >= 0 && index < list.count())
+            return list.at(index).dateTime();
     }
+
     return QDateTime();
+}
+
+int NemoCalendarEvent::recurExceptions() const
+{
+    return mManager->getEvent(mUniqueId).recurExceptionDates.count();
 }
 
 NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
 {
-    KCalCore::Alarm::List alarms = mEvent->alarms();
-
-    KCalCore::Alarm::Ptr alarm;
-
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure)
-            continue;
-
-        if (alarm)
-            return ReminderNone;
-        else
-            alarm = alarms.at(ii);
-    }
-
-    if (!alarm)
-        return ReminderNone;
-
-    KCalCore::Duration d = alarm->startOffset();
-    int sec = d.asSeconds();
-
-    switch (sec) {
-    case 0:
-        return ReminderTime;
-    case -5 * 60:
-        return Reminder5Min;
-    case -15 * 60:
-        return Reminder15Min;
-    case -30 * 60:
-        return Reminder30Min;
-    case -60 * 60:
-        return Reminder1Hour;
-    case -2 * 60 * 60:
-        return Reminder2Hour;
-    case -24 * 60 * 60:
-        return Reminder1Day;
-    case -2 * 24 * 60 * 60:
-        return Reminder2Day;
-    default:
-        return ReminderNone;
-    }
+    return mManager->getEvent(mUniqueId).reminder;
 }
 
-void NemoCalendarEvent::setReminder(Reminder r)
+void NemoCalendarEvent::setReminder(Reminder reminder)
 {
-    Reminder old = reminder();
-
-    KCalCore::Alarm::List alarms = mEvent->alarms();
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure)
-            continue;
-        mEvent->removeAlarm(alarms.at(ii));
-    }
-
-    KCalCore::Duration offset(0);
-
-    switch (r) {
-    default:
-    case ReminderNone:
-    case ReminderTime:
-        break;
-    case Reminder5Min:
-        offset = KCalCore::Duration(-5 * 60);
-        break;
-    case Reminder15Min:
-        offset = KCalCore::Duration(-15 * 60);
-        break;
-    case Reminder30Min:
-        offset = KCalCore::Duration(-30 * 60);
-        break;
-    case Reminder1Hour:
-        offset = KCalCore::Duration(-60 * 60);
-        break;
-    case Reminder2Hour:
-        offset = KCalCore::Duration(-2 * 60 * 60);
-        break;
-    case Reminder1Day:
-        offset = KCalCore::Duration(-24 * 60 * 60);
-        break;
-    case Reminder2Day:
-        offset = KCalCore::Duration(-2 * 24 * 60 * 60);
-        break;
-    }
-
-    if (r != ReminderNone) {
-        KCalCore::Alarm::Ptr alarm = mEvent->newAlarm();
-        alarm->setEnabled(true);
-        alarm->setStartOffset(offset);
-    }
-
-    if (r != old) {
-        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-            emit event->reminderChanged();
-    }
+    mManager->setReminder(mUniqueId, reminder);
 }
 
 QString NemoCalendarEvent::uniqueId() const
 {
-    return mEvent->uid();
+    return mUniqueId;
 }
 
 QString NemoCalendarEvent::color() const
 {
-    QString eventNotebook = NemoCalendarDb::calendar()->notebook(mEvent);
-    return NemoCalendarEventCache::instance()->notebookColor(eventNotebook);
+    return mManager->getNotebookColor(mManager->getEvent(mUniqueId).calendarUid);
 }
 
 QString NemoCalendarEvent::alarmProgram() const
 {
-    KCalCore::Alarm::List alarms = mEvent->alarms();
-
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure &&
-            alarms.at(ii)->programArguments() == uniqueId())
-            return alarms.at(ii)->programFile();
-    }
-
-    return QString();
+    return mManager->getEvent(mUniqueId).alarmProgram;
 }
 
 void NemoCalendarEvent::setAlarmProgram(const QString &program)
 {
-    KCalCore::Alarm::List alarms = mEvent->alarms();
-
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure &&
-            alarms.at(ii)->programArguments() == uniqueId()) {
-
-            if (alarms.at(ii)->programFile() != program) {
-                alarms[ii]->setProgramFile(program);
-                foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-                    emit event->alarmProgramChanged();
-            }
-
-            return;
-        }
-    }
-
-    KCalCore::Alarm::Ptr alarm = mEvent->newAlarm();
-    alarm->setEnabled(true);
-    alarm->setType(KCalCore::Alarm::Procedure);
-    alarm->setProcedureAlarm(program, uniqueId());
+    mManager->setAlarmProgram(mUniqueId, program);
 }
 
 bool NemoCalendarEvent::readonly() const
 {
-    QString eventNotebook = NemoCalendarDb::calendar()->notebook(mEvent);
-    return NemoCalendarDb::storage()->notebook(eventNotebook)->isReadOnly();
+    return mManager->getEvent(mUniqueId).readonly;
 }
 
 QString NemoCalendarEvent::calendarUid() const
 {
-    return NemoCalendarDb::calendar()->notebook(mEvent);
+    return mManager->getEvent(mUniqueId).calendarUid;
 }
 
 void NemoCalendarEvent::save(const QString &calendarUid)
 {
-    QString uid = calendarUid.isEmpty() ? mNewEvent ? NemoCalendarDb::storage()->defaultNotebook()->uid()
-                                                    : this->calendarUid()
-                                        : calendarUid;
+    if (mNewEvent)
+        mNewEvent = false;
 
-    mKCal::Notebook::Ptr notebook = NemoCalendarDb::storage()->notebook(uid);
-
-    if (notebook == 0) {
-        return;
-    }
-
-    if (mNewEvent || this->calendarUid() != uid) {
-
-        if (mNewEvent) {
-            mNewEvent = false;
-        } else if (this->calendarUid() != uid) {
-            remove();
-        }
-
-        NemoCalendarDb::calendar()->addEvent(mEvent, uid);
-        emit calendarUidChanged();
-    }
-
-    mEvent->setRevision(mEvent->revision() + 1);
-
-    // TODO: this sucks
-    NemoCalendarDb::storage()->save();
+    mManager->saveEvent(mUniqueId, calendarUid);
 }
 
 // Removes the entire event
 void NemoCalendarEvent::remove()
 {
     if (!mNewEvent) {
-        NemoCalendarDb::calendar()->deleteEvent(mEvent);
+        mManager->deleteEvent(mUniqueId);
 
         // TODO: this sucks
-        NemoCalendarDb::storage()->save();
+        mManager->save();
     }
 }
-
-// eventToVEvent() is protected
-class NemoCalendarVCalFormat : public KCalCore::VCalFormat
-{
-public:
-    QString convertEventToVEvent(const KCalCore::Event::Ptr &event, const QString &prodId)
-    {
-        VObject *vCalObj = vcsCreateVCal(
-            QDateTime::currentDateTime().toString(Qt::ISODate).toLatin1().data(),
-            NULL,
-            prodId.toLatin1().data(),
-            NULL,
-            "1.0");
-        VObject *vEventObj = eventToVEvent(event);
-        addVObjectProp(vCalObj, vEventObj);
-        char *memVObject = writeMemVObject(0, 0, vCalObj);
-        QString retn = QLatin1String(memVObject);
-        free(memVObject);
-        free(vEventObj);
-        free(vCalObj);
-        return retn;
-    }
-};
 
 // Returns the event as a VCalendar string
 QString NemoCalendarEvent::vCalendar(const QString &prodId) const
 {
-    NemoCalendarVCalFormat fmt;
-    return fmt.convertEventToVEvent(mEvent,
-                                    prodId.isEmpty() ?
-                                        QLatin1String("-//NemoMobile.org/Nemo//NONSGML v1.0//EN") :
-                                        prodId);
-}
+    if (mUniqueId.isEmpty()) {
+        qWarning() << "Event has no uid, returning empty VCalendar string."
+                   << "Save event before calling this function";
+        return "";
+    }
 
-const KCalCore::Event::Ptr& NemoCalendarEvent::event() const
-{
-    return mEvent;
-}
-
-void NemoCalendarEvent::setEvent(const KCalCore::Event::Ptr &event)
-{
-    if (mEvent == event)
-        return;
-
-    QString dl = displayLabel();
-    QString de = description();
-    QDateTime st = startTime();
-    QDateTime et = endTime();
-    bool ad = allDay();
-    Recur re = recur();
-
-    mEvent = event;
-
-    if (displayLabel() != dl) emit displayLabelChanged();
-    if (description() != de) emit descriptionChanged();
-    if (startTime() != st) emit startTimeChanged();
-    if (endTime() != et) emit endTimeChanged();
-    if (allDay() != ad) emit allDayChanged();
-    if (recur() != re) emit recurChanged();
-    emit colorChanged();
+    return mManager->convertEventToVCalendarSync(mUniqueId, prodId);
 }
 
 QString NemoCalendarEvent::location() const
 {
-    return mEvent ? mEvent->location() : QString();
+    return mManager->getEvent(mUniqueId).location;
 }
 
 void NemoCalendarEvent::setLocation(const QString &newLocation)
 {
-    if (newLocation != location()) {
-        mEvent->setLocation(newLocation);
+    mManager->setLocation(mUniqueId, newLocation);
+}
 
-        foreach(NemoCalendarEvent *event, NemoCalendarEventCache::events(mEvent))
-            emit event->locationChanged();
-    }
+void NemoCalendarEvent::notebookColorChanged(QString notebookUid)
+{
+    if (mManager->getEvent(mUniqueId).calendarUid == notebookUid)
+        emit colorChanged();
 }

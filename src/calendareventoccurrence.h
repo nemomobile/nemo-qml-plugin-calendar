@@ -36,9 +36,6 @@
 #include <QObject>
 #include <QDateTime>
 
-// mkcal
-#include <extendedcalendar.h>
-
 class NemoCalendarEvent;
 
 class NemoCalendarEventOccurrence : public QObject
@@ -49,23 +46,21 @@ class NemoCalendarEventOccurrence : public QObject
     Q_PROPERTY(NemoCalendarEvent *event READ eventObject CONSTANT)
 
 public:
-    NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &,
+    NemoCalendarEventOccurrence(const QString &eventUid,
+                                const QDateTime &startTime,
+                                const QDateTime &endTime,
                                 QObject *parent = 0);
     ~NemoCalendarEventOccurrence();
 
     QDateTime startTime() const;
     QDateTime endTime() const;
-    NemoCalendarEvent *eventObject();
-
-    const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
-
-    const KCalCore::Event::Ptr event() const;
-    void setEvent(const KCalCore::Event::Ptr &);
-
+    NemoCalendarEvent *eventObject() const;
     Q_INVOKABLE void remove();
+
 private:
-    mKCal::ExtendedCalendar::ExpandedIncidence mOccurrence;
-    NemoCalendarEvent *mEvent;
+    QString mEventUid;
+    QDateTime mStartTime;
+    QDateTime mEndTime;
 };
 
 #endif // CALENDAREVENTOCCURRENCE_H

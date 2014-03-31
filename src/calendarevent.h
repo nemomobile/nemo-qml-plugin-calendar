@@ -36,8 +36,10 @@
 #include <QObject>
 #include <QDateTime>
 
-// mkcal
-#include <event.h>
+// kcalcore
+#include <KDateTime>
+
+class NemoCalendarManager;
 
 class NemoCalendarEvent : public QObject
 {
@@ -58,7 +60,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
-    Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
+    Q_PROPERTY(QString calendarUid READ calendarUid CONSTANT)
     Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY locationChanged)
 
 public:
@@ -89,8 +91,7 @@ public:
         SpecClockTime
     };
 
-    explicit NemoCalendarEvent(QObject *parent = 0);
-    NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent = 0);
+    NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent = false);
     ~NemoCalendarEvent();
 
     QString displayLabel() const;
@@ -133,11 +134,11 @@ public:
     Q_INVOKABLE void remove();
     Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
-    const KCalCore::Event::Ptr &event() const;
-    void setEvent(const KCalCore::Event::Ptr &);
-
     QString location() const;
     void setLocation(const QString &newLocation);
+
+public slots:
+    void notebookColorChanged(QString notebookUid);
 
 signals:
     void displayLabelChanged();
@@ -154,8 +155,9 @@ signals:
     void locationChanged();
 
 private:
+    NemoCalendarManager *mManager;
+    QString mUniqueId;
     bool mNewEvent;
-    KCalCore::Event::Ptr mEvent;
 };
 
 #endif // CALENDAREVENT_H
