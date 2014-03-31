@@ -23,8 +23,6 @@ SOURCES += \
     calendarevent.cpp \
     calendareventoccurrence.cpp \
     calendaragendamodel.cpp \
-    calendardb.cpp \
-    calendareventcache.cpp \
     calendarapi.cpp \
     calendareventquery.cpp \
     calendarnotebookmodel.cpp \
@@ -35,8 +33,6 @@ HEADERS += \
     calendarevent.h \
     calendareventoccurrence.h \
     calendaragendamodel.h \
-    calendardb.h \
-    calendareventcache.h \
     calendarapi.h \
     calendareventquery.h \
     calendarnotebookmodel.h \

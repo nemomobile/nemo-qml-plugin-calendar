@@ -38,7 +38,6 @@
 #include "calendarapi.h"
 #include "calendareventquery.h"
 #include "calendarnotebookmodel.h"
-#include "calendardb.h"
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
 #include "calendarmanager.h"
