@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testdefinition version="1.0">
   <suite name="nemo-qml-plugins-calendar-qt5-tests" domain="mw">
+    <set name="unit-tests" feature="calendar mw">
+       <case manual="false" name="calendarmanager">
+         <step>/opt/tests/nemo-qml-plugins-qt5/calendar/tst_calendarmanager</step>
+       </case>
+     </set>
   </suite>
 </testdefinition>

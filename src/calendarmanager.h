@@ -127,6 +127,8 @@ signals:
     void dataUpdated();
 
 private:
+    friend class tst_NemoCalendarManager;
+
     void doAgendaRefresh();
     bool isRangeLoaded(const QPair<QDate, QDate> &r, QList<NemoCalendarData::Range> *newRanges);
     QList<NemoCalendarData::Range> addRanges(const QList<NemoCalendarData::Range> &oldRanges,
