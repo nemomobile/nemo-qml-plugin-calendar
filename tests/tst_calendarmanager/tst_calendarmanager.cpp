@@ -11,6 +11,8 @@ class tst_NemoCalendarManager : public QObject
 private slots:
     void test_isRangeLoaded_data();
     void test_isRangeLoaded();
+    void test_addRanges_data();
+    void test_addRanges();
 
 private:
     NemoCalendarManager mManager;
@@ -319,6 +321,179 @@ void tst_NemoCalendarManager::test_isRangeLoaded()
 
     foreach (const NemoCalendarData::Range &range, newRanges)
         QVERIFY(correctNewRanges.contains(range));
+}
+
+void tst_NemoCalendarManager::test_addRanges_data()
+{
+    QDate march01(2014, 3, 1);
+    QDate march02(2014, 3, 2);
+    QDate march03(2014, 3, 3);
+    QDate march04(2014, 3, 4);
+    QDate march05(2014, 3, 5);
+    QDate march06(2014, 3, 6);
+    QDate march18(2014, 3, 18);
+    QDate march19(2014, 3, 19);
+    QDate march30(2014, 3, 30);
+    QDate march31(2014, 3, 31);
+
+    QTest::addColumn<QList<NemoCalendarData::Range> >("oldRanges");
+    QTest::addColumn<QList<NemoCalendarData::Range> >("newRanges");
+    QTest::addColumn<QList<NemoCalendarData::Range> >("combinedRanges");
+
+    QList<NemoCalendarData::Range> oldRanges;
+    QList<NemoCalendarData::Range> newRanges;
+    QList<NemoCalendarData::Range> combinedRanges;
+
+    QTest::newRow("Empty parameters") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges << NemoCalendarData::Range(march01, march02);
+    combinedRanges << NemoCalendarData::Range(march01, march02);
+    QTest::newRow("Empty newRange parameter, 1 old range") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    newRanges << NemoCalendarData::Range(march01, march02);
+    QTest::newRow("Empty oldRanges parameter, 1 new range") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march03, march03)
+              << NemoCalendarData::Range(march05, march06)
+              << NemoCalendarData::Range(march18, march19);
+    newRanges.clear();
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01)
+                   << NemoCalendarData::Range(march03, march03)
+                   << NemoCalendarData::Range(march05, march06)
+                   << NemoCalendarData::Range(march18, march19);
+    QTest::newRow("Empty newRange parameter, 4 sorted old ranges") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march18, march19)
+              << NemoCalendarData::Range(march03, march03)
+              << NemoCalendarData::Range(march05, march06);
+    newRanges.clear();
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01)
+                   << NemoCalendarData::Range(march03, march03)
+                   << NemoCalendarData::Range(march05, march06)
+                   << NemoCalendarData::Range(march18, march19);
+    QTest::newRow("Empty newRange parameter, 4 unsorted old ranges") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march03, march03)
+              << NemoCalendarData::Range(march05, march06)
+              << NemoCalendarData::Range(march18, march19);
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01)
+                   << NemoCalendarData::Range(march03, march03)
+                   << NemoCalendarData::Range(march05, march06)
+                   << NemoCalendarData::Range(march18, march19);
+    QTest::newRow("Empty oldRanges parameter, 4 sorted new ranges") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march18, march19)
+              << NemoCalendarData::Range(march03, march03)
+              << NemoCalendarData::Range(march05, march06);
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01)
+                   << NemoCalendarData::Range(march03, march03)
+                   << NemoCalendarData::Range(march05, march06)
+                   << NemoCalendarData::Range(march18, march19);
+    QTest::newRow("Empty oldRanges parameter, 4 unsorted new ranges") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march30, march31);
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march01, march01);
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01)
+                   << NemoCalendarData::Range(march30, march31);
+    QTest::newRow("Add one range") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march01, march02);
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march18, march19);
+    newRanges << NemoCalendarData::Range(march30, march31);
+    newRanges << NemoCalendarData::Range(march04, march05);
+    combinedRanges.clear();
+    combinedRanges <<  NemoCalendarData::Range(march01, march02)
+                    << NemoCalendarData::Range(march04, march05)
+                    << NemoCalendarData::Range(march18, march19)
+                    << NemoCalendarData::Range(march30, march31);
+    QTest::newRow("Add two unsorted ranges") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march01, march02);
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march04, march05)
+     << NemoCalendarData::Range(march18, march18)
+     << NemoCalendarData::Range(march03, march03)
+     << NemoCalendarData::Range(march19, march30);
+    combinedRanges.clear();
+    combinedRanges <<  NemoCalendarData::Range(march01, march05)
+                    << NemoCalendarData::Range(march18, march30);
+    QTest::newRow("Add four unsorted, ranges, combines into two") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march02, march02)
+              << NemoCalendarData::Range(march04, march04)
+              << NemoCalendarData::Range(march06, march06);
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march03, march03)
+              << NemoCalendarData::Range(march05, march05)
+              << NemoCalendarData::Range(march01, march01);
+    combinedRanges.clear();
+    combinedRanges <<  NemoCalendarData::Range(march01, march06);
+    QTest::newRow("Add three ranges to three existing, combines into one") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march02, march05)
+              << NemoCalendarData::Range(march18, march30);
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march19, march31)
+              << NemoCalendarData::Range(march01, march03)
+              << NemoCalendarData::Range(march06, march06)
+              << NemoCalendarData::Range(march31, march31);
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march06)
+                   << NemoCalendarData::Range(march18, march31);
+    QTest::newRow("Add overlapping ranges, combines into two") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march01, march01);
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01);
+    QTest::newRow("Add one range four times, combines into one") << oldRanges << newRanges << combinedRanges;
+
+    oldRanges.clear();
+    oldRanges << NemoCalendarData::Range(march01, march01);
+    newRanges.clear();
+    newRanges << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march01, march01)
+              << NemoCalendarData::Range(march01, march01);
+    combinedRanges.clear();
+    combinedRanges << NemoCalendarData::Range(march01, march01);
+    QTest::newRow("Add existing range four times") << oldRanges << newRanges << combinedRanges;
+}
+
+void tst_NemoCalendarManager::test_addRanges()
+{
+    QFETCH(QList<NemoCalendarData::Range>, oldRanges);
+    QFETCH(QList<NemoCalendarData::Range>, newRanges);
+    QFETCH(QList<NemoCalendarData::Range>, combinedRanges);
+    QList<NemoCalendarData::Range> result = mManager.addRanges(oldRanges, newRanges);
+    QVERIFY(result == combinedRanges);
 }
 
 #include "tst_calendarmanager.moc"
