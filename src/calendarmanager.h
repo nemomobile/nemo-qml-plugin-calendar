@@ -71,10 +71,10 @@ public:
     void setAllDay(const QString &uid, bool allDay);
     void setDescription(const QString &uid, const QString &description);
     void setDisplayLabel(const QString &uid, const QString &displayLabel);
-    void setEndTime(const QString &uid, const KDateTime &dateTime);
+    void setEndTime(const QString &uid, const KDateTime &endTime);
     void setExceptions(const QString &uid, QList<KDateTime> exceptions);
     void setLocation(const QString &uid, const QString &location);
-    void setStartTime(const QString &uid, const KDateTime &dateTime);
+    void setStartTime(const QString &uid, const KDateTime &startTime);
     void setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur);
     void setReminder(const QString &uid, NemoCalendarEvent::Reminder reminder);
 
@@ -97,17 +97,6 @@ public:
 
 private slots:
     void storageModifiedSlot(QString info);
-
-    void displayLabelChangedSlot(QString uid, QString displayLabel);
-    void descriptionChangedSlot(QString uid, QString description);
-    void locationChangedSlot(QString uid, QString location);
-    void startTimeChangedSlot(QString uid, KDateTime dateTime);
-    void endTimeChangedSlot(QString uid, KDateTime dateTime);
-    void allDayChangedSlot(QString uid, bool allDay);
-    void alarmProgramChangedSlot(QString uid, QString program);
-    void recurrenceChangedSlot(QString uid, NemoCalendarEvent::Recur recur);
-    void reminderChangedSlot(QString uid, NemoCalendarEvent::Reminder reminder);
-    void exceptionsChangedSlot(QString uid, QList<KDateTime> exceptions);
 
     void excludedNotebooksChangedSlot(QStringList excludedNotebooks);
     void notebooksChangedSlot(QList<NemoCalendarData::Notebook> notebooks);
@@ -140,6 +129,7 @@ private:
     QThread mWorkerThread;
     NemoCalendarWorker *mCalendarWorker;
     QHash<QString, NemoCalendarData::Event> mEvents;
+    QHash<QString, NemoCalendarData::Event> mModifiedEvents;
     QHash<QString, NemoCalendarEvent *> mEventObjects;
     QHash<QString, NemoCalendarData::EventOccurrence> mEventOccurrences;
     QHash<QDate, QStringList> mEventOccurrenceForDates;

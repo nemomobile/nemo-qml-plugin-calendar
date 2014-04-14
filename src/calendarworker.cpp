@@ -153,25 +153,77 @@ QString NemoCalendarWorker::createEvent()
     return ptr->uid();
 }
 
-void NemoCalendarWorker::saveEvent(const QString &uid, const QString &notebookUid)
+void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, const QString &notebookUid)
 {
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-
-    if (!event || notebookUid.isEmpty() || !mStorage->isValidNotebook(notebookUid))
+    if (!notebookUid.isEmpty() && !mStorage->isValidNotebook(notebookUid))
         return;
 
-    if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
+    KCalCore::Event::Ptr event = mCalendar->event(eventData.uniqueId);
+
+    bool changed = false;
+
+    if (!event) {
+        event = KCalCore::Event::Ptr(new KCalCore::Event);
+        event->setUid(eventData.uniqueId);
+        // Set event start & end dates as default ctor KDateTime gives false positives for ==
+        event->setDtEnd(eventData.endTime);
+        event->setDtStart(eventData.startTime);
+
+        if (notebookUid.isEmpty())
+            mCalendar->addEvent(event);
+        else
+            mCalendar->addEvent(event, notebookUid);
+        changed = true;
+    } else if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
         // mkcal does funny things when moving event between notebooks, work around by changing uid
         KCalCore::Event::Ptr newEvent = KCalCore::Event::Ptr(event->clone());
         newEvent->setUid(KCalCore::CalFormat::createUniqueId());
 
         mCalendar->deleteEvent(event);
         mCalendar->addEvent(newEvent, notebookUid);
+        event = newEvent;
+    } else {
+        event->setRevision(event->revision() + 1);
     }
 
-    event->setRevision(event->revision() + 1);
+    changed = setAlarmProgram(event, eventData.alarmProgram) ? true : changed;
 
-    save();
+    if (event->allDay() != eventData.allDay) {
+        event->setAllDay(eventData.allDay);
+        changed = true;
+    }
+
+    if (event->description() != eventData.description) {
+        event->setDescription(eventData.description);
+        changed = true;
+    }
+    if (event->summary() != eventData.displayLabel) {
+        event->setSummary(eventData.displayLabel);
+        changed = true;
+    }
+    if (event->dtEnd() != eventData.endTime) {
+        event->setDtEnd(eventData.endTime);
+        changed = true;
+    }
+    if (event->location() != eventData.location) {
+        event->setLocation(eventData.location);
+        changed = true;
+    }
+    if (event->isReadOnly() != eventData.readonly) {
+        event->setReadOnly(eventData.readonly);
+        changed = true;
+    }
+    changed = setRecurrence(event, eventData.recur) ? true : changed;
+    changed = setExceptions(event, eventData.recurExceptionDates) ? true : changed;
+    changed = setReminder(event, eventData.reminder) ? true : changed;
+
+    if (event->dtStart() != eventData.startTime) {
+        event->setDtStart(eventData.startTime);
+        changed = true;
+    }
+
+    if (changed)
+        save();
 }
 
 void NemoCalendarWorker::init()
@@ -183,69 +235,8 @@ void NemoCalendarWorker::init()
     loadNotebooks();
 }
 
-void NemoCalendarWorker::setLocation(const QString &uid, const QString &location)
+bool NemoCalendarWorker::setAlarmProgram(KCalCore::Event::Ptr &event, const QString &program)
 {
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event || event->location() == location)
-        return;
-
-    event->setLocation(location);
-    emit locationChanged(uid, location);
-}
-
-void NemoCalendarWorker::setDisplayLabel(const QString &uid, const QString &displayLabel)
-{
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event || event->summary() == displayLabel)
-        return;
-
-    event->setSummary(displayLabel);
-    emit displayLabelChanged(uid, displayLabel);
-}
-
-void NemoCalendarWorker::setDescription(const QString &uid, const QString &description)
-{
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event || event->description() == description)
-        return;
-
-    event->setDescription(description);
-    emit descriptionChanged(uid, description);
-}
-
-void NemoCalendarWorker::setStartTime(const QString &uid, const KDateTime &dateTime)
-{
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event || event->dtStart() == dateTime)
-        return;
-
-    event->setDtStart(dateTime);
-    emit startTimeChanged(uid, dateTime);
-}
-
-void NemoCalendarWorker::setEndTime(const QString &uid, const KDateTime &dateTime)
-{
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event || event->dtEnd() == dateTime)
-        return;
-
-    event->setDtEnd(dateTime);
-    emit endTimeChanged(uid, dateTime);
-}
-
-void NemoCalendarWorker::setAllDay(const QString &uid, bool allDay)
-{
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event || event->allDay() == allDay)
-        return;
-
-    event->setAllDay(allDay);
-    emit allDayChanged(uid, allDay);
-}
-
-void NemoCalendarWorker::setAlarmProgram(const QString &uid, const QString &program)
-{
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
     KCalCore::Alarm::List alarms = event->alarms();
 
     for (int ii = 0; ii < alarms.count(); ++ii) {
@@ -253,9 +244,9 @@ void NemoCalendarWorker::setAlarmProgram(const QString &uid, const QString &prog
                 && alarms.at(ii)->programArguments() == event->uid()) {
             if (alarms.at(ii)->programFile() != program) {
                 alarms[ii]->setProgramFile(program);
-                emit alarmProgramChanged(uid, program);
+                return true;
             }
-            return;
+            return false;
         }
     }
 
@@ -263,7 +254,7 @@ void NemoCalendarWorker::setAlarmProgram(const QString &uid, const QString &prog
     alarm->setEnabled(true);
     alarm->setType(KCalCore::Alarm::Procedure);
     alarm->setProcedureAlarm(program, event->uid());
-    emit alarmProgramChanged(uid, program);
+    return true;
 }
 
 NemoCalendarEvent::Recur NemoCalendarWorker::convertRecurrence(const KCalCore::Event::Ptr &event) const
@@ -292,15 +283,12 @@ NemoCalendarEvent::Recur NemoCalendarWorker::convertRecurrence(const KCalCore::E
     return NemoCalendarEvent::RecurCustom;
 }
 
-void NemoCalendarWorker::setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur)
+bool NemoCalendarWorker::setRecurrence(KCalCore::Event::Ptr &event, NemoCalendarEvent::Recur recur)
 {
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
     if (!event)
-        return;
+        return false;
 
     NemoCalendarEvent::Recur oldRecur = convertRecurrence(event);
-
-    int oldExceptions = event->recurrence()->exDateTimes().count();
 
     if (recur == NemoCalendarEvent::RecurCustom) {
         qWarning() << "Cannot assign RecurCustom, will assing RecurOnce";
@@ -332,14 +320,10 @@ void NemoCalendarWorker::setRecurrence(const QString &uid, NemoCalendarEvent::Re
         case NemoCalendarEvent::RecurCustom:
             break;
         }
-
-        emit recurrenceChanged(uid, recur);
+        return true;
     }
 
-    KCalCore::DateTimeList exDateTimes = event->recurrence()->exDateTimes();
-    if (exDateTimes.count() != oldExceptions) {
-        emit exceptionsChanged(uid, exDateTimes);
-    }
+    return false;
 }
 
 KCalCore::Duration NemoCalendarWorker::reminderToDuration(NemoCalendarEvent::Reminder reminder) const
@@ -419,11 +403,13 @@ NemoCalendarEvent::Reminder NemoCalendarWorker::getReminder(const KCalCore::Even
     }
 }
 
-void NemoCalendarWorker::setReminder(const QString &uid, NemoCalendarEvent::Reminder reminder)
+bool NemoCalendarWorker::setReminder(KCalCore::Event::Ptr &event, NemoCalendarEvent::Reminder reminder)
 {
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
     if (!event)
-        return;
+        return false;
+
+    if (getReminder(event) == reminder)
+        return false;
 
     KCalCore::Alarm::List alarms = event->alarms();
     for (int ii = 0; ii < alarms.count(); ++ii) {
@@ -436,25 +422,25 @@ void NemoCalendarWorker::setReminder(const QString &uid, NemoCalendarEvent::Remi
         KCalCore::Alarm::Ptr alarm = event->newAlarm();
         alarm->setEnabled(true);
         alarm->setStartOffset(reminderToDuration(reminder));
-        emit reminderChanged(uid, reminder);
     }
+
+    return true;
 }
 
-void NemoCalendarWorker::setExceptions(const QString &uid, const QList<KDateTime> &exceptions)
+bool NemoCalendarWorker::setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions)
 {
-    KCalCore::Event::Ptr event = mCalendar->event(uid);
     if (!event || !event->recurs())
-        return;
+        return false;
 
     KCalCore::DateTimeList newList;
     newList.append(exceptions);
     newList.sortUnique();
     KCalCore::DateTimeList oldList = event->recurrence()->exDateTimes();
     if (newList == oldList)
-        return;
+        return false;
 
     event->recurrence()->setExDateTimes(newList);
-    emit exceptionsChanged(uid, newList);
+    return true;
 }
 
 QList<NemoCalendarData::Notebook> NemoCalendarWorker::notebooks() const

@@ -59,25 +59,12 @@ public slots:
     void save();
 
     QString createEvent();
-    void saveEvent(const QString &uid, const QString &notebookUid);
+    void saveEvent(const NemoCalendarData::Event &event, const QString &notebookUid);
     void deleteEvent(const QString &uid, const QDateTime &dateTime);
-
     QString convertEventToVCalendar(const QString &uid, const QString &prodId) const;
-
-    void setLocation(const QString &uid, const QString &location);
-    void setDisplayLabel(const QString &uid, const QString &displayLabel);
-    void setDescription(const QString &uid, const QString &description);
-    void setStartTime(const QString &uid, const KDateTime &dateTime);
-    void setEndTime(const QString &uid, const KDateTime &dateTime);
-    void setAllDay(const QString &uid, bool allDay);
-    void setAlarmProgram(const QString &uid, const QString &program);
-    void setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur);
-    void setReminder(const QString &uid, NemoCalendarEvent::Reminder reminder);
-    void setExceptions(const QString &uid, const QList<KDateTime> &exceptions);
 
     QList<NemoCalendarData::Notebook> notebooks() const;
     void setNotebookColor(const QString &notebookUid, const QString &color);
-
     void setExcludedNotebooks(const QStringList &list);
     void excludeNotebook(const QString &notebookUid, bool exclude);
     void setDefaultNotebook(const QString &notebookUid);
@@ -88,16 +75,6 @@ public slots:
 
 signals:
     void storageModifiedSignal(QString info);
-    void locationChanged(QString uid, QString location);
-    void displayLabelChanged(QString uid, QString displayLabel);
-    void descriptionChanged(QString uid, QString description);
-    void startTimeChanged(QString uid, KDateTime dateTime);
-    void endTimeChanged(QString uid, KDateTime dateTime);
-    void allDayChanged(QString uid, bool allDay);
-    void alarmProgramChanged(QString uid, QString program);
-    void recurrenceChanged(QString uid, NemoCalendarEvent::Recur recur);
-    void reminderChanged(QString uid, NemoCalendarEvent::Reminder reminder);
-    void exceptionsChanged(QString uid, QList<KDateTime> exceptions);
 
     void excludedNotebooksChanged(QStringList excludedNotebooks);
     void notebookColorChanged(NemoCalendarData::Notebook notebook);
@@ -113,6 +90,11 @@ private:
     void loadNotebooks();
     QStringList excludedNotebooks() const;
     bool saveExcludeNotebook(const QString &notebookUid, bool exclude);
+
+    bool setAlarmProgram(KCalCore::Event::Ptr &event, const QString &program);
+    bool setRecurrence(KCalCore::Event::Ptr &event, NemoCalendarEvent::Recur recur);
+    bool setReminder(KCalCore::Event::Ptr &event, NemoCalendarEvent::Reminder reminder);
+    bool setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions);
 
     NemoCalendarEvent::Recur convertRecurrence(const KCalCore::Event::Ptr &event) const;
     KCalCore::Duration reminderToDuration(NemoCalendarEvent::Reminder reminder) const;
