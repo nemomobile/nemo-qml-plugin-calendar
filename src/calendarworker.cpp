@@ -146,13 +146,6 @@ void NemoCalendarWorker::save()
     mStorage->save();
 }
 
-QString NemoCalendarWorker::createEvent()
-{
-    KCalCore::Event::Ptr ptr(new KCalCore::Event);
-    mCalendar->addEvent(ptr);
-    return ptr->uid();
-}
-
 void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, const QString &notebookUid)
 {
     if (!notebookUid.isEmpty() && !mStorage->isValidNotebook(notebookUid))
