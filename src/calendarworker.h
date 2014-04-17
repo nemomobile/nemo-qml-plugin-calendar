@@ -76,6 +76,8 @@ public slots:
 signals:
     void storageModifiedSignal(QString info);
 
+    void eventNotebookChanged(QString oldEventUid, QString newEventUid, QString notebookUid);
+
     void excludedNotebooksChanged(QStringList excludedNotebooks);
     void notebookColorChanged(NemoCalendarData::Notebook notebook);
     void notebooksChanged(QList<NemoCalendarData::Notebook> notebooks);

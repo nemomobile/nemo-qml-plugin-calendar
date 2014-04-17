@@ -41,6 +41,8 @@ NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const QString &eventUid
                                                          QObject *parent)
     : QObject(parent), mEventUid(eventUid), mStartTime(startTime), mEndTime(endTime)
 {
+    connect(NemoCalendarManager::instance(), SIGNAL(eventUidChanged(QString,QString)),
+            this, SLOT(eventUidChanged(QString,QString)));
 }
 
 NemoCalendarEventOccurrence::~NemoCalendarEventOccurrence()
@@ -68,4 +70,10 @@ void NemoCalendarEventOccurrence::remove()
 {
     NemoCalendarManager::instance()->deleteEvent(mEventUid, mStartTime);
     NemoCalendarManager::instance()->save();
+}
+
+void NemoCalendarEventOccurrence::eventUidChanged(QString oldUid, QString newUid)
+{
+    if (mEventUid == oldUid)
+        mEventUid = newUid;
 }

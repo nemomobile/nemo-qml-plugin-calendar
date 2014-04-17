@@ -57,6 +57,9 @@ public:
     NemoCalendarEvent *eventObject() const;
     Q_INVOKABLE void remove();
 
+private slots:
+    void eventUidChanged(QString oldUid, QString newUid);
+
 private:
     QString mEventUid;
     QDateTime mStartTime;

@@ -56,7 +56,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
     Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
     Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
-    Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
+    Q_PROPERTY(QString uniqueId READ uniqueId NOTIFY uniqueIdChanged)
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
@@ -137,8 +137,9 @@ public:
     QString location() const;
     void setLocation(const QString &newLocation);
 
-public slots:
+private slots:
     void notebookColorChanged(QString notebookUid);
+    void eventUidChanged(QString oldUid, QString newUid);
 
 signals:
     void displayLabelChanged();
@@ -149,6 +150,7 @@ signals:
     void recurChanged();
     void recurExceptionsChanged();
     void reminderChanged();
+    void uniqueIdChanged();
     void alarmProgramChanged();
     void colorChanged();
     void calendarUidChanged();

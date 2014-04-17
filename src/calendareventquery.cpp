@@ -39,6 +39,8 @@ NemoCalendarEventQuery::NemoCalendarEventQuery()
 : mIsComplete(true), mOccurrence(0)
 {
     connect(NemoCalendarManager::instance(), SIGNAL(dataUpdated()), this, SLOT(refresh()));
+    connect(NemoCalendarManager::instance(), SIGNAL(eventUidChanged(QString,QString)),
+            this, SLOT(eventUidChanged(QString,QString)));
 }
 
 // The uid of the matched event
@@ -117,5 +119,11 @@ void NemoCalendarEventQuery::refresh()
         emit occurrenceChanged();
         emit eventChanged();
     }
+}
+
+void NemoCalendarEventQuery::eventUidChanged(QString oldUid, QString newUid)
+{
+    if (mUid == oldUid)
+        mUid = newUid;
 }
 

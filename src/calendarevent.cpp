@@ -39,7 +39,10 @@
 NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent)
     : QObject(manager), mManager(manager), mUniqueId(uid), mNewEvent(newEvent)
 {
-    connect(mManager, SIGNAL(notebookColorChanged(QString)), this, SLOT(notebookColorChanged(QString)));
+    connect(mManager, SIGNAL(notebookColorChanged(QString)),
+            this, SLOT(notebookColorChanged(QString)));
+    connect(mManager, SIGNAL(eventUidChanged(QString,QString)),
+            this, SLOT(eventUidChanged(QString,QString)));
 }
 
 NemoCalendarEvent::~NemoCalendarEvent()
@@ -251,4 +254,12 @@ void NemoCalendarEvent::notebookColorChanged(QString notebookUid)
 {
     if (mManager->getEvent(mUniqueId).calendarUid == notebookUid)
         emit colorChanged();
+}
+
+void NemoCalendarEvent::eventUidChanged(QString oldUid, QString newUid)
+{
+    if (mUniqueId == oldUid) {
+        mUniqueId = newUid;
+        emit uniqueIdChanged();
+    }
 }

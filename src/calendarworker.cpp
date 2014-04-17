@@ -159,29 +159,28 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, con
         return;
 
     KCalCore::Event::Ptr event = mCalendar->event(eventData.uniqueId);
-
     bool changed = false;
-
     if (!event) {
         event = KCalCore::Event::Ptr(new KCalCore::Event);
         event->setUid(eventData.uniqueId);
         // Set event start & end dates as default ctor KDateTime gives false positives for ==
         event->setDtEnd(eventData.endTime);
         event->setDtStart(eventData.startTime);
-
         if (notebookUid.isEmpty())
             mCalendar->addEvent(event);
         else
             mCalendar->addEvent(event, notebookUid);
+
         changed = true;
     } else if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
         // mkcal does funny things when moving event between notebooks, work around by changing uid
         KCalCore::Event::Ptr newEvent = KCalCore::Event::Ptr(event->clone());
         newEvent->setUid(KCalCore::CalFormat::createUniqueId());
-
+        emit eventNotebookChanged(event->uid(), newEvent->uid(), notebookUid);
         mCalendar->deleteEvent(event);
         mCalendar->addEvent(newEvent, notebookUid);
         event = newEvent;
+        changed = true;
     } else {
         event->setRevision(event->revision() + 1);
     }
@@ -192,7 +191,6 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, con
         event->setAllDay(eventData.allDay);
         changed = true;
     }
-
     if (event->description() != eventData.description) {
         event->setDescription(eventData.description);
         changed = true;
@@ -216,7 +214,6 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, con
     changed = setRecurrence(event, eventData.recur) ? true : changed;
     changed = setExceptions(event, eventData.recurExceptionDates) ? true : changed;
     changed = setReminder(event, eventData.reminder) ? true : changed;
-
     if (event->dtStart() != eventData.startTime) {
         event->setDtStart(eventData.startTime);
         changed = true;
@@ -699,7 +696,6 @@ void NemoCalendarWorker::loadNotebooks()
 NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurence(const QString &uid, const QDateTime &start) const
 {
     KCalCore::Event::Ptr event = mCalendar->event(uid);
-
     NemoCalendarData::EventOccurrence occurrence;
 
     if (event) {

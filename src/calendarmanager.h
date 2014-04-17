@@ -98,6 +98,8 @@ public:
 private slots:
     void storageModifiedSlot(QString info);
 
+    void eventNotebookChanged(QString oldEventUid, QString newEventUid, QString notebookUid);
+
     void excludedNotebooksChangedSlot(QStringList excludedNotebooks);
     void notebooksChangedSlot(QList<NemoCalendarData::Notebook> notebooks);
 
@@ -114,6 +116,7 @@ signals:
     void notebookColorChanged(QString notebookUid);
     void storageModified();
     void dataUpdated();
+    void eventUidChanged(QString oldUid, QString newUid);
 
 private:
     friend class tst_NemoCalendarManager;

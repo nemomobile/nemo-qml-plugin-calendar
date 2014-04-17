@@ -65,6 +65,9 @@ NemoCalendarManager::NemoCalendarManager() :
     connect(mCalendarWorker, SIGNAL(storageModifiedSignal(QString)),
             this, SLOT(storageModifiedSlot(QString)));
 
+    connect(mCalendarWorker, SIGNAL(eventNotebookChanged(QString,QString,QString)),
+            this, SLOT(eventNotebookChanged(QString,QString,QString)));
+
     connect(mCalendarWorker, SIGNAL(excludedNotebooksChanged(QStringList)),
             this, SLOT(excludedNotebooksChangedSlot(QStringList)));
     connect(mCalendarWorker, SIGNAL(notebooksChanged(QList<NemoCalendarData::Notebook>)),
@@ -382,11 +385,14 @@ void NemoCalendarManager::timeout() {
 
 void NemoCalendarManager::saveEvent(const QString &uid, const QString &calendarUid)
 {
-    if (!mModifiedEvents.contains(uid))
-        return;
-
-    mEvents[uid] = mModifiedEvents.value(uid);
-    mModifiedEvents.remove(uid);
+    if (!mModifiedEvents.contains(uid)) {
+        if (! (mEvents.contains(uid) && mEvents.value(uid).calendarUid != calendarUid)) {
+            return;
+        }
+    } else {
+        mEvents[uid] = mModifiedEvents.value(uid);
+        mModifiedEvents.remove(uid);
+    }
 
     QMetaObject::invokeMethod(mCalendarWorker, "saveEvent", Qt::QueuedConnection,
                               Q_ARG(NemoCalendarData::Event, mEvents.value(uid)),
@@ -625,6 +631,38 @@ void NemoCalendarManager::storageModifiedSlot(QString info)
     Q_UNUSED(info)
     mResetPending = true;
     emit storageModified();
+}
+
+void NemoCalendarManager::eventNotebookChanged(QString oldEventUid, QString newEventUid, QString notebookUid)
+{
+    if (mModifiedEvents.contains(oldEventUid)) {
+        mModifiedEvents.insert(newEventUid, mModifiedEvents.value(oldEventUid));
+        mModifiedEvents[newEventUid].calendarUid = notebookUid;
+        mModifiedEvents.remove(oldEventUid);
+    }
+    if (mEvents.contains(oldEventUid)) {
+        mEvents.insert(newEventUid, mEvents.value(oldEventUid));
+        mEvents[newEventUid].calendarUid = notebookUid;
+        mEvents.remove(oldEventUid);
+    }
+    if (mEventObjects.contains(oldEventUid)) {
+        mEventObjects.insert(newEventUid, mEventObjects.value(oldEventUid));
+        mEventObjects.remove(oldEventUid);
+    }
+    foreach (QString occurenceUid, mEventOccurrences.keys()) {
+        if (mEventOccurrences.value(occurenceUid).eventUid == oldEventUid)
+            mEventOccurrences[occurenceUid].eventUid = newEventUid;
+    }
+
+    emit eventUidChanged(oldEventUid, newEventUid);
+
+    // Event uid is changed when events are moved between notebooks, the notebook color
+    // associated with this event has changed. Emit color changed after emitting eventUidChanged,
+    // so that data models have the correct event uid to use when querying for NemoCalendarEvent
+    // instances, see NemoCalendarEventOccurrence::eventObject(), used by NemoCalendarAgendaModel.
+    NemoCalendarEvent *eventObject = mEventObjects.value(newEventUid);
+    if (eventObject)
+        emit eventObject->colorChanged();
 }
 
 void NemoCalendarManager::excludedNotebooksChangedSlot(QStringList excludedNotebooks)
