@@ -30,7 +30,7 @@ private:
 
 void tst_CalendarEvent::initTestCase()
 {
-    // Create plugin, it shuts down the DB in proper order, see NemoCalendarDb::dropReferences()
+    // Create plugin, it shuts down the DB in proper order
     engine = new QQmlEngine(this);
     NemoCalendarPlugin* plugin = new NemoCalendarPlugin();
     plugin->initializeEngine(engine, "foobar");
@@ -59,7 +59,8 @@ void tst_CalendarEvent::initialValues()
     QVERIFY(!event->startTime().isValid());
 }
 
-void tst_CalendarEvent::setters() {
+void tst_CalendarEvent::setters()
+{
     NemoCalendarApi calendarApi(this);
     NemoCalendarEvent *event = calendarApi.createEvent();
     QVERIFY(event != 0);
