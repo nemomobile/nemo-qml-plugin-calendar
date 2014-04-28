@@ -60,7 +60,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
-    Q_PROPERTY(QString calendarUid READ calendarUid CONSTANT)
+    Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
     Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY locationChanged)
 
 public:

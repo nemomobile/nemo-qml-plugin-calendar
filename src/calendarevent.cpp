@@ -261,5 +261,7 @@ void NemoCalendarEvent::eventUidChanged(QString oldUid, QString newUid)
     if (mUniqueId == oldUid) {
         mUniqueId = newUid;
         emit uniqueIdChanged();
+        // Event uid changes when the event is moved between notebooks, calendar uid has changed
+        emit calendarUidChanged();
     }
 }
