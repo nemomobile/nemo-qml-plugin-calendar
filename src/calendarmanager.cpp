@@ -679,18 +679,26 @@ void NemoCalendarManager::excludedNotebooksChangedSlot(QStringList excludedNoteb
 
 void NemoCalendarManager::notebooksChangedSlot(QList<NemoCalendarData::Notebook> notebooks)
 {
+    QHash<QString, NemoCalendarData::Notebook> newNotebooks;
+    QStringList colorChangers;
+    bool changed = false;
     foreach (const NemoCalendarData::Notebook &notebook, notebooks) {
-        bool notify = false;
         if (mNotebooks.contains(notebook.uid)) {
-            if (mNotebooks.value(notebook.uid).color != notebook.color)
-                notify = true;
+            if (mNotebooks.value(notebook.uid) != notebook) {
+                changed = true;
+                if (mNotebooks.value(notebook.uid).color != notebook.color)
+                    colorChangers << notebook.uid;
+            }
         }
-        mNotebooks.insert(notebook.uid, notebook);
-        if (notify)
-            emit notebookColorChanged(notebook.uid);
+        newNotebooks.insert(notebook.uid, notebook);
     }
 
-    emit notebooksChanged(mNotebooks.values());
+    if (changed || mNotebooks.count() != newNotebooks.count()) {
+        mNotebooks = newNotebooks;
+        emit notebooksChanged(mNotebooks.values());
+        foreach (const QString &uid, colorChangers)
+            emit notebookColorChanged(uid);
+    }
 }
 
 NemoCalendarEventOccurrence* NemoCalendarManager::getNextOccurence(const QString &uid, const QDateTime &start)

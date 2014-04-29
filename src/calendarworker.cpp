@@ -649,12 +649,11 @@ void NemoCalendarWorker::loadNotebooks()
     mKCal::Notebook::List notebooks = mStorage->notebooks();
     QSettings settings("nemo", "nemo-qml-plugin-calendar");
 
-    QHash<QString, NemoCalendarData::Notebook> newNotebookList;
+    QHash<QString, NemoCalendarData::Notebook> newNotebooks;
 
     bool changed = mNotebooks.isEmpty();
-
     for (int ii = 0; ii < notebooks.count(); ++ii) {
-        NemoCalendarData::Notebook notebook = mNotebooks.value(notebooks.at(ii)->uid(),NemoCalendarData::Notebook());
+        NemoCalendarData::Notebook notebook = mNotebooks.value(notebooks.at(ii)->uid(), NemoCalendarData::Notebook());
         notebook.name = notebooks.at(ii)->name();
         notebook.uid = notebooks.at(ii)->uid();
         notebook.description = notebooks.at(ii)->description();
@@ -672,14 +671,14 @@ void NemoCalendarWorker::loadNotebooks()
         if (notebook.color.isEmpty())
             notebook.color = defaultNotebookColors.at((nextDefaultNotebookColor++) % defaultNotebookColors.count());
 
-        if (!changed && !mNotebooks.contains(notebook.uid) && mNotebooks.value(notebook.uid) != notebook)
+        if (mNotebooks.contains(notebook.uid) && mNotebooks.value(notebook.uid) != notebook)
             changed = true;
 
-        newNotebookList.insert(notebook.uid, notebook);
+        newNotebooks.insert(notebook.uid, notebook);
     }
 
-    if (changed) {
-        mNotebooks = newNotebookList;
+    if (changed || mNotebooks.count() != newNotebooks.count()) {
+        mNotebooks = newNotebooks;
         emit excludedNotebooksChanged(excludedNotebooks());
         emit notebooksChanged(mNotebooks.values());
     }
