@@ -694,6 +694,7 @@ void NemoCalendarManager::notebooksChangedSlot(QList<NemoCalendarData::Notebook>
     }
 
     if (changed || mNotebooks.count() != newNotebooks.count()) {
+        emit notebooksAboutToChange();
         mNotebooks = newNotebooks;
         emit notebooksChanged(mNotebooks.values());
         foreach (const QString &uid, colorChangers)

@@ -112,6 +112,7 @@ private slots:
 
 signals:
     void excludedNotebooksChanged(QStringList excludedNotebooks);
+    void notebooksAboutToChange();
     void notebooksChanged(QList<NemoCalendarData::Notebook> notebooks);
     void notebookColorChanged(QString notebookUid);
     void storageModified();
