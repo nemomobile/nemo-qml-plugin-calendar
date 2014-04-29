@@ -56,6 +56,7 @@ public:
     virtual bool setData(const QModelIndex &index, const QVariant &, int role);
 
 public slots:
+    void notebooksAboutToChange();
     void notebooksChanged();
 
 protected:

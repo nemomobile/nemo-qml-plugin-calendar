@@ -39,6 +39,8 @@ NemoCalendarNotebookModel::NemoCalendarNotebookModel()
 {
     connect(NemoCalendarManager::instance(), SIGNAL(notebooksChanged(QList<NemoCalendarData::Notebook>)),
             this, SLOT(notebooksChanged()));
+    connect(NemoCalendarManager::instance(), SIGNAL(notebooksAboutToChange()),
+            this, SLOT(notebooksAboutToChange()));
 }
 
 int NemoCalendarNotebookModel::rowCount(const QModelIndex &index) const
@@ -102,9 +104,13 @@ bool NemoCalendarNotebookModel::setData(const QModelIndex &index, const QVariant
     return true;
 }
 
-void NemoCalendarNotebookModel::notebooksChanged()
+void NemoCalendarNotebookModel::notebooksAboutToChange()
 {
     beginResetModel();
+}
+
+void NemoCalendarNotebookModel::notebooksChanged()
+{
     endResetModel();
 }
 
