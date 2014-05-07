@@ -7,7 +7,6 @@ Group:      System/Libraries
 License:    BSD
 URL:        https://github.com/nemomobile/nemo-qml-plugin-calendar
 Source0:    %{name}-%{version}.tar.bz2
-Source100:  nemo-qml-plugin-calendar-qt5.yaml
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Concurrent)
