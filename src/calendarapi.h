@@ -34,7 +34,6 @@
 #define CALENDARAPI_H
 
 #include <QStringList>
-#include <QAbstractListModel>
 
 class QJSEngine;
 class QQmlEngine;

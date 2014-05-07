@@ -71,6 +71,7 @@ signals:
 
 private slots:
     void refresh();
+    void eventUidChanged(QString oldUid, QString newUid);
 
 private:
     bool mIsComplete;

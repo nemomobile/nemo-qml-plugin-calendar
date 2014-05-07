@@ -4,7 +4,7 @@ PLUGIN_IMPORT_PATH = org/nemomobile/calendar
 TEMPLATE = lib
 CONFIG += qt plugin hide_symbols
 
-QT += qml
+QT += qml concurrent
 QT -= gui
 
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
@@ -18,24 +18,29 @@ INSTALLS += qmldir
 
 CONFIG += link_pkgconfig
 
+isEmpty(SRCDIR) SRCDIR = "."
+
 SOURCES += \
-    plugin.cpp \
-    calendarevent.cpp \
-    calendaragendamodel.cpp \
-    calendardb.cpp \
-    calendareventcache.cpp \
-    calendarapi.cpp \
-    calendareventquery.cpp \
-    calendarnotebookmodel.cpp \
+    $$SRCDIR/plugin.cpp \
+    $$SRCDIR/calendarevent.cpp \
+    $$SRCDIR/calendareventoccurrence.cpp \
+    $$SRCDIR/calendaragendamodel.cpp \
+    $$SRCDIR/calendarapi.cpp \
+    $$SRCDIR/calendareventquery.cpp \
+    $$SRCDIR/calendarnotebookmodel.cpp \
+    $$SRCDIR/calendarmanager.cpp \
+    $$SRCDIR/calendarworker.cpp
 
 HEADERS += \
-    calendarevent.h \
-    calendaragendamodel.h \
-    calendardb.h \
-    calendareventcache.h \
-    calendarapi.h \
-    calendareventquery.h \
-    calendarnotebookmodel.h \
+    $$SRCDIR/calendarevent.h \
+    $$SRCDIR/calendareventoccurrence.h \
+    $$SRCDIR/calendaragendamodel.h \
+    $$SRCDIR/calendarapi.h \
+    $$SRCDIR/calendareventquery.h \
+    $$SRCDIR/calendarnotebookmodel.h \
+    $$SRCDIR/calendarmanager.h \
+    $$SRCDIR/calendarworker.h \
+    $$SRCDIR/calendardata.h
 
 MOC_DIR = $$PWD/.moc
 OBJECTS_DIR = $$PWD/.obj

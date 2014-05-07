@@ -55,6 +55,10 @@ public:
     virtual QVariant data(const QModelIndex &index, int role) const;
     virtual bool setData(const QModelIndex &index, const QVariant &, int role);
 
+public slots:
+    void notebooksAboutToChange();
+    void notebooksChanged();
+
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
 };

@@ -38,9 +38,9 @@
 #include "calendarapi.h"
 #include "calendareventquery.h"
 #include "calendarnotebookmodel.h"
-#include "calendardb.h"
 #include "calendarevent.h"
 #include "calendaragendamodel.h"
+#include "calendarmanager.h"
 
 class QtDate : public QObject
 {
@@ -75,25 +75,25 @@ QObject *QtDate::New(QQmlEngine *e, QJSEngine *)
     return new QtDate(e);
 }
 
-
-class DbReleaser: public QObject
+class CalendarManagerReleaser: public QObject
 {
     Q_OBJECT
 
 public:
-    DbReleaser(QObject *parent)
+    CalendarManagerReleaser(QObject *parent)
         : QObject(parent)
     {
     }
 
-    ~DbReleaser()
+    ~CalendarManagerReleaser()
     {
-        // mkcal uses internally some static KTimeZone instances. Need to explicitly
-        // drop references so shutting down application has deterministic order for deletions.
-        NemoCalendarDb::dropReferences();
+        // Call NemoCalendarManager dtor to ensure that the QThread managed by it
+        // will be destroyed via deleteLater when control returns to the event loop.
+        // Deleting NemoCalendarManager in NemoCalendarPlugin dtor is not an option
+        // as it is called after the event loop is stopped.
+        delete NemoCalendarManager::instance();
     }
 };
-
 
 class Q_DECL_EXPORT NemoCalendarPlugin : public QQmlExtensionPlugin
 {
@@ -104,7 +104,7 @@ public:
     void initializeEngine(QQmlEngine *engine, const char *uri)
     {
         Q_UNUSED(uri)
-        new DbReleaser(engine);
+        new CalendarManagerReleaser(engine);
     }
 
     void registerTypes(const char *uri)

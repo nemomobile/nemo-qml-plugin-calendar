@@ -30,23 +30,50 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CALENDARDB_H
-#define CALENDARDB_H
+#include "calendareventoccurrence.h"
 
-#include <extendedcalendar.h>
-#include <extendedstorage.h>
+#include "calendarevent.h"
+#include "calendarmanager.h"
 
-class NemoCalendarDb
+NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const QString &eventUid,
+                                                         const QDateTime &startTime,
+                                                         const QDateTime &endTime,
+                                                         QObject *parent)
+    : QObject(parent), mEventUid(eventUid), mStartTime(startTime), mEndTime(endTime)
 {
-public:
-    static mKCal::ExtendedCalendar::Ptr &calendar();
-    static mKCal::ExtendedStorage::Ptr &storage();
+    connect(NemoCalendarManager::instance(), SIGNAL(eventUidChanged(QString,QString)),
+            this, SLOT(eventUidChanged(QString,QString)));
+}
 
-    static void dropReferences();
+NemoCalendarEventOccurrence::~NemoCalendarEventOccurrence()
+{
+}
 
-private:
-    static mKCal::ExtendedCalendar::Ptr s_calendar;
-    static mKCal::ExtendedStorage::Ptr s_storage;
-};
+QDateTime NemoCalendarEventOccurrence::startTime() const
+{
+    return mStartTime;
+}
 
-#endif // CALENDARDB_H
+QDateTime NemoCalendarEventOccurrence::endTime() const
+{
+    return mEndTime;
+}
+
+NemoCalendarEvent *NemoCalendarEventOccurrence::eventObject() const
+{
+    return NemoCalendarManager::instance()->eventObject(mEventUid);
+}
+
+// Removes just this occurrence of the event.  If this is a recurring event, it adds an exception for
+// this instance
+void NemoCalendarEventOccurrence::remove()
+{
+    NemoCalendarManager::instance()->deleteEvent(mEventUid, mStartTime);
+    NemoCalendarManager::instance()->save();
+}
+
+void NemoCalendarEventOccurrence::eventUidChanged(QString oldUid, QString newUid)
+{
+    if (mEventUid == oldUid)
+        mEventUid = newUid;
+}

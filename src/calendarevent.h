@@ -36,9 +36,10 @@
 #include <QObject>
 #include <QDateTime>
 
-// mkcal
-#include <event.h>
-#include <extendedcalendar.h>
+// kcalcore
+#include <KDateTime>
+
+class NemoCalendarManager;
 
 class NemoCalendarEvent : public QObject
 {
@@ -55,7 +56,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
     Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
     Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
-    Q_PROPERTY(QString uniqueId READ uniqueId CONSTANT)
+    Q_PROPERTY(QString uniqueId READ uniqueId NOTIFY uniqueIdChanged)
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
@@ -90,8 +91,7 @@ public:
         SpecClockTime
     };
 
-    explicit NemoCalendarEvent(QObject *parent = 0);
-    NemoCalendarEvent(const KCalCore::Event::Ptr &event, QObject *parent = 0);
+    NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent = false);
     ~NemoCalendarEvent();
 
     QString displayLabel() const;
@@ -134,12 +134,12 @@ public:
     Q_INVOKABLE void remove();
     Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
-    inline KCalCore::Event::Ptr event();
-    inline const KCalCore::Event::Ptr &event() const;
-    void setEvent(const KCalCore::Event::Ptr &);
-
     QString location() const;
     void setLocation(const QString &newLocation);
+
+private slots:
+    void notebookColorChanged(QString notebookUid);
+    void eventUidChanged(QString oldUid, QString newUid);
 
 signals:
     void displayLabelChanged();
@@ -150,77 +150,16 @@ signals:
     void recurChanged();
     void recurExceptionsChanged();
     void reminderChanged();
+    void uniqueIdChanged();
     void alarmProgramChanged();
     void colorChanged();
     void calendarUidChanged();
     void locationChanged();
 
 private:
-    friend class NemoCalendarEventCache;
-
-    bool mNewEvent:1;
-    KCalCore::Event::Ptr mEvent;
+    NemoCalendarManager *mManager;
+    QString mUniqueId;
+    bool mNewEvent;
 };
-
-
-
-class NemoCalendarEventOccurrence : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(QDateTime startTime READ startTime CONSTANT)
-    Q_PROPERTY(QDateTime endTime READ endTime CONSTANT)
-    Q_PROPERTY(NemoCalendarEvent *event READ eventObject CONSTANT)
-
-public:
-    NemoCalendarEventOccurrence(const mKCal::ExtendedCalendar::ExpandedIncidence &,
-                                QObject *parent = 0);
-    ~NemoCalendarEventOccurrence();
-
-    QDateTime startTime() const;
-    QDateTime endTime() const;
-    NemoCalendarEvent *eventObject();
-
-    inline mKCal::ExtendedCalendar::ExpandedIncidence expandedEvent();
-    inline const mKCal::ExtendedCalendar::ExpandedIncidence &expandedEvent() const;
-
-    inline KCalCore::Event::Ptr event();
-    inline const KCalCore::Event::Ptr event() const;
-    void setEvent(const KCalCore::Event::Ptr &);
-
-    Q_INVOKABLE void remove();
-private:
-    mKCal::ExtendedCalendar::ExpandedIncidence mOccurrence;
-    NemoCalendarEvent *mEvent;
-};
-
-KCalCore::Event::Ptr NemoCalendarEvent::event()
-{
-    return mEvent;
-}
-
-const KCalCore::Event::Ptr &NemoCalendarEvent::event() const
-{
-    return mEvent;
-}
-
-KCalCore::Event::Ptr NemoCalendarEventOccurrence::event()
-{
-    return mOccurrence.second.dynamicCast<KCalCore::Event>();
-}
-
-const KCalCore::Event::Ptr NemoCalendarEventOccurrence::event() const
-{
-    return mOccurrence.second.dynamicCast<KCalCore::Event>();
-}
-
-mKCal::ExtendedCalendar::ExpandedIncidence NemoCalendarEventOccurrence::expandedEvent()
-{
-    return mOccurrence;
-}
-
-const mKCal::ExtendedCalendar::ExpandedIncidence &NemoCalendarEventOccurrence::expandedEvent() const
-{
-    return mOccurrence;
-}
 
 #endif // CALENDAREVENT_H

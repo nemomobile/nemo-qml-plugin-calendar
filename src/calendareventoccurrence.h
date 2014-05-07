@@ -30,65 +30,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#ifndef CALENDAREVENTCACHE_H
-#define CALENDAREVENTCACHE_H
+#ifndef CALENDAREVENTOCCURRENCE_H
+#define CALENDAREVENTOCCURRENCE_H
 
-// Qt
-#include <QSet>
 #include <QObject>
-
-// mkcal
-#include <event.h>
-#include <extendedstorage.h>
+#include <QDateTime>
 
 class NemoCalendarEvent;
-class NemoCalendarAgendaModel;
-class NemoCalendarEventOccurrence;
-class NemoCalendarEventCache : public QObject, public mKCal::ExtendedStorageObserver
+
+class NemoCalendarEventOccurrence : public QObject
 {
     Q_OBJECT
-private:
-    NemoCalendarEventCache();
+    Q_PROPERTY(QDateTime startTime READ startTime CONSTANT)
+    Q_PROPERTY(QDateTime endTime READ endTime CONSTANT)
+    Q_PROPERTY(NemoCalendarEvent *event READ eventObject CONSTANT)
 
 public:
-    static NemoCalendarEventCache *instance();
-    void load();
+    NemoCalendarEventOccurrence(const QString &eventUid,
+                                const QDateTime &startTime,
+                                const QDateTime &endTime,
+                                QObject *parent = 0);
+    ~NemoCalendarEventOccurrence();
 
-    /* mKCal::ExtendedStorageObserver */
-    void storageModified(mKCal::ExtendedStorage *storage, const QString &info);
-    void storageProgress(mKCal::ExtendedStorage *storage, const QString &info);
-    void storageFinished(mKCal::ExtendedStorage *storage, bool error, const QString &info);
+    QDateTime startTime() const;
+    QDateTime endTime() const;
+    NemoCalendarEvent *eventObject() const;
+    Q_INVOKABLE void remove();
 
-    QString notebookColor(const QString &) const;
-    void setNotebookColor(const QString &, const QString &);
-
-    static QList<NemoCalendarEvent *> events(const KCalCore::Event::Ptr &event);
-
-protected:
-    virtual bool event(QEvent *);
-
-signals:
-    void modelReset();
+private slots:
+    void eventUidChanged(QString oldUid, QString newUid);
 
 private:
-    friend class NemoCalendarApi;
-    friend class NemoCalendarEvent;
-    friend class NemoCalendarAgendaModel;
-    friend class NemoCalendarEventOccurrence;
-
-    void scheduleAgendaRefresh(NemoCalendarAgendaModel *);
-    void cancelAgendaRefresh(NemoCalendarAgendaModel *);
-    void doAgendaRefresh();
-
-    QStringList mDefaultNotebookColors;
-
-    QSet<QString> mNotebooks;
-    QHash<QString, QString> mNotebookColors;
-    QSet<NemoCalendarEvent *> mEvents;
-    QSet<NemoCalendarEventOccurrence *> mEventOccurrences;
-
-    bool mRefreshEventSent;
-    QSet<NemoCalendarAgendaModel *> mRefreshModels;
+    QString mEventUid;
+    QDateTime mStartTime;
+    QDateTime mEndTime;
 };
 
-#endif // CALENDAREVENTCACHE_H
+#endif // CALENDAREVENTOCCURRENCE_H

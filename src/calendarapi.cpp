@@ -32,83 +32,47 @@
 
 #include "calendarapi.h"
 
-#include <QSettings>
 #include <QQmlEngine>
-#include "calendardb.h"
 #include "calendarevent.h"
-#include "calendareventcache.h"
+#include "calendarmanager.h"
 
 NemoCalendarApi::NemoCalendarApi(QObject *parent)
 : QObject(parent)
 {
+    connect(NemoCalendarManager::instance(),
+            SIGNAL(excludedNotebooksChanged(QStringList)),
+            this, SIGNAL(excludedNotebooksChanged()));
 }
 
 NemoCalendarEvent *NemoCalendarApi::createEvent()
 {
-    return new NemoCalendarEvent;
+    return NemoCalendarManager::instance()->createEvent();
 }
 
 void NemoCalendarApi::remove(const QString &uid)
 {
-    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
-    KCalCore::Event::Ptr event = calendar->event(uid);
-    if (!event)
-        return;
-    calendar->deleteEvent(event);
+    NemoCalendarManager::instance()->deleteEvent(uid);
+
     // TODO: this sucks
-    NemoCalendarDb::storage()->save();
+    NemoCalendarManager::instance()->save();
 }
 
 void NemoCalendarApi::remove(const QString &uid, const QDateTime &time)
 {
-    mKCal::ExtendedCalendar::Ptr calendar = NemoCalendarDb::calendar();
-    KCalCore::Event::Ptr event = calendar->event(uid);
-    if (!event)
-        return;
-    if (event->recurs())
-        event->recurrence()->addExDateTime(KDateTime(time, KDateTime::Spec(KDateTime::LocalZone)));
-    else
-        calendar->deleteEvent(event);
+    NemoCalendarManager::instance()->deleteEvent(uid, time);
+
     // TODO: this sucks
-    NemoCalendarDb::storage()->save();
+    NemoCalendarManager::instance()->save();
 }
 
 QStringList NemoCalendarApi::excludedNotebooks() const
 {
-    mKCal::Notebook::List notebooks = NemoCalendarDb::storage()->notebooks();
-
-    QStringList rv;
-
-    for (int ii = 0; ii < notebooks.count(); ++ii) {
-        if (!NemoCalendarEventCache::instance()->mNotebooks.contains(notebooks.at(ii)->uid()))
-            rv.append(notebooks.at(ii)->uid());
-    }
-
-    return rv;
+    return NemoCalendarManager::instance()->excludedNotebooks();
 }
 
 void NemoCalendarApi::setExcludedNotebooks(const QStringList &list)
 {
-    QStringList current = excludedNotebooks();
-    if (list == current)
-        return;
-
-    QSettings settings("nemo", "nemo-qml-plugin-calendar");
-
-    for (int ii = 0; ii < current.count(); ++ii) {
-        QString uid = current.at(ii);
-        if (!list.contains(uid))
-            settings.remove("exclude/" + uid);
-    }
-
-    for (int ii = 0; ii < list.count(); ++ii) {
-        QString uid = list.at(ii);
-        if (!current.contains(uid))
-            settings.setValue("exclude/" + uid, true);
-    }
-
-    emit excludedNotebooksChanged();
-    NemoCalendarEventCache::instance()->load();
+    NemoCalendarManager::instance()->setExcludedNotebooks(list);
 }
 
 QObject *NemoCalendarApi::New(QQmlEngine *e, QJSEngine *)
