@@ -44,15 +44,22 @@ class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStat
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
+    Q_ENUMS(FilterMode)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
+    Q_PROPERTY(int filterMode READ filterMode WRITE setFilterMode NOTIFY filterModeChanged)
 
 public:
     enum {
         EventObjectRole = Qt::UserRole,
         OccurrenceObjectRole,
         SectionBucketRole
+    };
+
+    enum FilterMode {
+        FilterNone,
+        FilterNonAllDay
     };
 
     explicit NemoCalendarAgendaModel(QObject *parent = 0);
@@ -66,6 +73,9 @@ public:
 
     int count() const;
 
+    int filterMode() const;
+    void setFilterMode(int mode);
+
     // NemoCalendarAgendaModel takes ownership of the NemoCalendarEventOccurrence objects
     void doRefresh(QList<NemoCalendarEventOccurrence *>);
 
@@ -74,11 +84,13 @@ public:
 
     virtual void classBegin();
     virtual void componentComplete();
+
 signals:
     void countChanged();
     void startDateChanged();
     void endDateChanged();
     void updated();
+    void filterModeChanged();
 
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
@@ -92,6 +104,7 @@ private:
     QList<NemoCalendarEventOccurrence *> mEvents;
 
     bool mIsComplete;
+    int mFilterMode;
 };
 
 #endif // CALENDARAGENDAMODEL_H

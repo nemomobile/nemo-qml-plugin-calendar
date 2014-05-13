@@ -38,7 +38,7 @@
 #include "calendarmanager.h"
 
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
-: QAbstractListModel(parent), mIsComplete(true)
+    : QAbstractListModel(parent), mIsComplete(true), mFilterMode(FilterNone)
 {
     connect(NemoCalendarManager::instance(), SIGNAL(storageModified()), this, SLOT(refresh()));
     connect(NemoCalendarManager::instance(), SIGNAL(dataUpdated()), this, SLOT(refresh()));
@@ -126,10 +126,23 @@ static bool eventsLessThan(const NemoCalendarEventOccurrence *e1,
 
 void NemoCalendarAgendaModel::doRefresh(QList<NemoCalendarEventOccurrence *> newEvents)
 {
-    qSort(newEvents.begin(), newEvents.end(), eventsLessThan);
-
     QList<NemoCalendarEventOccurrence *> events = mEvents;
     QList<NemoCalendarEventOccurrence *> skippedEvents;
+
+    // filter out if necessary
+    if (mFilterMode == FilterNonAllDay) {
+        QList<NemoCalendarEventOccurrence *>::iterator it = newEvents.begin();
+        while (it != newEvents.end()) {
+            if (!(*it)->eventObject()->allDay()) {
+                skippedEvents.append(*it);
+                it = newEvents.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
+
+    qSort(newEvents.begin(), newEvents.end(), eventsLessThan);
 
     int oldEventCount = mEvents.count();
     int newEventsCounter = 0;
@@ -194,6 +207,20 @@ void NemoCalendarAgendaModel::doRefresh(QList<NemoCalendarEventOccurrence *> new
 int NemoCalendarAgendaModel::count() const
 {
     return mEvents.size();
+}
+
+int NemoCalendarAgendaModel::filterMode() const
+{
+    return mFilterMode;
+}
+
+void NemoCalendarAgendaModel::setFilterMode(int mode)
+{
+    if (mode != mFilterMode) {
+        mFilterMode = mode;
+        emit filterModeChanged();
+        refresh();
+    }
 }
 
 int NemoCalendarAgendaModel::rowCount(const QModelIndex &index) const
