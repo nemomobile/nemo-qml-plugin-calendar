@@ -50,6 +50,8 @@ struct Notebook {
     bool localCalendar;
     bool excluded;
 
+    Notebook() : isDefault(false), readOnly(false), localCalendar(false), excluded(false) { }
+
     bool operator==(const Notebook other) const
     {
         return uid == other.uid && name == other.name && description == other.description &&
