@@ -448,7 +448,11 @@ void NemoCalendarWorker::excludeNotebook(const QString &notebookUid, bool exclud
 
 void NemoCalendarWorker::setDefaultNotebook(const QString &notebookUid)
 {
+    if (mStorage->defaultNotebook()->uid() == notebookUid)
+        return;
+
     mStorage->setDefaultNotebook(mStorage->notebook(notebookUid));
+    mStorage->save();
 }
 
 QStringList NemoCalendarWorker::excludedNotebooks() const
