@@ -1,6 +1,13 @@
 #include <QObject>
 #include <QtTest>
 
+// mKCal
+#include "extendedcalendar.h"
+#include "extendedstorage.h"
+
+// kCalCore
+#include <calformat.h>
+
 #include "calendarmanager.h"
 #include <QSignalSpy>
 
@@ -13,9 +20,17 @@ private slots:
     void test_isRangeLoaded();
     void test_addRanges_data();
     void test_addRanges();
+    void test_notebookApi();
+    void cleanupTestCase();
 
 private:
+    mKCal::Notebook::Ptr createNotebook();
+
     NemoCalendarManager mManager;
+    mKCal::ExtendedCalendar::Ptr mCalendar;
+    mKCal::ExtendedStorage::Ptr mStorage;
+    QList<mKCal::Notebook::Ptr> mAddedNotebooks;
+    QString mDefaultNotebook;
 };
 
 void tst_NemoCalendarManager::test_isRangeLoaded_data()
@@ -494,6 +509,106 @@ void tst_NemoCalendarManager::test_addRanges()
     QFETCH(QList<NemoCalendarData::Range>, combinedRanges);
     QList<NemoCalendarData::Range> result = mManager.addRanges(oldRanges, newRanges);
     QVERIFY(result == combinedRanges);
+}
+
+mKCal::Notebook::Ptr tst_NemoCalendarManager::createNotebook()
+{
+    return mKCal::Notebook::Ptr(new mKCal::Notebook(KCalCore::CalFormat::createUniqueId(),
+                                                    "",
+                                                    QLatin1String(""),
+                                                    "#110000",
+                                                    false, // Not shared.
+                                                    true, // Is master.
+                                                    false, // Not synced to Ovi.
+                                                    false, // Writable.
+                                                    true)); // Visible.
+}
+
+void tst_NemoCalendarManager::test_notebookApi()
+{
+    NemoCalendarManager *manager = NemoCalendarManager::instance();
+    QSignalSpy notebookSpy(manager, SIGNAL(notebooksChanged(QList<NemoCalendarData::Notebook>)));
+    QSignalSpy defaultNotebookSpy(manager, SIGNAL(defaultNotebookChanged(QString)));
+
+    // Wait for the manager to open the calendar database, etc
+    for (int i = 0; i < 30; i++) {
+        if (notebookSpy.count() > 0)
+            break;
+
+        QTest::qWait(100);
+    }
+    QCOMPARE(notebookSpy.count(), 1);
+    QCOMPARE(defaultNotebookSpy.count(), 1);
+    int notebookCount = manager->notebooks().count();
+    mDefaultNotebook = manager->defaultNotebook();
+
+    mCalendar = mKCal::ExtendedCalendar::Ptr(new mKCal::ExtendedCalendar(KDateTime::Spec::LocalZone()));
+    mStorage = mCalendar->defaultStorage(mCalendar);
+    mStorage->open();
+
+    mAddedNotebooks << createNotebook();
+    QVERIFY(mStorage->addNotebook(mAddedNotebooks.last()));
+    mStorage->save();
+    for (int i = 0; i < 30; i++) {
+        if (notebookSpy.count() > 1)
+            break;
+
+        QTest::qWait(100);
+    }
+    QCOMPARE(notebookSpy.count(), 2);
+    QCOMPARE(manager->notebooks().count(), notebookCount + 1);
+
+    mAddedNotebooks << createNotebook();
+    QVERIFY(mStorage->addNotebook(mAddedNotebooks.last()));
+    mStorage->save();
+    for (int i = 0; i < 30; i++) {
+        if (notebookSpy.count() > 2)
+            break;
+
+        QTest::qWait(100);
+    }
+    QCOMPARE(notebookSpy.count(), 3);
+    QCOMPARE(manager->notebooks().count(), notebookCount + 2);
+
+    QStringList uidList;
+    foreach (const NemoCalendarData::Notebook &notebook, manager->notebooks())
+        uidList << notebook.uid;
+
+    foreach (const mKCal::Notebook::Ptr &notebookPtr, mAddedNotebooks)
+        QVERIFY(uidList.contains(notebookPtr->uid()));
+
+    manager->setDefaultNotebook(mAddedNotebooks.first()->uid());
+    for (int i = 0; i < 30; i++) {
+        if (notebookSpy.count() > 3)
+            break;
+
+        QTest::qWait(100);
+    }
+    QCOMPARE(manager->defaultNotebook(), mAddedNotebooks.first()->uid());
+    QCOMPARE(defaultNotebookSpy.count(), 2);
+
+    manager->setDefaultNotebook(mAddedNotebooks.last()->uid());
+    for (int i = 0; i < 30; i++) {
+        if (notebookSpy.count() > 4)
+            break;
+
+        QTest::qWait(100);
+    }
+    QCOMPARE(manager->defaultNotebook(), mAddedNotebooks.last()->uid());
+    QCOMPARE(defaultNotebookSpy.count(), 3);
+}
+
+void tst_NemoCalendarManager::cleanupTestCase()
+{
+    NemoCalendarManager::instance()->setDefaultNotebook(mDefaultNotebook);
+    delete NemoCalendarManager::instance();
+    foreach (const mKCal::Notebook::Ptr &notebookPtr, mAddedNotebooks)
+        mStorage->deleteNotebook(notebookPtr);
+
+    mStorage->save();
+    mStorage->close();
+    mStorage.clear();
+    mCalendar.clear();
 }
 
 #include "tst_calendarmanager.moc"
