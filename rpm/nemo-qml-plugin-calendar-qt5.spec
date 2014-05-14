@@ -1,7 +1,7 @@
 Name:       nemo-qml-plugin-calendar-qt5
 
 Summary:    Calendar plugin for Nemo Mobile
-Version:    0.0.22
+Version:    0.1.4
 Release:    1
 Group:      System/Libraries
 License:    BSD

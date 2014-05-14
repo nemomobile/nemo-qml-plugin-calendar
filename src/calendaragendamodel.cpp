@@ -47,6 +47,8 @@ NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
 NemoCalendarAgendaModel::~NemoCalendarAgendaModel()
 {
     NemoCalendarManager::instance()->cancelAgendaRefresh(this);
+    qDeleteAll(mEvents);
+    mEvents.clear();
 }
 
 QHash<int, QByteArray> NemoCalendarAgendaModel::roleNames() const
