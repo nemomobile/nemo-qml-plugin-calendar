@@ -437,19 +437,19 @@ void tst_NemoCalendarManager::test_addRanges_data()
     newRanges << NemoCalendarData::Range(march30, march31);
     newRanges << NemoCalendarData::Range(march04, march05);
     combinedRanges.clear();
-    combinedRanges <<  NemoCalendarData::Range(march01, march02)
-                    << NemoCalendarData::Range(march04, march05)
-                    << NemoCalendarData::Range(march18, march19)
-                    << NemoCalendarData::Range(march30, march31);
+    combinedRanges << NemoCalendarData::Range(march01, march02)
+                   << NemoCalendarData::Range(march04, march05)
+                   << NemoCalendarData::Range(march18, march19)
+                   << NemoCalendarData::Range(march30, march31);
     QTest::newRow("Add two unsorted ranges") << oldRanges << newRanges << combinedRanges;
 
     oldRanges.clear();
     oldRanges << NemoCalendarData::Range(march01, march02);
     newRanges.clear();
     newRanges << NemoCalendarData::Range(march04, march05)
-     << NemoCalendarData::Range(march18, march18)
-     << NemoCalendarData::Range(march03, march03)
-     << NemoCalendarData::Range(march19, march30);
+              << NemoCalendarData::Range(march18, march18)
+              << NemoCalendarData::Range(march03, march03)
+              << NemoCalendarData::Range(march19, march30);
     combinedRanges.clear();
     combinedRanges <<  NemoCalendarData::Range(march01, march05)
                     << NemoCalendarData::Range(march18, march30);
