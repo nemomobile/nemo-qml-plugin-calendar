@@ -43,6 +43,7 @@ class NemoCalendarApi : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList excludedNotebooks READ excludedNotebooks WRITE setExcludedNotebooks NOTIFY excludedNotebooksChanged)
+    Q_PROPERTY(QString defaultNotebook READ defaultNotebook WRITE setDefaultNotebook NOTIFY defaultNotebookChanged)
 
 public:
     NemoCalendarApi(QObject *parent = 0);
@@ -54,11 +55,14 @@ public:
     QStringList excludedNotebooks() const;
     void setExcludedNotebooks(const QStringList &);
 
+    QString defaultNotebook() const;
+    void setDefaultNotebook(const QString &notebook);
+
     static QObject *New(QQmlEngine *, QJSEngine *);
 
 signals:
     void excludedNotebooksChanged();
-
+    void defaultNotebookChanged();
 };
 
 #endif // CALENDARAPI_H
