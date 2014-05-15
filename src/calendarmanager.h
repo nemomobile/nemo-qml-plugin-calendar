@@ -80,6 +80,7 @@ public:
 
     // Notebooks
     QList<NemoCalendarData::Notebook> notebooks();
+    QString defaultNotebook() const;
     void setDefaultNotebook(const QString &notebookUid);
     QStringList excludedNotebooks();
     void setExcludedNotebooks(const QStringList &list);
@@ -115,6 +116,7 @@ signals:
     void notebooksAboutToChange();
     void notebooksChanged(QList<NemoCalendarData::Notebook> notebooks);
     void notebookColorChanged(QString notebookUid);
+    void defaultNotebookChanged(QString notebookUid);
     void storageModified();
     void dataUpdated();
     void eventUidChanged(QString oldUid, QString newUid);

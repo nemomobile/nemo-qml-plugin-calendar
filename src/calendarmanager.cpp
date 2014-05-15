@@ -108,6 +108,15 @@ QList<NemoCalendarData::Notebook> NemoCalendarManager::notebooks()
     return mNotebooks.values();
 }
 
+QString NemoCalendarManager::defaultNotebook() const
+{
+    foreach (const NemoCalendarData::Notebook &notebook, mNotebooks) {
+        if (notebook.isDefault)
+            return notebook.uid;
+    }
+    return "";
+}
+
 void NemoCalendarManager::setDefaultNotebook(const QString &notebookUid)
 {
     QMetaObject::invokeMethod(mCalendarWorker, "setDefaultNotebook", Qt::QueuedConnection,
@@ -681,6 +690,7 @@ void NemoCalendarManager::notebooksChangedSlot(QList<NemoCalendarData::Notebook>
 {
     QHash<QString, NemoCalendarData::Notebook> newNotebooks;
     QStringList colorChangers;
+    QString newDefaultNotebookUid;
     bool changed = false;
     foreach (const NemoCalendarData::Notebook &notebook, notebooks) {
         if (mNotebooks.contains(notebook.uid)) {
@@ -690,6 +700,11 @@ void NemoCalendarManager::notebooksChangedSlot(QList<NemoCalendarData::Notebook>
                     colorChangers << notebook.uid;
             }
         }
+        if (notebook.isDefault) {
+            if (!mNotebooks.contains(notebook.uid) || !mNotebooks.value(notebook.uid).isDefault)
+                newDefaultNotebookUid = notebook.uid;
+        }
+
         newNotebooks.insert(notebook.uid, notebook);
     }
 
@@ -699,6 +714,9 @@ void NemoCalendarManager::notebooksChangedSlot(QList<NemoCalendarData::Notebook>
         emit notebooksChanged(mNotebooks.values());
         foreach (const QString &uid, colorChangers)
             emit notebookColorChanged(uid);
+
+        if (!newDefaultNotebookUid.isEmpty())
+            emit defaultNotebookChanged(newDefaultNotebookUid);
     }
 }
 
