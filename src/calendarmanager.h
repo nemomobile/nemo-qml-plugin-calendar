@@ -44,6 +44,7 @@
 class NemoCalendarWorker;
 class NemoCalendarAgendaModel;
 class NemoCalendarEventOccurrence;
+class NemoCalendarEventQuery;
 
 class NemoCalendarManager : public QObject
 {
@@ -91,6 +92,11 @@ public:
     void cancelAgendaRefresh(NemoCalendarAgendaModel *model);
     void scheduleAgendaRefresh(NemoCalendarAgendaModel *model);
 
+    // EventQuery
+    void registerEventQuery(NemoCalendarEventQuery *query);
+    void unRegisterEventQuery(NemoCalendarEventQuery *query);
+    void scheduleEventQueryRefresh(NemoCalendarEventQuery *query);
+
     // Caller gets ownership of returned NemoCalendarEventOccurrence object
     // Does synchronous DB thread access - no DB operations, though, fast when no ongoing DB ops
     NemoCalendarEventOccurrence* getNextOccurence(const QString &uid, const QDateTime &start);
@@ -103,7 +109,8 @@ private slots:
     void excludedNotebooksChangedSlot(QStringList excludedNotebooks);
     void notebooksChangedSlot(QList<NemoCalendarData::Notebook> notebooks);
 
-    void rangesLoadedSlot(QList<NemoCalendarData::Range> ranges,
+    void dataLoadedSlot(QList<NemoCalendarData::Range> ranges,
+                          QStringList uidList,
                           QHash<QString, NemoCalendarData::Event> events,
                           QHash<QString, NemoCalendarData::EventOccurrence> occurrences,
                           QHash<QDate, QStringList> dailyOccurences,
@@ -123,7 +130,7 @@ signals:
 private:
     friend class tst_NemoCalendarManager;
 
-    void doAgendaRefresh();
+    void doAgendaAndQueryRefresh();
     bool isRangeLoaded(const QPair<QDate, QDate> &r, QList<NemoCalendarData::Range> *newRanges);
     QList<NemoCalendarData::Range> addRanges(const QList<NemoCalendarData::Range> &oldRanges,
                                              const QList<NemoCalendarData::Range> &newRanges);
@@ -139,6 +146,8 @@ private:
     QHash<QString, NemoCalendarData::EventOccurrence> mEventOccurrences;
     QHash<QDate, QStringList> mEventOccurrenceForDates;
     QList<NemoCalendarAgendaModel *> mAgendaRefreshList;
+    QList<NemoCalendarEventQuery *> mQueryRefreshList;
+    QList<NemoCalendarEventQuery *> mQueryList; // List of all NemoCalendarEventQuery instances
     QStringList mExcludedNotebooks;
     QHash<QString, NemoCalendarData::Notebook> mNotebooks;
 
@@ -153,6 +162,10 @@ private:
 
     // A list of non-overlapping loaded ranges sorted by range start date
     QList<NemoCalendarData::Range > mLoadedRanges;
+
+    // A list of event UIDs that have been processed by NemoCalendarWorker, any events that
+    // match the UIDs have been loaded
+    QStringList mLoadedQueries;
 };
 
 #endif // CALENDARMANAGER_H
