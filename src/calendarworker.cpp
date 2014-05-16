@@ -558,10 +558,15 @@ QHash<QDate, QStringList> NemoCalendarWorker::dailyEventOccurrences(const QList<
     return occurrenceHash;
 }
 
-void NemoCalendarWorker::loadRanges(const QList<NemoCalendarData::Range> &ranges, bool reset)
+void NemoCalendarWorker::loadData(const QList<NemoCalendarData::Range> &ranges,
+                                    const QStringList &uidList,
+                                    bool reset)
 {
     foreach (const NemoCalendarData::Range &range, ranges)
         mStorage->load(range.first, range.second);
+
+    foreach (const QString &uid, uidList)
+        mStorage->load(uid);
 
     // Load all recurring incidences, we have no other way to detect if they occur within a range
     mStorage->loadRecurringIncidences();
@@ -591,7 +596,7 @@ void NemoCalendarWorker::loadRanges(const QList<NemoCalendarData::Range> &ranges
     QHash<QString, NemoCalendarData::EventOccurrence> occurrences = eventOccurences(ranges);
     QHash<QDate, QStringList> dailyOccurences = dailyEventOccurrences(ranges, allDay, occurrences.values());
 
-    emit rangesLoaded(ranges, events, occurrences, dailyOccurences, reset);
+    emit dataLoaded(ranges, uidList, events, occurrences, dailyOccurences, reset);
 }
 
 NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Event::Ptr &e) const

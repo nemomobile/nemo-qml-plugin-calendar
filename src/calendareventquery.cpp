@@ -39,8 +39,17 @@ NemoCalendarEventQuery::NemoCalendarEventQuery()
 : mIsComplete(true), mOccurrence(0)
 {
     connect(NemoCalendarManager::instance(), SIGNAL(dataUpdated()), this, SLOT(refresh()));
+    connect(NemoCalendarManager::instance(), SIGNAL(storageModified()), this, SLOT(refresh()));
+
     connect(NemoCalendarManager::instance(), SIGNAL(eventUidChanged(QString,QString)),
             this, SLOT(eventUidChanged(QString,QString)));
+
+    NemoCalendarManager::instance()->registerEventQuery(this);
+}
+
+NemoCalendarEventQuery::~NemoCalendarEventQuery()
+{
+    NemoCalendarManager::instance()->unRegisterEventQuery(this);
 }
 
 // The uid of the matched event
@@ -55,6 +64,16 @@ void NemoCalendarEventQuery::setUniqueId(const QString &uid)
         return;
     mUid = uid;
     emit uniqueIdChanged();
+
+    if (mEvent.isValid()) {
+        mEvent = NemoCalendarData::Event();
+        emit eventChanged();
+    }
+    if (mOccurrence) {
+        delete mOccurrence;
+        mOccurrence = 0;
+        emit occurrenceChanged();
+    }
 
     refresh();
 }
@@ -84,10 +103,10 @@ void NemoCalendarEventQuery::resetStartTime()
 
 QObject *NemoCalendarEventQuery::event() const
 {
-    if (mUid.isEmpty())
+    if (mEvent.isValid() && mEvent.uniqueId == mUid)
+        return NemoCalendarManager::instance()->eventObject(mUid);
+    else
         return 0;
-
-    return NemoCalendarManager::instance()->eventObject(mUid);
 }
 
 QObject *NemoCalendarEventQuery::occurrence() const
@@ -106,24 +125,56 @@ void NemoCalendarEventQuery::componentComplete()
     refresh();
 }
 
-void NemoCalendarEventQuery::refresh()
+void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
 {
-    if (!mIsComplete || mUid.isEmpty() || !mStartTime.isValid())
+    // The value of mUid may have changed, verify that we got what we asked for
+    if (event.isValid() && event.uniqueId != mUid)
         return;
 
-    NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurence(mUid, mStartTime);
-
-    if (occurrence) {
-        mOccurrence = occurrence;
-        mOccurrence->setParent(this);
-        emit occurrenceChanged();
+    bool updateOccurrence = false;
+    if (event.uniqueId != mEvent.uniqueId) {
+        mEvent = event;
         emit eventChanged();
+        updateOccurrence = true;
+    } else if (mEvent.isValid()) { // The event may have changed even if the pointer did not
+        if (mEvent.allDay != event.allDay
+                || mEvent.endTime != event.endTime
+                || mEvent.recur != event.recur
+                || mEvent.recurExceptionDates != event.recurExceptionDates
+                || mEvent.startTime != event.startTime) {
+            updateOccurrence = true;
+        }
     }
+
+    if (updateOccurrence) { // Err on the safe side: always update occurrence if it may have changed
+        if (mOccurrence) {
+            delete mOccurrence;
+            mOccurrence = 0;
+        }
+        if (mEvent.isValid()) {
+            NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurence(mUid, mStartTime);
+            if (occurrence) {
+                mOccurrence = occurrence;
+                mOccurrence->setParent(this);
+            }
+        }
+        emit occurrenceChanged();
+    }
+}
+
+void NemoCalendarEventQuery::refresh()
+{
+    if (!mIsComplete || mUid.isEmpty())
+        return;
+
+    NemoCalendarManager::instance()->scheduleEventQueryRefresh(this);
 }
 
 void NemoCalendarEventQuery::eventUidChanged(QString oldUid, QString newUid)
 {
-    if (mUid == oldUid)
-        mUid = newUid;
+    if (mUid == oldUid) {
+        emit newUniqueId(newUid);
+        refresh();
+    }
 }
 

@@ -68,7 +68,8 @@ public slots:
     void excludeNotebook(const QString &notebookUid, bool exclude);
     void setDefaultNotebook(const QString &notebookUid);
 
-    void loadRanges(const QList<NemoCalendarData::Range> &ranges, bool reset);
+    void loadData(const QList<NemoCalendarData::Range> &ranges,
+                    const QStringList &uidList, bool reset);
 
     NemoCalendarData::EventOccurrence getNextOccurence(const QString &uid, const QDateTime &startTime) const;
 
@@ -81,7 +82,8 @@ signals:
     void notebookColorChanged(NemoCalendarData::Notebook notebook);
     void notebooksChanged(QList<NemoCalendarData::Notebook> notebooks);
 
-    void rangesLoaded(QList<NemoCalendarData::Range> ranges,
+    void dataLoaded(QList<NemoCalendarData::Range> ranges,
+                      QStringList uidList,
                       QHash<QString, NemoCalendarData::Event> events,
                       QHash<QString, NemoCalendarData::EventOccurrence> occurrences,
                       QHash<QDate, QStringList> dailyOccurences,

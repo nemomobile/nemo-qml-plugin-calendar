@@ -37,6 +37,8 @@
 #include <QDateTime>
 #include <QQmlParserStatus>
 
+#include "calendardata.h"
+
 class NemoCalendarEventOccurrence;
 class NemoCalendarEventQuery : public QObject, public QQmlParserStatus
 {
@@ -49,6 +51,7 @@ class NemoCalendarEventQuery : public QObject, public QQmlParserStatus
 
 public:
     NemoCalendarEventQuery();
+    ~NemoCalendarEventQuery();
 
     QString uniqueId() const;
     void setUniqueId(const QString &);
@@ -63,11 +66,18 @@ public:
     virtual void classBegin();
     virtual void componentComplete();
 
+    void doRefresh(NemoCalendarData::Event event);
+
 signals:
     void uniqueIdChanged();
     void eventChanged();
     void occurrenceChanged();
     void startTimeChanged();
+
+    // Indicates that the event UID has changed in database, event has been moved between notebooks.
+    // The property uniqueId will not be changed, the data pointer properties event and occurrence
+    // will reset to null pointers.
+    void newUniqueId(QString newUid);
 
 private slots:
     void refresh();
@@ -77,6 +87,7 @@ private:
     bool mIsComplete;
     QString mUid;
     QDateTime mStartTime;
+    NemoCalendarData::Event mEvent;
     NemoCalendarEventOccurrence *mOccurrence;
 };
 

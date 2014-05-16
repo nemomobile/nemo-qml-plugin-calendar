@@ -37,6 +37,11 @@ struct Event {
     {
         return uniqueId == other.uniqueId;
     }
+
+    bool isValid() const
+    {
+        return !uniqueId.isEmpty();
+    }
 };
 
 struct Notebook {
