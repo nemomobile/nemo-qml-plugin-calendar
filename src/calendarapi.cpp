@@ -39,9 +39,10 @@
 NemoCalendarApi::NemoCalendarApi(QObject *parent)
 : QObject(parent)
 {
-    connect(NemoCalendarManager::instance(),
-            SIGNAL(excludedNotebooksChanged(QStringList)),
+    connect(NemoCalendarManager::instance(), SIGNAL(excludedNotebooksChanged(QStringList)),
             this, SIGNAL(excludedNotebooksChanged()));
+    connect(NemoCalendarManager::instance(), SIGNAL(defaultNotebookChanged(QString)),
+            this, SIGNAL(defaultNotebookChanged()));
 }
 
 NemoCalendarEvent *NemoCalendarApi::createEvent()
@@ -73,6 +74,16 @@ QStringList NemoCalendarApi::excludedNotebooks() const
 void NemoCalendarApi::setExcludedNotebooks(const QStringList &list)
 {
     NemoCalendarManager::instance()->setExcludedNotebooks(list);
+}
+
+QString NemoCalendarApi::defaultNotebook() const
+{
+    return NemoCalendarManager::instance()->defaultNotebook();
+}
+
+void NemoCalendarApi::setDefaultNotebook(const QString &notebook)
+{
+    NemoCalendarManager::instance()->setDefaultNotebook(notebook);
 }
 
 QObject *NemoCalendarApi::New(QQmlEngine *e, QJSEngine *)

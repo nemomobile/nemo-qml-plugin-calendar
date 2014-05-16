@@ -81,9 +81,7 @@ QVariant NemoCalendarNotebookModel::data(const QModelIndex &index, int role) con
 bool NemoCalendarNotebookModel::setData(const QModelIndex &index, const QVariant &data, int role)
 {
     // QAbstractItemModel::setData() appears to assume values getting set synchronously, however
-    // we use asynchronous functions from NemoCalendarManager in this function. The values may not
-    // have changed when we emit the dataChanged() signal, in which case the model will update
-    // unnecessary, the real change happening only after the notebooksChanged signal is received.
+    // we use asynchronous functions from NemoCalendarManager in this function.
     // TODO: cache the notebook data to improve change signaling
 
     if (!index.isValid()
@@ -95,10 +93,8 @@ bool NemoCalendarNotebookModel::setData(const QModelIndex &index, const QVariant
 
     if (role == ColorRole) {
         NemoCalendarManager::instance()->setNotebookColor(notebook.uid, data.toString());
-        emit dataChanged(index, index, QVector<int>() << role);
     } else if (role == DefaultRole) {
         NemoCalendarManager::instance()->setDefaultNotebook(notebook.uid);
-        emit dataChanged(this->index(0, 0), this->index(NemoCalendarManager::instance()->notebooks().count() - 1, 0), QVector<int>() << role);
     }
 
     return true;
