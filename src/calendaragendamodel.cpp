@@ -187,6 +187,8 @@ void NemoCalendarAgendaModel::doRefresh(QList<NemoCalendarEventOccurrence *> new
 
     if (oldEventCount != mEvents.count())
         emit countChanged();
+
+    emit updated();
 }
 
 int NemoCalendarAgendaModel::count() const

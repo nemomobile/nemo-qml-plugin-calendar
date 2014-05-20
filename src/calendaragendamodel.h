@@ -78,6 +78,7 @@ signals:
     void countChanged();
     void startDateChanged();
     void endDateChanged();
+    void updated();
 
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
