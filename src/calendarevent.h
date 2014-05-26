@@ -58,7 +58,6 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId NOTIFY uniqueIdChanged)
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
-    Q_PROPERTY(QString alarmProgram READ alarmProgram WRITE setAlarmProgram NOTIFY alarmProgramChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
     Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
     Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY locationChanged)
@@ -124,9 +123,6 @@ public:
 
     QString color() const;
 
-    QString alarmProgram() const;
-    void setAlarmProgram(const QString &);
-
     bool readonly() const;
     QString calendarUid() const;
 
@@ -151,7 +147,6 @@ signals:
     void recurExceptionsChanged();
     void reminderChanged();
     void uniqueIdChanged();
-    void alarmProgramChanged();
     void colorChanged();
     void calendarUidChanged();
     void locationChanged();

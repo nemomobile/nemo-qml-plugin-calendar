@@ -189,16 +189,6 @@ QString NemoCalendarEvent::color() const
     return mManager->getNotebookColor(mManager->getEvent(mUniqueId).calendarUid);
 }
 
-QString NemoCalendarEvent::alarmProgram() const
-{
-    return mManager->getEvent(mUniqueId).alarmProgram;
-}
-
-void NemoCalendarEvent::setAlarmProgram(const QString &program)
-{
-    mManager->setAlarmProgram(mUniqueId, program);
-}
-
 bool NemoCalendarEvent::readonly() const
 {
     return mManager->getEvent(mUniqueId).readonly;

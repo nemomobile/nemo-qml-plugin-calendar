@@ -44,7 +44,6 @@ void tst_CalendarEvent::initialValues()
 
     // Check default values
     QVERIFY(!event->uniqueId().isEmpty());
-    QVERIFY(event->alarmProgram().isEmpty());
     QVERIFY(!event->allDay());
     QVERIFY(event->calendarUid().isEmpty());
     QVERIFY(event->color() == "");
@@ -64,21 +63,6 @@ void tst_CalendarEvent::setters()
     NemoCalendarApi calendarApi(this);
     NemoCalendarEvent *event = calendarApi.createEvent();
     QVERIFY(event != 0);
-
-    QSignalSpy alarmProgramSpy(event, SIGNAL(alarmProgramChanged()));
-    QLatin1String alarmProgram("alarmProgram");
-    event->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmProgramSpy.count(), 1);
-    QCOMPARE(event->alarmProgram(), alarmProgram);
-
-    event->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmProgramSpy.count(), 1);
-    QCOMPARE(event->alarmProgram(), alarmProgram);
-
-    alarmProgram = QLatin1String("another alarm program");
-    event->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmProgramSpy.count(), 2);
-    QCOMPARE(event->alarmProgram(), alarmProgram);
 
     QSignalSpy allDaySpy(event, SIGNAL(allDayChanged()));
     bool allDay = !event->allDay();
@@ -141,34 +125,35 @@ void tst_CalendarEvent::testSignals()
     NemoCalendarEvent *eventB = (NemoCalendarEvent*) query.event();
     QVERIFY(eventB != 0);
 
-    QSignalSpy alarmAProgramSpy(eventA, SIGNAL(alarmProgramChanged()));
-    QSignalSpy alarmBProgramSpy(eventB, SIGNAL(alarmProgramChanged()));
-    QLatin1String alarmProgram("alarmProgram");
-    eventA->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmAProgramSpy.count(), 1);
-    QCOMPARE(alarmBProgramSpy.count(), 1);
-    QCOMPARE(eventA->alarmProgram(), alarmProgram);
-    QCOMPARE(eventB->alarmProgram(), alarmProgram);
+    QSignalSpy labelSpyA(eventA, SIGNAL(displayLabelChanged()));
+    QSignalSpy labelSpyB(eventB, SIGNAL(displayLabelChanged()));
+    QLatin1String label("event display label");
 
-    eventA->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmAProgramSpy.count(), 1);
-    QCOMPARE(alarmBProgramSpy.count(), 1);
-    QCOMPARE(eventA->alarmProgram(), alarmProgram);
-    QCOMPARE(eventB->alarmProgram(), alarmProgram);
+    eventA->setDisplayLabel(label);
+    QCOMPARE(labelSpyA.count(), 1);
+    QCOMPARE(labelSpyB.count(), 1);
+    QCOMPARE(eventA->displayLabel(), label);
+    QCOMPARE(eventB->displayLabel(), label);
 
-    alarmProgram = QLatin1String("another alarm program");
-    eventA->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmAProgramSpy.count(), 2);
-    QCOMPARE(alarmBProgramSpy.count(), 2);
-    QCOMPARE(eventA->alarmProgram(), alarmProgram);
-    QCOMPARE(eventB->alarmProgram(), alarmProgram);
+    eventA->setDisplayLabel(label);
+    QCOMPARE(labelSpyA.count(), 1);
+    QCOMPARE(labelSpyB.count(), 1);
+    QCOMPARE(eventA->displayLabel(), label);
+    QCOMPARE(eventB->displayLabel(), label);
 
-    alarmProgram = QLatin1String("yet another alarm program");
-    eventB->setAlarmProgram(alarmProgram);
-    QCOMPARE(alarmAProgramSpy.count(), 3);
-    QCOMPARE(alarmBProgramSpy.count(), 3);
-    QCOMPARE(eventA->alarmProgram(), alarmProgram);
-    QCOMPARE(eventB->alarmProgram(), alarmProgram);
+    label = QLatin1String("another event label");
+    eventA->setDisplayLabel(label);
+    QCOMPARE(labelSpyA.count(), 2);
+    QCOMPARE(labelSpyB.count(), 2);
+    QCOMPARE(eventA->displayLabel(), label);
+    QCOMPARE(eventB->displayLabel(), label);
+
+    label = QLatin1String("yet another event label");
+    eventB->setDisplayLabel(label);
+    QCOMPARE(labelSpyA.count(), 3);
+    QCOMPARE(labelSpyB.count(), 3);
+    QCOMPARE(eventA->displayLabel(), label);
+    QCOMPARE(eventB->displayLabel(), label);
 }
 
 void tst_CalendarEvent::recurExceptions()
@@ -235,10 +220,6 @@ void tst_CalendarEvent::testSave()
     NemoCalendarEvent *event = calendarApi.createEvent();
     QVERIFY(event != 0);
 
-    QLatin1String alarmProgram("alarmProgram");
-    event->setAlarmProgram(alarmProgram);
-    QCOMPARE(event->alarmProgram(), alarmProgram);
-
     bool allDay = false;
     event->setAllDay(allDay);
     QCOMPARE(event->allDay(), allDay);
@@ -302,7 +283,6 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(eventB->endTime().toTime_t(), endTime.toTime_t());
     QCOMPARE(eventB->startTime().toTime_t(), startTime.toTime_t());
 
-    QCOMPARE(eventB->alarmProgram(), alarmProgram);
     QCOMPARE(eventB->allDay(), allDay);
     QCOMPARE(eventB->description(), description);
     QCOMPARE(eventB->displayLabel(), displayLabel);
