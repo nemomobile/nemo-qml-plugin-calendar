@@ -92,7 +92,6 @@ private:
     QStringList excludedNotebooks() const;
     bool saveExcludeNotebook(const QString &notebookUid, bool exclude);
 
-    bool setAlarmProgram(KCalCore::Event::Ptr &event, const QString &program);
     bool setRecurrence(KCalCore::Event::Ptr &event, NemoCalendarEvent::Recur recur);
     bool setReminder(KCalCore::Event::Ptr &event, NemoCalendarEvent::Reminder reminder);
     bool setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions);

@@ -178,8 +178,6 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, con
         event->setRevision(event->revision() + 1);
     }
 
-    changed = setAlarmProgram(event, eventData.alarmProgram) ? true : changed;
-
     if (event->allDay() != eventData.allDay) {
         event->setAllDay(eventData.allDay);
         changed = true;
@@ -223,28 +221,6 @@ void NemoCalendarWorker::init()
     mStorage->open();
     mStorage->registerObserver(this);
     loadNotebooks();
-}
-
-bool NemoCalendarWorker::setAlarmProgram(KCalCore::Event::Ptr &event, const QString &program)
-{
-    KCalCore::Alarm::List alarms = event->alarms();
-
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure
-                && alarms.at(ii)->programArguments() == event->uid()) {
-            if (alarms.at(ii)->programFile() != program) {
-                alarms[ii]->setProgramFile(program);
-                return true;
-            }
-            return false;
-        }
-    }
-
-    KCalCore::Alarm::Ptr alarm = event->newAlarm();
-    alarm->setEnabled(true);
-    alarm->setType(KCalCore::Alarm::Procedure);
-    alarm->setProcedureAlarm(program, event->uid());
-    return true;
 }
 
 NemoCalendarEvent::Recur NemoCalendarWorker::convertRecurrence(const KCalCore::Event::Ptr &event) const
@@ -622,15 +598,6 @@ NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Ev
 {
     NemoCalendarData::Event event;
     event.uniqueId = e->uid();
-    KCalCore::Alarm::List alarms = e->alarms();
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure &&
-                alarms.at(ii)->programArguments() == event.uniqueId) {
-            event.alarmProgram = alarms.at(ii)->programFile();
-            break;
-        }
-    }
-
     event.allDay = e->allDay();
     event.calendarUid = mCalendar->notebook(e);
     event.description = e->description();

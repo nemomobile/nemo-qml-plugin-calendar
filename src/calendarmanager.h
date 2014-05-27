@@ -67,7 +67,6 @@ public:
     // Event
     NemoCalendarData::Event getEvent(const QString& uid);
 
-    void setAlarmProgram(const QString &uid, const QString &program);
     void setAllDay(const QString &uid, bool allDay);
     void setDescription(const QString &uid, const QString &description);
     void setDisplayLabel(const QString &uid, const QString &displayLabel);

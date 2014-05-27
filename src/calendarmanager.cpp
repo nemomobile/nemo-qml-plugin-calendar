@@ -546,24 +546,6 @@ void NemoCalendarManager::setAllDay(const QString &uid, bool allDay)
         emit mEventObjects.value(uid)->allDayChanged();
 }
 
-void NemoCalendarManager::setAlarmProgram(const QString &uid, const QString &program)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).alarmProgram == program)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).alarmProgram == program)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].alarmProgram = program;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->alarmProgramChanged();
-}
-
 void NemoCalendarManager::setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur)
 {
     if (mModifiedEvents.contains(uid)) {
@@ -772,9 +754,6 @@ void NemoCalendarManager::sendEventChangeSignals(const NemoCalendarData::Event &
     NemoCalendarEvent *eventObject = mEventObjects.value(newEvent.uniqueId);
     if (!eventObject)
         return;
-
-    if (newEvent.alarmProgram != oldEvent.alarmProgram)
-        emit eventObject->alarmProgramChanged();
 
     if (newEvent.allDay != oldEvent.allDay)
         emit eventObject->allDayChanged();

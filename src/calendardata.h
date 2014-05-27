@@ -29,7 +29,6 @@ struct Event {
     QList<KDateTime> recurExceptionDates;
     NemoCalendarEvent::Reminder reminder;
     QString uniqueId;
-    QString alarmProgram;
     bool readonly;
     QString location;
     QString calendarUid;
