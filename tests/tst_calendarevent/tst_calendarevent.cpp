@@ -122,6 +122,12 @@ void tst_CalendarEvent::testSignals()
 
     NemoCalendarEventQuery query;
     query.setUniqueId(eventA->uniqueId());
+    for (int i = 0; i < 30; i++) {
+        if (query.event())
+            break;
+
+        QTest::qWait(100);
+    }
     NemoCalendarEvent *eventB = (NemoCalendarEvent*) query.event();
     QVERIFY(eventB != 0);
 
@@ -276,7 +282,14 @@ void tst_CalendarEvent::testSave()
 
     NemoCalendarEventQuery query;
     query.setUniqueId(event->uniqueId());
+    for (int i = 0; i < 30; i++) {
+        if (query.event())
+            break;
+
+        QTest::qWait(100);
+    }
     NemoCalendarEvent *eventB = (NemoCalendarEvent*) query.event();
+    QVERIFY(eventB != 0);
 
     // mKCal DB stores times as seconds, loosing millisecond accuracy.
     // Compare dates with QDateTime::toTime_t() instead of QDateTime::toMSecsSinceEpoch()
