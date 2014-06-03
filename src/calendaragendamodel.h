@@ -45,13 +45,14 @@ class NemoCalendarAgendaModel : public QAbstractListModel, public QQmlParserStat
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     Q_ENUMS(FilterMode)
+    Q_ENUMS(AgendaRoles)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(QDate startDate READ startDate WRITE setStartDate NOTIFY startDateChanged)
     Q_PROPERTY(QDate endDate READ endDate WRITE setEndDate NOTIFY endDateChanged)
     Q_PROPERTY(int filterMode READ filterMode WRITE setFilterMode NOTIFY filterModeChanged)
 
 public:
-    enum {
+    enum AgendaRoles {
         EventObjectRole = Qt::UserRole,
         OccurrenceObjectRole,
         SectionBucketRole
@@ -81,6 +82,7 @@ public:
 
     int rowCount(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
+    Q_INVOKABLE QVariant get(int index, int role) const;
 
     virtual void classBegin();
     virtual void componentComplete();

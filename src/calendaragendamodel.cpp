@@ -37,6 +37,8 @@
 #include "calendareventoccurrence.h"
 #include "calendarmanager.h"
 
+#include <QDebug>
+
 NemoCalendarAgendaModel::NemoCalendarAgendaModel(QObject *parent)
     : QAbstractListModel(parent), mIsComplete(true), mFilterMode(FilterNone)
 {
@@ -189,6 +191,7 @@ void NemoCalendarAgendaModel::doRefresh(QList<NemoCalendarEventOccurrence *> new
         if (insertCount) {
             beginInsertRows(QModelIndex(), mEventsIndex, mEventsIndex + insertCount - 1);
             for (int ii = 0; ii < insertCount; ++ii) {
+                newEvents.at(newEventsCounter + ii)->setParent(this);
                 mEvents.insert(mEventsIndex++, newEvents.at(newEventsCounter + ii));
             }
             newEventsCounter += insertCount;
@@ -233,18 +236,29 @@ int NemoCalendarAgendaModel::rowCount(const QModelIndex &index) const
 
 QVariant NemoCalendarAgendaModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() >= mEvents.count())
+    if (!index.isValid())
         return QVariant();
 
+    return get(index.row(), role);
+}
+
+QVariant NemoCalendarAgendaModel::get(int index, int role) const
+{
+    if (index < 0 || index >= mEvents.count()) {
+        qWarning() << "CalendarAgendaModel: Invalid index";
+        return QVariant();
+    }
+
     switch (role) {
-        case EventObjectRole:
-            return QVariant::fromValue<QObject *>(mEvents.at(index.row())->eventObject());
-        case OccurrenceObjectRole:
-            return QVariant::fromValue<QObject *>(mEvents.at(index.row()));
-        case SectionBucketRole:
-            return mEvents.at(index.row())->startTime().date();
-        default:
-            return QVariant();
+    case EventObjectRole:
+        return QVariant::fromValue<QObject *>(mEvents.at(index)->eventObject());
+    case OccurrenceObjectRole:
+        return QVariant::fromValue<QObject *>(mEvents.at(index));
+    case SectionBucketRole:
+        return mEvents.at(index)->startTime().date();
+    default:
+        qWarning() << "CalendarAgendaModel: Unknown role asked";
+        return QVariant();
     }
 }
 
