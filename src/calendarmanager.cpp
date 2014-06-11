@@ -626,6 +626,29 @@ void NemoCalendarManager::setReminder(const QString &uid, NemoCalendarEvent::Rem
         emit mEventObjects.value(uid)->reminderChanged();
 }
 
+void NemoCalendarManager::setRecurEndDate(const QString &uid, const QDate &endDate)
+{
+    if (mModifiedEvents.contains(uid)) {
+        if (mModifiedEvents.value(uid).recurEndDate == endDate)
+            return;
+    } else {
+        if (!mEvents.contains(uid) || mEvents.value(uid).recurEndDate == endDate)
+            return;
+        else
+            mModifiedEvents.insert(uid, mEvents.value(uid));
+    }
+
+    bool wasValid = mModifiedEvents[uid].recurEndDate.isValid();
+    mModifiedEvents[uid].recurEndDate = endDate;
+
+    if (mEventObjects.contains(uid) && mEventObjects.value(uid)) {
+        emit mEventObjects.value(uid)->recurEndDateChanged();
+
+        if (endDate.isValid() != wasValid)
+            emit mEventObjects.value(uid)->hasRecurEndDateChanged();
+    }
+}
+
 void NemoCalendarManager::setExceptions(const QString &uid, QList<KDateTime> exceptions)
 {
     QList<KDateTime> oldExceptions;

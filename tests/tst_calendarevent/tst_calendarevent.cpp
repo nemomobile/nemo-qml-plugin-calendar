@@ -53,6 +53,7 @@ void tst_CalendarEvent::initialValues()
     QVERIFY(!event->endTime().isValid());
     QVERIFY(!event->readonly());
     QVERIFY(event->recur() == NemoCalendarEvent::RecurOnce);
+    QVERIFY(!event->recurEndDate().isValid());
     QVERIFY(event->recurExceptions() == 0);
     QVERIFY(event->reminder() == NemoCalendarEvent::ReminderNone);
     QVERIFY(!event->startTime().isValid());
@@ -99,6 +100,12 @@ void tst_CalendarEvent::setters()
     event->setRecur(recur);
     QCOMPARE(recurSpy.count(), 1);
     QCOMPARE(event->recur(), recur);
+
+    QSignalSpy recurEndSpy(event, SIGNAL(recurEndDateChanged()));
+    QDateTime recurEnd = QDateTime::currentDateTime().addDays(100);
+    event->setRecurEndDate(recurEnd);
+    QCOMPARE(recurEndSpy.count(), 1);
+    QCOMPARE(event->recurEndDate(), QDateTime(recurEnd.date())); // day precision
 
     QSignalSpy reminderSpy(event, SIGNAL(reminderChanged()));
     NemoCalendarEvent::Reminder reminder = NemoCalendarEvent::ReminderTime; // default is ReminderNone
@@ -250,6 +257,10 @@ void tst_CalendarEvent::testSave()
     event->setRecur(recur);
     QCOMPARE(event->recur(), recur);
 
+    QDateTime recurEnd = endTime.addDays(100);
+    event->setRecurEndDate(recurEnd);
+    QCOMPARE(event->recurEndDate(), QDateTime(recurEnd.date()));
+
     NemoCalendarEvent::Reminder reminder = NemoCalendarEvent::ReminderTime;
     event->setReminder(reminder);
     QCOMPARE(event->reminder(), reminder);
@@ -301,6 +312,7 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(eventB->displayLabel(), displayLabel);
     QCOMPARE(eventB->location(), location);
     QCOMPARE(eventB->recur(), recur);
+    QCOMPARE(eventB->recurEndDate(), QDateTime(recurEnd.date()));
     QCOMPARE(eventB->reminder(), reminder);
 
     calendarApi.remove(event->uniqueId());
