@@ -42,6 +42,8 @@
 // kCalCore
 #include <calformat.h>
 #include <vcalformat.h>
+#include <recurrence.h>
+#include <recurrencerule.h>
 
 #include <libical/vobject.h>
 #include <libical/vcaltmp.h>
@@ -202,8 +204,19 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, con
         event->setReadOnly(eventData.readonly);
         changed = true;
     }
+
     changed = setRecurrence(event, eventData.recur) ? true : changed;
+
+    // setEndDate saves to default rule, but Recurrence::endDate() returns cumulative date
+    KCalCore::RecurrenceRule *defaultRule = event->recurrence()->defaultRRule();
+    if ((eventData.recurEndDate.isValid() && (!defaultRule || defaultRule->endDt().date() != eventData.recurEndDate))
+        || (!eventData.recurEndDate.isValid() && defaultRule && defaultRule->endDt().isValid())) {
+        event->recurrence()->setEndDate(eventData.recurEndDate);
+        changed = true;
+    }
+
     changed = setExceptions(event, eventData.recurExceptionDates) ? true : changed;
+
     changed = setReminder(event, eventData.reminder) ? true : changed;
     if (event->dtStart() != eventData.startTime) {
         event->setDtStart(eventData.startTime);
@@ -611,6 +624,10 @@ NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Ev
     event.location = e->location();
     event.readonly = mStorage->notebook(event.calendarUid)->isReadOnly();
     event.recur = convertRecurrence(e);
+    KCalCore::RecurrenceRule *defaultRule = e->recurrence()->defaultRRule();
+    if (defaultRule) {
+        event.recurEndDate = defaultRule->endDt().date();
+    }
     event.recurExceptionDates = e->recurrence()->exDateTimes();
     event.reminder = getReminder(e);
     event.startTime = e->dtStart();

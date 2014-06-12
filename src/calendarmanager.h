@@ -77,6 +77,7 @@ public:
     void setStartTime(const QString &uid, const KDateTime &startTime);
     void setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur);
     void setReminder(const QString &uid, NemoCalendarEvent::Reminder reminder);
+    void setRecurEndDate(const QString &uid, const QDate &endDate);
 
     // Notebooks
     QList<NemoCalendarData::Notebook> notebooks();

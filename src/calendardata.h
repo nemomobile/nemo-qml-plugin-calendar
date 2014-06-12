@@ -27,6 +27,7 @@ struct Event {
     bool allDay;
     NemoCalendarEvent::Recur recur;
     QList<KDateTime> recurExceptionDates;
+    QDate recurEndDate;
     NemoCalendarEvent::Reminder reminder;
     QString uniqueId;
     bool readonly;

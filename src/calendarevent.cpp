@@ -121,6 +121,26 @@ void NemoCalendarEvent::setRecur(Recur r)
     mManager->setRecurrence(mUniqueId, r);
 }
 
+QDateTime NemoCalendarEvent::recurEndDate() const
+{
+    return QDateTime(mManager->getEvent(mUniqueId).recurEndDate);
+}
+
+bool NemoCalendarEvent::hasRecurEndDate() const
+{
+    return mManager->getEvent(mUniqueId).recurEndDate.isValid();
+}
+
+void NemoCalendarEvent::setRecurEndDate(const QDateTime &dateTime)
+{
+    mManager->setRecurEndDate(mUniqueId, dateTime.date());
+}
+
+void NemoCalendarEvent::unsetRecurEndDate()
+{
+    setRecurEndDate(QDateTime());
+}
+
 void NemoCalendarEvent::removeException(int index)
 {
     if (recur() == RecurOnce)
