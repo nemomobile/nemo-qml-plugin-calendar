@@ -114,6 +114,7 @@ public:
         qmlRegisterUncreatableType<NemoCalendarEvent>(uri, 1, 0, "CalendarEvent", "Create CalendarEvent instances through a model");
         qmlRegisterType<NemoCalendarAgendaModel>(uri, 1, 0, "AgendaModel");
         qmlRegisterType<NemoCalendarEventQuery>(uri, 1, 0, "EventQuery");
+        qmlRegisterUncreatableType<Person>(uri, 1, 0, "Person", "Persons reachable only through EventQuery");
         qmlRegisterType<NemoCalendarNotebookModel>(uri, 1, 0, "NotebookModel");
         qmlRegisterType<NemoCalendarNotebookQuery>(uri, 1, 0, "NotebookQuery");
         qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);

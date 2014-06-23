@@ -36,7 +36,7 @@
 #include "calendareventoccurrence.h"
 
 NemoCalendarEventQuery::NemoCalendarEventQuery()
-: mIsComplete(true), mOccurrence(0)
+    : mIsComplete(true), mOccurrence(0), mAttendeesCached(false)
 {
     connect(NemoCalendarManager::instance(), SIGNAL(dataUpdated()), this, SLOT(refresh()));
     connect(NemoCalendarManager::instance(), SIGNAL(storageModified()), this, SLOT(refresh()));
@@ -114,6 +114,24 @@ QObject *NemoCalendarEventQuery::occurrence() const
     return mOccurrence;
 }
 
+QList<QObject*> NemoCalendarEventQuery::attendees()
+{
+    QList<QObject*> result;
+
+    if (!mAttendeesCached) {
+        mAttendees = NemoCalendarManager::instance()->getEventAttendees(mUid);
+        mAttendeesCached = true;
+    }
+
+    foreach (const NemoCalendarData::Attendee &attendee, mAttendees) {
+        QObject *person = new Person(attendee.name, attendee.email, attendee.isOrganizer,
+                                     attendee.participationRole);
+        result.append(person);
+    }
+
+    return result;
+}
+
 void NemoCalendarEventQuery::classBegin()
 {
     mIsComplete = false;
@@ -160,6 +178,11 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
         }
         emit occurrenceChanged();
     }
+
+    // always emit also attendee change signal
+    mAttendees.clear();
+    mAttendeesCached = false;
+    emit attendeesChanged();
 }
 
 void NemoCalendarEventQuery::refresh()
@@ -177,4 +200,3 @@ void NemoCalendarEventQuery::eventUidChanged(QString oldUid, QString newUid)
         refresh();
     }
 }
-

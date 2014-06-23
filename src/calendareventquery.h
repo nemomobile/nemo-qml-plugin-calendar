@@ -40,6 +40,42 @@
 #include "calendardata.h"
 
 class NemoCalendarEventOccurrence;
+
+class Person : public QObject
+{
+    Q_OBJECT
+    Q_ENUMS(AttendeeRole)
+    Q_PROPERTY(QString name READ name FINAL)
+    Q_PROPERTY(QString email READ email FINAL)
+    Q_PROPERTY(bool isOrganizer READ isOrganizer FINAL)
+    Q_PROPERTY(int participationRole READ participationRole FINAL)
+
+public:
+    // mapping to KCalcore::Attendee::Role
+    enum AttendeeRole {
+      RequiredParticipant,
+      OptionalParticipant,
+      NonParticipant,
+      ChairParticipant
+    };
+
+    Person(const QString &aName, const QString &aEmail, bool aIsOrganizer, bool aParticipationRole)
+        : m_name(aName), m_email(aEmail), m_isOrganizer(aIsOrganizer), m_participationRole(aParticipationRole)
+    {
+    }
+
+    QString name() const { return m_name; }
+    QString email() const { return m_email; }
+    bool isOrganizer() const { return m_isOrganizer; }
+    int participationRole() const { return m_participationRole; }
+
+private:
+    QString m_name;
+    QString m_email;
+    bool m_isOrganizer;
+    int m_participationRole;
+};
+
 class NemoCalendarEventQuery : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
@@ -48,6 +84,7 @@ class NemoCalendarEventQuery : public QObject, public QQmlParserStatus
     Q_PROPERTY(QDateTime startTime READ startTime WRITE setStartTime RESET resetStartTime NOTIFY startTimeChanged)
     Q_PROPERTY(QObject *event READ event NOTIFY eventChanged)
     Q_PROPERTY(QObject *occurrence READ occurrence NOTIFY occurrenceChanged)
+    Q_PROPERTY(QList<QObject*> attendees READ attendees NOTIFY attendeesChanged)
 
 public:
     NemoCalendarEventQuery();
@@ -63,6 +100,8 @@ public:
     QObject *event() const;
     QObject *occurrence() const;
 
+    QList<QObject*> attendees();
+
     virtual void classBegin();
     virtual void componentComplete();
 
@@ -72,6 +111,7 @@ signals:
     void uniqueIdChanged();
     void eventChanged();
     void occurrenceChanged();
+    void attendeesChanged();
     void startTimeChanged();
 
     // Indicates that the event UID has changed in database, event has been moved between notebooks.
@@ -89,6 +129,8 @@ private:
     QDateTime mStartTime;
     NemoCalendarData::Event mEvent;
     NemoCalendarEventOccurrence *mOccurrence;
+    bool mAttendeesCached;
+    QList<NemoCalendarData::Attendee> mAttendees;
 };
 
 #endif

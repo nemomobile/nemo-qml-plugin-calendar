@@ -785,6 +785,15 @@ NemoCalendarEventOccurrence* NemoCalendarManager::getNextOccurence(const QString
     return new NemoCalendarEventOccurrence(eo.eventUid, eo.startTime, eo.endTime);
 }
 
+QList<NemoCalendarData::Attendee> NemoCalendarManager::getEventAttendees(const QString &uid)
+{
+    QList<NemoCalendarData::Attendee> attendees;
+    QMetaObject::invokeMethod(mCalendarWorker, "getEventAttendees", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QList<NemoCalendarData::Attendee>, attendees),
+                              Q_ARG(QString, uid));
+    return attendees;
+}
+
 void NemoCalendarManager::dataLoadedSlot(QList<NemoCalendarData::Range> ranges,
                                            QStringList uidList,
                                            QHash<QString, NemoCalendarData::Event> events,
