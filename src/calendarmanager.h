@@ -101,6 +101,8 @@ public:
     // Caller gets ownership of returned NemoCalendarEventOccurrence object
     // Does synchronous DB thread access - no DB operations, though, fast when no ongoing DB ops
     NemoCalendarEventOccurrence* getNextOccurence(const QString &uid, const QDateTime &start);
+    // return attendees for given event, synchronous call
+    QList<NemoCalendarData::Attendee> getEventAttendees(const QString &uid);
 
 private slots:
     void storageModifiedSlot(QString info);

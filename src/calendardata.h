@@ -3,6 +3,9 @@
 
 #include <QString>
 
+// KCalCore
+#include <attendee.h>
+
 #include "calendarevent.h"
 
 namespace NemoCalendarData {
@@ -71,6 +74,13 @@ struct Notebook {
 };
 
 typedef QPair<QDate,QDate> Range;
+
+struct Attendee {
+    bool isOrganizer;
+    QString name;
+    QString email;
+    KCalCore::Attendee::Role participationRole;
+};
 
 }
 #endif // NEMOCALENDARDATA_H

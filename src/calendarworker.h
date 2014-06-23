@@ -72,6 +72,7 @@ public slots:
                     const QStringList &uidList, bool reset);
 
     NemoCalendarData::EventOccurrence getNextOccurence(const QString &uid, const QDateTime &startTime) const;
+    QList<NemoCalendarData::Attendee> getEventAttendees(const QString &uid);
 
 signals:
     void storageModifiedSignal(QString info);

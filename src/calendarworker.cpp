@@ -714,3 +714,43 @@ NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurence(const QSt
 
     return occurrence;
 }
+
+QList<NemoCalendarData::Attendee> NemoCalendarWorker::getEventAttendees(const QString &uid)
+{
+    QList<NemoCalendarData::Attendee> result;
+
+    KCalCore::Event::Ptr event = mCalendar->event(uid);
+
+    if (event.isNull()) {
+        return result;
+    }
+
+    KCalCore::Person::Ptr calOrganizer = event->organizer();
+
+    NemoCalendarData::Attendee organizer;
+
+    if (!calOrganizer.isNull() && !calOrganizer->isEmpty()) {
+        organizer.isOrganizer = true;
+        organizer.name = calOrganizer->name();
+        organizer.email = calOrganizer->email();
+        organizer.participationRole = KCalCore::Attendee::ReqParticipant;
+        result.append(organizer);
+    }
+
+    KCalCore::Attendee::List attendees = event->attendees();
+    NemoCalendarData::Attendee attendee;
+    attendee.isOrganizer = false;
+
+    foreach (KCalCore::Attendee::Ptr calAttendee, attendees) {
+        attendee.name = calAttendee->name();
+        attendee.email = calAttendee->email();
+        if (attendee.name == organizer.name && attendee.email == organizer.email) {
+            // avoid duplicate info
+            continue;
+        }
+        attendee.participationRole = calAttendee->role();
+        result.append(attendee);
+    }
+
+    return result;
+}
