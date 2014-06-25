@@ -19,7 +19,6 @@ private slots:
     void initialValues();
     void setters();
     void testSignals();
-    void recurExceptions();
     void testSave();
     void cleanupTestCase();
 
@@ -54,7 +53,6 @@ void tst_CalendarEvent::initialValues()
     QVERIFY(!event->readonly());
     QVERIFY(event->recur() == NemoCalendarEvent::RecurOnce);
     QVERIFY(!event->recurEndDate().isValid());
-    QVERIFY(event->recurExceptions() == 0);
     QVERIFY(event->reminder() == NemoCalendarEvent::ReminderNone);
     QVERIFY(!event->startTime().isValid());
 }
@@ -167,64 +165,6 @@ void tst_CalendarEvent::testSignals()
     QCOMPARE(labelSpyB.count(), 3);
     QCOMPARE(eventA->displayLabel(), label);
     QCOMPARE(eventB->displayLabel(), label);
-}
-
-void tst_CalendarEvent::recurExceptions()
-{
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEvent *event = calendarApi.createEvent();
-    QVERIFY(event != 0);
-
-    event->setStartTime(QDateTime::currentDateTime(), NemoCalendarEvent::SpecLocalZone);
-    event->setEndTime(QDateTime::currentDateTime().addSecs(3600), NemoCalendarEvent::SpecLocalZone);
-    QCOMPARE(event->recurExceptions(), 0);
-    QCOMPARE(event->recur(), NemoCalendarEvent::RecurOnce);
-    QSignalSpy recurExceptionSpy(event, SIGNAL(recurExceptionsChanged()));
-
-    // Add invalid recur exception date to a non-recurring event, nothing should happen
-    event->addException(QDateTime());
-    QCOMPARE(recurExceptionSpy.count(), 0);
-
-    // Add valid recur exception date to a non-recurring event, nothing should happen
-    event->addException(event->startTime().addDays(1));
-    QCOMPARE(recurExceptionSpy.count(), 0);
-
-    event->setRecur(NemoCalendarEvent::RecurDaily);
-    // Add invalid recur exception date to a recurring event, nothing should happen
-    event->addException(QDateTime());
-    QCOMPARE(recurExceptionSpy.count(), 0);
-
-    // Add valid recur exception date to a recurring event
-    QDateTime exceptionDateTimeA = event->startTime().addDays(1);
-    event->addException(exceptionDateTimeA);
-    QCOMPARE(recurExceptionSpy.count(), 1);
-    QCOMPARE(event->recurExceptions(), 1);
-    QCOMPARE(event->recurException(0), exceptionDateTimeA);
-
-    // Add a second recur exception
-    QDateTime exceptionDateTimeB = event->startTime().addDays(2);
-    event->addException(exceptionDateTimeB);
-    QCOMPARE(recurExceptionSpy.count(), 2);
-    QCOMPARE(event->recurExceptions(), 2);
-    QCOMPARE(event->recurException(0), exceptionDateTimeA);
-    QCOMPARE(event->recurException(1), exceptionDateTimeB);
-
-    // Request non-valid recurException, valid index are 0,1.
-    QVERIFY(!event->recurException(-1).isValid());
-    QVERIFY(!event->recurException(17).isValid());
-
-    // Remove invalid recur exception, valid index are 0,1.
-    event->removeException(-7);
-    QCOMPARE(event->recurExceptions(), 2);
-    QCOMPARE(recurExceptionSpy.count(), 2);
-    event->removeException(4);
-    QCOMPARE(event->recurExceptions(), 2);
-    QCOMPARE(recurExceptionSpy.count(), 2);
-
-    // Remove valid recur exception
-    event->removeException(0);
-    QCOMPARE(recurExceptionSpy.count(), 3);
-    QCOMPARE(event->recurException(0), exceptionDateTimeB);
 }
 
 void tst_CalendarEvent::testSave()

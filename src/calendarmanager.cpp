@@ -649,41 +649,6 @@ void NemoCalendarManager::setRecurEndDate(const QString &uid, const QDate &endDa
     }
 }
 
-void NemoCalendarManager::setExceptions(const QString &uid, QList<KDateTime> exceptions)
-{
-    QList<KDateTime> oldExceptions;
-    if (mModifiedEvents.contains(uid)) {
-        oldExceptions = mModifiedEvents.value(uid).recurExceptionDates;
-    } else {
-        if (!mEvents.contains(uid))
-            return;
-        else
-            oldExceptions = mEvents.value(uid).recurExceptionDates;
-    }
-
-    bool changed = true;
-    if (exceptions.count() == oldExceptions.count()) {
-        changed = false;
-        for (int i = 0; i < exceptions.size(); i++) {
-            if (exceptions.at(i).isValid() && !oldExceptions.contains(exceptions.at(i))) {
-                changed = true;
-                break;
-            }
-        }
-    }
-
-    if (!changed)
-        return;
-
-    if (!mModifiedEvents.contains(uid))
-        mModifiedEvents.insert(uid, mEvents.value(uid));
-
-    mModifiedEvents[uid].recurExceptionDates = exceptions;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->recurExceptionsChanged();
-}
-
 void NemoCalendarManager::storageModifiedSlot(QString info)
 {
     Q_UNUSED(info)
@@ -850,9 +815,6 @@ void NemoCalendarManager::sendEventChangeSignals(const NemoCalendarData::Event &
 
     if (newEvent.recur != oldEvent.recur)
         emit eventObject->recurChanged();
-
-    if (newEvent.recurExceptionDates != oldEvent.recurExceptionDates)
-        emit eventObject->recurExceptionsChanged();
 
     if (newEvent.reminder != oldEvent.reminder)
         emit eventObject->reminderChanged();

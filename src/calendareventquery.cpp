@@ -158,7 +158,6 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
         if (mEvent.allDay != event.allDay
                 || mEvent.endTime != event.endTime
                 || mEvent.recur != event.recur
-                || mEvent.recurExceptionDates != event.recurExceptionDates
                 || mEvent.startTime != event.startTime) {
             updateOccurrence = true;
         }

@@ -215,8 +215,6 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, con
         changed = true;
     }
 
-    changed = setExceptions(event, eventData.recurExceptionDates) ? true : changed;
-
     changed = setReminder(event, eventData.reminder) ? true : changed;
     if (event->dtStart() != eventData.startTime) {
         event->setDtStart(eventData.startTime);
@@ -406,22 +404,6 @@ bool NemoCalendarWorker::setReminder(KCalCore::Event::Ptr &event, NemoCalendarEv
     return true;
 }
 
-bool NemoCalendarWorker::setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions)
-{
-    if (!event || !event->recurs())
-        return false;
-
-    KCalCore::DateTimeList newList;
-    newList.append(exceptions);
-    newList.sortUnique();
-    KCalCore::DateTimeList oldList = event->recurrence()->exDateTimes();
-    if (newList == oldList)
-        return false;
-
-    event->recurrence()->setExDateTimes(newList);
-    return true;
-}
-
 QList<NemoCalendarData::Notebook> NemoCalendarWorker::notebooks() const
 {
     return mNotebooks.values();
@@ -517,7 +499,8 @@ void NemoCalendarWorker::setNotebookColor(const QString &notebookUid, const QStr
     }
 }
 
-QHash<QString, NemoCalendarData::EventOccurrence> NemoCalendarWorker::eventOccurences(const QList<NemoCalendarData::Range> &ranges) const
+QHash<QString, NemoCalendarData::EventOccurrence>
+NemoCalendarWorker::eventOccurences(const QList<NemoCalendarData::Range> &ranges) const
 {
     mKCal::ExtendedCalendar::ExpandedIncidenceList events;
     foreach (NemoCalendarData::Range range, ranges) {
@@ -628,7 +611,6 @@ NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Ev
     if (defaultRule) {
         event.recurEndDate = defaultRule->endDt().date();
     }
-    event.recurExceptionDates = e->recurrence()->exDateTimes();
     event.reminder = getReminder(e);
     event.startTime = e->dtStart();
     return event;

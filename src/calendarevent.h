@@ -36,9 +36,6 @@
 #include <QObject>
 #include <QDateTime>
 
-// kcalcore
-#include <KDateTime>
-
 class NemoCalendarManager;
 
 class NemoCalendarEvent : public QObject
@@ -56,7 +53,6 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
     Q_PROPERTY(QDateTime recurEndDate READ recurEndDate NOTIFY recurEndDateChanged)
     Q_PROPERTY(bool hasRecurEndDate READ hasRecurEndDate NOTIFY hasRecurEndDateChanged)
-    Q_PROPERTY(int recurExceptions READ recurExceptions NOTIFY recurExceptionsChanged)
     Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId NOTIFY uniqueIdChanged)
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
@@ -118,11 +114,6 @@ public:
     Q_INVOKABLE void setRecurEndDate(const QDateTime &dateTime);
     Q_INVOKABLE void unsetRecurEndDate();
 
-    int recurExceptions() const;
-    Q_INVOKABLE void removeException(int);
-    Q_INVOKABLE void addException(const QDateTime &);
-    Q_INVOKABLE QDateTime recurException(int) const;
-
     Reminder reminder() const;
     void setReminder(Reminder);
 
@@ -150,7 +141,6 @@ signals:
     void endTimeChanged();
     void allDayChanged();
     void recurChanged();
-    void recurExceptionsChanged();
     void reminderChanged();
     void uniqueIdChanged();
     void colorChanged();

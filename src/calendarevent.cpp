@@ -34,6 +34,9 @@
 
 #include <QQmlInfo>
 
+// kcalcore
+#include <KDateTime>
+
 #include "calendarmanager.h"
 
 NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent)
@@ -139,54 +142,6 @@ void NemoCalendarEvent::setRecurEndDate(const QDateTime &dateTime)
 void NemoCalendarEvent::unsetRecurEndDate()
 {
     setRecurEndDate(QDateTime());
-}
-
-void NemoCalendarEvent::removeException(int index)
-{
-    if (recur() == RecurOnce)
-        return;
-
-    QList<KDateTime> exceptionDates = mManager->getEvent(mUniqueId).recurExceptionDates;
-    if (index < 0 && exceptionDates.count() <= index)
-        return;
-
-    exceptionDates.removeAt(index);
-    mManager->setExceptions(mUniqueId, exceptionDates);
-}
-
-void NemoCalendarEvent::addException(const QDateTime &date)
-{
-    if (!date.isValid())
-        return;
-
-    if (recur() == RecurOnce) {
-        qmlInfo(this) << "Cannot add exception to non-recurring event";
-        return;
-    }
-
-    KDateTime kDate = KDateTime(date, KDateTime::Spec(KDateTime::LocalZone));
-    QList<KDateTime> exceptionDates = mManager->getEvent(mUniqueId).recurExceptionDates;
-    if (exceptionDates.contains(kDate))
-        return;
-
-    exceptionDates.append(kDate);
-    mManager->setExceptions(mUniqueId, exceptionDates);
-}
-
-QDateTime NemoCalendarEvent::recurException(int index) const
-{
-    if (recur() != RecurOnce) {
-        QList<KDateTime> list = mManager->getEvent(mUniqueId).recurExceptionDates;
-        if (index >= 0 && index < list.count())
-            return list.at(index).dateTime();
-    }
-
-    return QDateTime();
-}
-
-int NemoCalendarEvent::recurExceptions() const
-{
-    return mManager->getEvent(mUniqueId).recurExceptionDates.count();
 }
 
 NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const

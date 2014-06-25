@@ -97,7 +97,6 @@ private:
 
     bool setRecurrence(KCalCore::Event::Ptr &event, NemoCalendarEvent::Recur recur);
     bool setReminder(KCalCore::Event::Ptr &event, NemoCalendarEvent::Reminder reminder);
-    bool setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions);
 
     NemoCalendarEvent::Recur convertRecurrence(const KCalCore::Event::Ptr &event) const;
     KCalCore::Duration reminderToDuration(NemoCalendarEvent::Reminder reminder) const;

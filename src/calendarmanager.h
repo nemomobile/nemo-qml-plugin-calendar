@@ -38,6 +38,9 @@
 #include <QThread>
 #include <QTimer>
 
+// KCalCore
+#include <KDateTime>
+
 #include "calendardata.h"
 #include "calendarevent.h"
 
@@ -72,7 +75,6 @@ public:
     void setDescription(const QString &uid, const QString &description);
     void setDisplayLabel(const QString &uid, const QString &displayLabel);
     void setEndTime(const QString &uid, const KDateTime &endTime);
-    void setExceptions(const QString &uid, QList<KDateTime> exceptions);
     void setLocation(const QString &uid, const QString &location);
     void setStartTime(const QString &uid, const KDateTime &startTime);
     void setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur);
