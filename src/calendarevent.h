@@ -134,7 +134,6 @@ public:
     QString calendarUid() const;
 
     Q_INVOKABLE void save(const QString &calendarUid = QString());
-    Q_INVOKABLE void remove();
     Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
     QString location() const;

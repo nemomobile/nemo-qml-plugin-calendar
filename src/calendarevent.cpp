@@ -227,17 +227,6 @@ void NemoCalendarEvent::save(const QString &calendarUid)
     mManager->saveEvent(mUniqueId, calendarUid);
 }
 
-// Removes the entire event
-void NemoCalendarEvent::remove()
-{
-    if (!mNewEvent) {
-        mManager->deleteEvent(mUniqueId);
-
-        // TODO: this sucks
-        mManager->save();
-    }
-}
-
 // Returns the event as a VCalendar string
 QString NemoCalendarEvent::vCalendar(const QString &prodId) const
 {
