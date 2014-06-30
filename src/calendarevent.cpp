@@ -39,8 +39,8 @@
 
 #include "calendarmanager.h"
 
-NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent)
-    : QObject(manager), mManager(manager), mUniqueId(uid), mNewEvent(newEvent)
+NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid)
+    : QObject(manager), mManager(manager), mUniqueId(uid)
 {
     connect(mManager, SIGNAL(notebookColorChanged(QString)),
             this, SLOT(notebookColorChanged(QString)));
@@ -57,19 +57,9 @@ QString NemoCalendarEvent::displayLabel() const
     return mManager->getEvent(mUniqueId).displayLabel;
 }
 
-void NemoCalendarEvent::setDisplayLabel(const QString &displayLabel)
-{
-    mManager->setDisplayLabel(mUniqueId, displayLabel);
-}
-
 QString NemoCalendarEvent::description() const
 {
     return mManager->getEvent(mUniqueId).description;
-}
-
-void NemoCalendarEvent::setDescription(const QString &description)
-{
-    mManager->setDescription(mUniqueId, description);
 }
 
 QDateTime NemoCalendarEvent::startTime() const
@@ -77,31 +67,9 @@ QDateTime NemoCalendarEvent::startTime() const
     return mManager->getEvent(mUniqueId).startTime.dateTime();
 }
 
-void NemoCalendarEvent::setStartTime(const QDateTime &startTime, int spec)
-{
-    KDateTime::SpecType kSpec = KDateTime::LocalZone;
-    if (spec == SpecClockTime) {
-        kSpec = KDateTime::ClockTime;
-    }
-
-    KDateTime kStart(startTime, kSpec);
-    mManager->setStartTime(mUniqueId, kStart);
-}
-
 QDateTime NemoCalendarEvent::endTime() const
 {
     return mManager->getEvent(mUniqueId).endTime.dateTime();
-}
-
-void NemoCalendarEvent::setEndTime(const QDateTime &endTime, int spec)
-{
-    KDateTime::SpecType kSpec = KDateTime::LocalZone;
-    if (spec == SpecClockTime) {
-        kSpec = KDateTime::ClockTime;
-    }
-
-    KDateTime kEnd(endTime, kSpec);
-    mManager->setEndTime(mUniqueId, kEnd);
 }
 
 bool NemoCalendarEvent::allDay() const
@@ -109,19 +77,9 @@ bool NemoCalendarEvent::allDay() const
     return mManager->getEvent(mUniqueId).allDay;
 }
 
-void NemoCalendarEvent::setAllDay(bool allDay)
-{
-    mManager->setAllDay(mUniqueId, allDay);
-}
-
 NemoCalendarEvent::Recur NemoCalendarEvent::recur() const
 {
     return mManager->getEvent(mUniqueId).recur;
-}
-
-void NemoCalendarEvent::setRecur(Recur r)
-{
-    mManager->setRecurrence(mUniqueId, r);
 }
 
 QDateTime NemoCalendarEvent::recurEndDate() const
@@ -134,24 +92,9 @@ bool NemoCalendarEvent::hasRecurEndDate() const
     return mManager->getEvent(mUniqueId).recurEndDate.isValid();
 }
 
-void NemoCalendarEvent::setRecurEndDate(const QDateTime &dateTime)
-{
-    mManager->setRecurEndDate(mUniqueId, dateTime.date());
-}
-
-void NemoCalendarEvent::unsetRecurEndDate()
-{
-    setRecurEndDate(QDateTime());
-}
-
 NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
 {
     return mManager->getEvent(mUniqueId).reminder;
-}
-
-void NemoCalendarEvent::setReminder(Reminder reminder)
-{
-    mManager->setReminder(mUniqueId, reminder);
 }
 
 QString NemoCalendarEvent::uniqueId() const
@@ -174,12 +117,9 @@ QString NemoCalendarEvent::calendarUid() const
     return mManager->getEvent(mUniqueId).calendarUid;
 }
 
-void NemoCalendarEvent::save(const QString &calendarUid)
+QString NemoCalendarEvent::location() const
 {
-    if (mNewEvent)
-        mNewEvent = false;
-
-    mManager->saveEvent(mUniqueId, calendarUid);
+    return mManager->getEvent(mUniqueId).location;
 }
 
 // Returns the event as a VCalendar string
@@ -192,16 +132,6 @@ QString NemoCalendarEvent::vCalendar(const QString &prodId) const
     }
 
     return mManager->convertEventToVCalendarSync(mUniqueId, prodId);
-}
-
-QString NemoCalendarEvent::location() const
-{
-    return mManager->getEvent(mUniqueId).location;
-}
-
-void NemoCalendarEvent::setLocation(const QString &newLocation)
-{
-    mManager->setLocation(mUniqueId, newLocation);
 }
 
 void NemoCalendarEvent::notebookColorChanged(QString notebookUid)

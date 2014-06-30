@@ -38,6 +38,7 @@
 class QJSEngine;
 class QQmlEngine;
 class NemoCalendarEvent;
+class NemoCalendarEventModification;
 
 class NemoCalendarApi : public QObject
 {
@@ -48,9 +49,10 @@ class NemoCalendarApi : public QObject
 public:
     NemoCalendarApi(QObject *parent = 0);
 
-    Q_INVOKABLE NemoCalendarEvent *createEvent();
-    Q_INVOKABLE void remove(const QString &);
-    Q_INVOKABLE void remove(const QString &, const QDateTime &);
+    Q_INVOKABLE NemoCalendarEventModification *createNewEvent();
+    Q_INVOKABLE NemoCalendarEventModification *createModification(NemoCalendarEvent *sourceEvent);
+    Q_INVOKABLE void remove(const QString &uid);
+    Q_INVOKABLE void remove(const QString &uid, const QDateTime &time);
 
     QStringList excludedNotebooks() const;
     void setExcludedNotebooks(const QStringList &);

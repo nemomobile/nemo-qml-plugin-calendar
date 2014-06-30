@@ -45,20 +45,20 @@ class NemoCalendarEvent : public QObject
     Q_ENUMS(Reminder)
     Q_ENUMS(TimeSpec)
 
-    Q_PROPERTY(QString displayLabel READ displayLabel WRITE setDisplayLabel NOTIFY displayLabelChanged)
-    Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY descriptionChanged)
+    Q_PROPERTY(QString displayLabel READ displayLabel NOTIFY displayLabelChanged)
+    Q_PROPERTY(QString description READ description NOTIFY descriptionChanged)
     Q_PROPERTY(QDateTime startTime READ startTime NOTIFY startTimeChanged)
     Q_PROPERTY(QDateTime endTime READ endTime NOTIFY endTimeChanged)
-    Q_PROPERTY(bool allDay READ allDay WRITE setAllDay NOTIFY allDayChanged)
-    Q_PROPERTY(Recur recur READ recur WRITE setRecur NOTIFY recurChanged)
+    Q_PROPERTY(bool allDay READ allDay NOTIFY allDayChanged)
+    Q_PROPERTY(Recur recur READ recur NOTIFY recurChanged)
     Q_PROPERTY(QDateTime recurEndDate READ recurEndDate NOTIFY recurEndDateChanged)
     Q_PROPERTY(bool hasRecurEndDate READ hasRecurEndDate NOTIFY hasRecurEndDateChanged)
-    Q_PROPERTY(Reminder reminder READ reminder WRITE setReminder NOTIFY reminderChanged)
+    Q_PROPERTY(Reminder reminder READ reminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId NOTIFY uniqueIdChanged)
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
     Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
-    Q_PROPERTY(QString location READ location WRITE setLocation NOTIFY locationChanged)
+    Q_PROPERTY(QString location READ location NOTIFY locationChanged)
 
 public:
     enum Recur {
@@ -88,47 +88,25 @@ public:
         SpecClockTime
     };
 
-    NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, bool newEvent = false);
+    NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid);
     ~NemoCalendarEvent();
 
     QString displayLabel() const;
-    void setDisplayLabel(const QString &displayLabel);
-
     QString description() const;
-    void setDescription(const QString &description);
-
     QDateTime startTime() const;
-    Q_INVOKABLE void setStartTime(const QDateTime &startTime, int spec);
-
     QDateTime endTime() const;
-    Q_INVOKABLE void setEndTime(const QDateTime &endTime, int spec);
-
     bool allDay() const;
-    void setAllDay(bool);
-
     Recur recur() const;
-    void setRecur(Recur);
-
     QDateTime recurEndDate() const;
     bool hasRecurEndDate() const;
-    Q_INVOKABLE void setRecurEndDate(const QDateTime &dateTime);
-    Q_INVOKABLE void unsetRecurEndDate();
-
     Reminder reminder() const;
-    void setReminder(Reminder);
-
     QString uniqueId() const;
-
     QString color() const;
-
     bool readonly() const;
     QString calendarUid() const;
-
-    Q_INVOKABLE void save(const QString &calendarUid = QString());
-    Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
-
     QString location() const;
-    void setLocation(const QString &newLocation);
+
+    Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
 private slots:
     void notebookColorChanged(QString notebookUid);
@@ -152,7 +130,6 @@ signals:
 private:
     NemoCalendarManager *mManager;
     QString mUniqueId;
-    bool mNewEvent;
 };
 
 #endif // CALENDAREVENT_H

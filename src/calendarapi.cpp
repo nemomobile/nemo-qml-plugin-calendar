@@ -34,6 +34,7 @@
 
 #include <QQmlEngine>
 #include "calendarevent.h"
+#include "calendareventmodification.h"
 #include "calendarmanager.h"
 
 NemoCalendarApi::NemoCalendarApi(QObject *parent)
@@ -45,9 +46,20 @@ NemoCalendarApi::NemoCalendarApi(QObject *parent)
             this, SIGNAL(defaultNotebookChanged()));
 }
 
-NemoCalendarEvent *NemoCalendarApi::createEvent()
+NemoCalendarEventModification *NemoCalendarApi::createNewEvent()
 {
-    return NemoCalendarManager::instance()->createEvent();
+    return new NemoCalendarEventModification();
+}
+
+NemoCalendarEventModification * NemoCalendarApi::createModification(NemoCalendarEvent *sourceEvent)
+{
+    if (sourceEvent) {
+        NemoCalendarData::Event data = NemoCalendarManager::instance()->getEvent(sourceEvent->uniqueId());
+        return new NemoCalendarEventModification(data);
+    } else {
+        qWarning("Null event passed to Calendar.getModification(). Returning new event.");
+        return createNewEvent();
+    }
 }
 
 void NemoCalendarApi::remove(const QString &uid)

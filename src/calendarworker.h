@@ -58,7 +58,7 @@ public slots:
     void init();
     void save();
 
-    void saveEvent(const NemoCalendarData::Event &event, const QString &notebookUid);
+    void saveEvent(const NemoCalendarData::Event &event);
     void deleteEvent(const QString &uid, const QDateTime &dateTime);
     QString convertEventToVCalendar(const QString &uid, const QString &prodId) const;
 

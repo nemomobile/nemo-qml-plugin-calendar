@@ -148,81 +148,61 @@ void NemoCalendarWorker::save()
     mStorage->save();
 }
 
-void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, const QString &notebookUid)
+void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData)
 {
+    QString notebookUid = eventData.calendarUid;
+
     if (!notebookUid.isEmpty() && !mStorage->isValidNotebook(notebookUid))
         return;
 
-    KCalCore::Event::Ptr event = mCalendar->event(eventData.uniqueId);
-    bool changed = false;
-    if (!event) {
+    KCalCore::Event::Ptr event;
+    bool createNew = eventData.uniqueId.isEmpty();
+
+    if (createNew) {
         event = KCalCore::Event::Ptr(new KCalCore::Event);
-        event->setUid(eventData.uniqueId);
-        // Set event start & end dates as default ctor KDateTime gives false positives for ==
-        event->setDtEnd(eventData.endTime);
-        event->setDtStart(eventData.startTime);
+    } else {
+        event = mCalendar->event(eventData.uniqueId);
+
+        if (!event) {
+            // possibility that event was removed while changes were edited. options to either skip, as done now,
+            // or resurrect the event
+            qWarning("Event to be saved not found");
+            return;
+        }
+
+        if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
+            // mkcal does funny things when moving event between notebooks, work around by changing uid
+            KCalCore::Event::Ptr newEvent = KCalCore::Event::Ptr(event->clone());
+            newEvent->setUid(KCalCore::CalFormat::createUniqueId());
+            emit eventNotebookChanged(event->uid(), newEvent->uid(), notebookUid);
+            mCalendar->deleteEvent(event);
+            mCalendar->addEvent(newEvent, notebookUid);
+            event = newEvent;
+        } else {
+            event->setRevision(event->revision() + 1);
+        }
+    }
+
+    event->setAllDay(eventData.allDay);
+    event->setDescription(eventData.description);
+    event->setSummary(eventData.displayLabel);
+    event->setDtStart(eventData.startTime);
+    event->setDtEnd(eventData.endTime);
+    event->setLocation(eventData.location);
+    setReminder(event, eventData.reminder);
+    setRecurrence(event, eventData.recur);
+
+    if (eventData.recur != NemoCalendarEvent::RecurOnce)
+        event->recurrence()->setEndDate(eventData.recurEndDate);
+
+    if (createNew) {
         if (notebookUid.isEmpty())
             mCalendar->addEvent(event);
         else
             mCalendar->addEvent(event, notebookUid);
-
-        changed = true;
-    } else if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
-        // mkcal does funny things when moving event between notebooks, work around by changing uid
-        KCalCore::Event::Ptr newEvent = KCalCore::Event::Ptr(event->clone());
-        newEvent->setUid(KCalCore::CalFormat::createUniqueId());
-        emit eventNotebookChanged(event->uid(), newEvent->uid(), notebookUid);
-        mCalendar->deleteEvent(event);
-        mCalendar->addEvent(newEvent, notebookUid);
-        event = newEvent;
-        changed = true;
-    } else {
-        event->setRevision(event->revision() + 1);
     }
 
-    if (event->allDay() != eventData.allDay) {
-        event->setAllDay(eventData.allDay);
-        changed = true;
-    }
-    if (event->description() != eventData.description) {
-        event->setDescription(eventData.description);
-        changed = true;
-    }
-    if (event->summary() != eventData.displayLabel) {
-        event->setSummary(eventData.displayLabel);
-        changed = true;
-    }
-    if (event->dtEnd() != eventData.endTime) {
-        event->setDtEnd(eventData.endTime);
-        changed = true;
-    }
-    if (event->location() != eventData.location) {
-        event->setLocation(eventData.location);
-        changed = true;
-    }
-    if (event->isReadOnly() != eventData.readonly) {
-        event->setReadOnly(eventData.readonly);
-        changed = true;
-    }
-
-    changed = setRecurrence(event, eventData.recur) ? true : changed;
-
-    // setEndDate saves to default rule, but Recurrence::endDate() returns cumulative date
-    KCalCore::RecurrenceRule *defaultRule = event->recurrence()->defaultRRule();
-    if ((eventData.recurEndDate.isValid() && (!defaultRule || defaultRule->endDt().date() != eventData.recurEndDate))
-        || (!eventData.recurEndDate.isValid() && defaultRule && defaultRule->endDt().isValid())) {
-        event->recurrence()->setEndDate(eventData.recurEndDate);
-        changed = true;
-    }
-
-    changed = setReminder(event, eventData.reminder) ? true : changed;
-    if (event->dtStart() != eventData.startTime) {
-        event->setDtStart(eventData.startTime);
-        changed = true;
-    }
-
-    if (changed)
-        save();
+    save();
 }
 
 void NemoCalendarWorker::init()

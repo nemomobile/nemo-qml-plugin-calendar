@@ -126,7 +126,7 @@ void NemoCalendarManager::setDefaultNotebook(const QString &notebookUid)
 
 NemoCalendarEvent* NemoCalendarManager::eventObject(const QString &eventUid)
 {
-    if (mEvents.contains(eventUid) || mModifiedEvents.contains(eventUid)) {
+    if (mEvents.contains(eventUid)) {
         if (!mEventObjects.contains(eventUid))
             mEventObjects.insert(eventUid, new NemoCalendarEvent(this, eventUid));
 
@@ -139,22 +139,10 @@ NemoCalendarEvent* NemoCalendarManager::eventObject(const QString &eventUid)
     return new NemoCalendarEvent(this, "");
 }
 
-NemoCalendarEvent* NemoCalendarManager::createEvent()
+void NemoCalendarManager::saveModification(NemoCalendarData::Event eventData)
 {
-    QString uid = KCalCore::CalFormat::createUniqueId();
-
-    NemoCalendarData::Event event;
-    event.uniqueId = uid;
-    event.recur = NemoCalendarEvent::RecurOnce;
-    event.reminder = NemoCalendarEvent::ReminderNone;
-    event.allDay = false;
-    event.readonly = false;
-    event.startTime = KDateTime(QDateTime(), KDateTime::LocalZone);
-    event.endTime = KDateTime(QDateTime(), KDateTime::LocalZone);
-    mModifiedEvents.insert(uid, event);
-
-    mEventObjects.insert(uid, new NemoCalendarEvent(this, uid, true));
-    return mEventObjects.value(uid);
+    QMetaObject::invokeMethod(mCalendarWorker, "saveEvent", Qt::QueuedConnection,
+                              Q_ARG(NemoCalendarData::Event, eventData));
 }
 
 QStringList NemoCalendarManager::excludedNotebooks()
@@ -436,22 +424,6 @@ void NemoCalendarManager::timeout() {
         doAgendaAndQueryRefresh();
 }
 
-void NemoCalendarManager::saveEvent(const QString &uid, const QString &calendarUid)
-{
-    if (!mModifiedEvents.contains(uid)) {
-        if (! (mEvents.contains(uid) && mEvents.value(uid).calendarUid != calendarUid)) {
-            return;
-        }
-    } else {
-        mEvents[uid] = mModifiedEvents.value(uid);
-        mModifiedEvents.remove(uid);
-    }
-
-    QMetaObject::invokeMethod(mCalendarWorker, "saveEvent", Qt::QueuedConnection,
-                              Q_ARG(NemoCalendarData::Event, mEvents.value(uid)),
-                              Q_ARG(QString, calendarUid));
-}
-
 void NemoCalendarManager::deleteEvent(const QString &uid, const QDateTime &dateTime)
 {
     QMetaObject::invokeMethod(mCalendarWorker, "deleteEvent", Qt::QueuedConnection,
@@ -476,177 +448,7 @@ QString NemoCalendarManager::convertEventToVCalendarSync(const QString &uid, con
 
 NemoCalendarData::Event NemoCalendarManager::getEvent(const QString &uid)
 {
-    if (mModifiedEvents.contains(uid))
-        return mModifiedEvents.value(uid);
-
     return mEvents.value(uid, NemoCalendarData::Event());
-}
-
-void NemoCalendarManager::setLocation(const QString &uid, const QString &location)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).location == location)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).location == location)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].location = location;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->locationChanged();
-}
-
-void NemoCalendarManager::setDisplayLabel(const QString &uid, const QString &displayLabel)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).displayLabel == displayLabel)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).displayLabel == displayLabel)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].displayLabel = displayLabel;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->displayLabelChanged();
-}
-
-void NemoCalendarManager::setDescription(const QString &uid, const QString &description)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).description == description)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).description == description)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].description = description;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->descriptionChanged();
-}
-
-void NemoCalendarManager::setStartTime(const QString &uid, const KDateTime &startTime)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).startTime == startTime)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).startTime == startTime)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].startTime = startTime;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->startTimeChanged();
-}
-
-void NemoCalendarManager::setEndTime(const QString &uid, const KDateTime &endTime)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).endTime == endTime)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).endTime == endTime)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].endTime = endTime;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->endTimeChanged();
-}
-
-void NemoCalendarManager::setAllDay(const QString &uid, bool allDay)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).allDay == allDay)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).allDay == allDay)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].allDay = allDay;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->allDayChanged();
-}
-
-void NemoCalendarManager::setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).recur == recur)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).recur == recur)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].recur = recur;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->recurChanged();
-}
-
-void NemoCalendarManager::setReminder(const QString &uid, NemoCalendarEvent::Reminder reminder)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).reminder == reminder)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).reminder == reminder)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    mModifiedEvents[uid].reminder = reminder;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid))
-        emit mEventObjects.value(uid)->reminderChanged();
-}
-
-void NemoCalendarManager::setRecurEndDate(const QString &uid, const QDate &endDate)
-{
-    if (mModifiedEvents.contains(uid)) {
-        if (mModifiedEvents.value(uid).recurEndDate == endDate)
-            return;
-    } else {
-        if (!mEvents.contains(uid) || mEvents.value(uid).recurEndDate == endDate)
-            return;
-        else
-            mModifiedEvents.insert(uid, mEvents.value(uid));
-    }
-
-    bool wasValid = mModifiedEvents[uid].recurEndDate.isValid();
-    mModifiedEvents[uid].recurEndDate = endDate;
-
-    if (mEventObjects.contains(uid) && mEventObjects.value(uid)) {
-        emit mEventObjects.value(uid)->recurEndDateChanged();
-
-        if (endDate.isValid() != wasValid)
-            emit mEventObjects.value(uid)->hasRecurEndDateChanged();
-    }
 }
 
 void NemoCalendarManager::storageModifiedSlot(QString info)
@@ -658,11 +460,6 @@ void NemoCalendarManager::storageModifiedSlot(QString info)
 
 void NemoCalendarManager::eventNotebookChanged(QString oldEventUid, QString newEventUid, QString notebookUid)
 {
-    if (mModifiedEvents.contains(oldEventUid)) {
-        mModifiedEvents.insert(newEventUid, mModifiedEvents.value(oldEventUid));
-        mModifiedEvents[newEventUid].calendarUid = notebookUid;
-        mModifiedEvents.remove(oldEventUid);
-    }
     if (mEvents.contains(oldEventUid)) {
         mEvents.insert(newEventUid, mEvents.value(oldEventUid));
         mEvents[newEventUid].calendarUid = notebookUid;
@@ -792,7 +589,8 @@ void NemoCalendarManager::dataLoadedSlot(QList<NemoCalendarData::Range> ranges,
     mTimer->start();
 }
 
-void NemoCalendarManager::sendEventChangeSignals(const NemoCalendarData::Event &newEvent, const NemoCalendarData::Event &oldEvent)
+void NemoCalendarManager::sendEventChangeSignals(const NemoCalendarData::Event &newEvent,
+                                                 const NemoCalendarData::Event &oldEvent)
 {
     NemoCalendarEvent *eventObject = mEventObjects.value(newEvent.uniqueId);
     if (!eventObject)
