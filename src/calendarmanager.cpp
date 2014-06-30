@@ -469,9 +469,9 @@ void NemoCalendarManager::eventNotebookChanged(QString oldEventUid, QString newE
         mEventObjects.insert(newEventUid, mEventObjects.value(oldEventUid));
         mEventObjects.remove(oldEventUid);
     }
-    foreach (QString occurenceUid, mEventOccurrences.keys()) {
-        if (mEventOccurrences.value(occurenceUid).eventUid == oldEventUid)
-            mEventOccurrences[occurenceUid].eventUid = newEventUid;
+    foreach (QString occurrenceUid, mEventOccurrences.keys()) {
+        if (mEventOccurrences.value(occurrenceUid).eventUid == oldEventUid)
+            mEventOccurrences[occurrenceUid].eventUid = newEventUid;
     }
 
     emit eventUidChanged(oldEventUid, newEventUid);
@@ -531,10 +531,10 @@ void NemoCalendarManager::notebooksChangedSlot(QList<NemoCalendarData::Notebook>
     }
 }
 
-NemoCalendarEventOccurrence* NemoCalendarManager::getNextOccurence(const QString &uid, const QDateTime &start)
+NemoCalendarEventOccurrence* NemoCalendarManager::getNextOccurrence(const QString &uid, const QDateTime &start)
 {
     NemoCalendarData::EventOccurrence eo;
-    QMetaObject::invokeMethod(mCalendarWorker, "getNextOccurence", Qt::BlockingQueuedConnection,
+    QMetaObject::invokeMethod(mCalendarWorker, "getNextOccurrence", Qt::BlockingQueuedConnection,
                               Q_RETURN_ARG(NemoCalendarData::EventOccurrence, eo),
                               Q_ARG(QString, uid),
                               Q_ARG(QDateTime, start));
@@ -560,7 +560,7 @@ void NemoCalendarManager::dataLoadedSlot(QList<NemoCalendarData::Range> ranges,
                                            QStringList uidList,
                                            QHash<QString, NemoCalendarData::Event> events,
                                            QHash<QString, NemoCalendarData::EventOccurrence> occurrences,
-                                           QHash<QDate, QStringList> dailyOccurences,
+                                           QHash<QDate, QStringList> dailyOccurrences,
                                            bool reset)
 {
     QList<NemoCalendarData::Event> oldEvents;
@@ -579,7 +579,7 @@ void NemoCalendarManager::dataLoadedSlot(QList<NemoCalendarData::Range> ranges,
     mLoadedQueries.append(uidList);
     mEvents = mEvents.unite(events);
     mEventOccurrences = mEventOccurrences.unite(occurrences);
-    mEventOccurrenceForDates = mEventOccurrenceForDates.unite(dailyOccurences);
+    mEventOccurrenceForDates = mEventOccurrenceForDates.unite(dailyOccurrences);
     mLoadPending = false;
 
     foreach (const NemoCalendarData::Event &oldEvent, oldEvents)

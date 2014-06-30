@@ -169,7 +169,7 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
             mOccurrence = 0;
         }
         if (mEvent.isValid()) {
-            NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurence(mUid, mStartTime);
+            NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurrence(mUid, mStartTime);
             if (occurrence) {
                 mOccurrence = occurrence;
                 mOccurrence->setParent(this);

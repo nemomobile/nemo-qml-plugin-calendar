@@ -480,7 +480,7 @@ void NemoCalendarWorker::setNotebookColor(const QString &notebookUid, const QStr
 }
 
 QHash<QString, NemoCalendarData::EventOccurrence>
-NemoCalendarWorker::eventOccurences(const QList<NemoCalendarData::Range> &ranges) const
+NemoCalendarWorker::eventOccurrences(const QList<NemoCalendarData::Range> &ranges) const
 {
     mKCal::ExtendedCalendar::ExpandedIncidenceList events;
     foreach (NemoCalendarData::Range range, ranges) {
@@ -510,9 +510,10 @@ NemoCalendarWorker::eventOccurences(const QList<NemoCalendarData::Range> &ranges
     return filtered;
 }
 
-QHash<QDate, QStringList> NemoCalendarWorker::dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
-                                                                   const QStringList &allDay,
-                                                                   const QList<NemoCalendarData::EventOccurrence> &occurrences)
+QHash<QDate, QStringList>
+NemoCalendarWorker::dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
+                                          const QStringList &allDay,
+                                          const QList<NemoCalendarData::EventOccurrence> &occurrences)
 {
     QHash<QDate, QStringList> occurrenceHash;
     foreach (const NemoCalendarData::Range &range, ranges) {
@@ -569,10 +570,10 @@ void NemoCalendarWorker::loadData(const QList<NemoCalendarData::Range> &ranges,
         }
     }
 
-    QHash<QString, NemoCalendarData::EventOccurrence> occurrences = eventOccurences(ranges);
-    QHash<QDate, QStringList> dailyOccurences = dailyEventOccurrences(ranges, allDay, occurrences.values());
+    QHash<QString, NemoCalendarData::EventOccurrence> occurrences = eventOccurrences(ranges);
+    QHash<QDate, QStringList> dailyOccurrences = dailyEventOccurrences(ranges, allDay, occurrences.values());
 
-    emit dataLoaded(ranges, uidList, events, occurrences, dailyOccurences, reset);
+    emit dataLoaded(ranges, uidList, events, occurrences, dailyOccurrences, reset);
 }
 
 NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Event::Ptr &e) const
@@ -640,7 +641,7 @@ void NemoCalendarWorker::loadNotebooks()
 }
 
 
-NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurence(const QString &uid, const QDateTime &start) const
+NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurrence(const QString &uid, const QDateTime &start) const
 {
     KCalCore::Event::Ptr event = mCalendar->event(uid);
     NemoCalendarData::EventOccurrence occurrence;
