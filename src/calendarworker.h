@@ -58,7 +58,7 @@ public slots:
     void init();
     void save();
 
-    void saveEvent(const NemoCalendarData::Event &event, const QString &notebookUid);
+    void saveEvent(const NemoCalendarData::Event &event);
     void deleteEvent(const QString &uid, const QDateTime &dateTime);
     QString convertEventToVCalendar(const QString &uid, const QString &prodId) const;
 
@@ -71,7 +71,7 @@ public slots:
     void loadData(const QList<NemoCalendarData::Range> &ranges,
                     const QStringList &uidList, bool reset);
 
-    NemoCalendarData::EventOccurrence getNextOccurence(const QString &uid, const QDateTime &startTime) const;
+    NemoCalendarData::EventOccurrence getNextOccurrence(const QString &uid, const QDateTime &startTime) const;
     QList<NemoCalendarData::Attendee> getEventAttendees(const QString &uid);
 
 signals:
@@ -87,7 +87,7 @@ signals:
                       QStringList uidList,
                       QHash<QString, NemoCalendarData::Event> events,
                       QHash<QString, NemoCalendarData::EventOccurrence> occurrences,
-                      QHash<QDate, QStringList> dailyOccurences,
+                      QHash<QDate, QStringList> dailyOccurrences,
                       bool reset);
 
 private:
@@ -97,16 +97,15 @@ private:
 
     bool setRecurrence(KCalCore::Event::Ptr &event, NemoCalendarEvent::Recur recur);
     bool setReminder(KCalCore::Event::Ptr &event, NemoCalendarEvent::Reminder reminder);
-    bool setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions);
 
     NemoCalendarEvent::Recur convertRecurrence(const KCalCore::Event::Ptr &event) const;
     KCalCore::Duration reminderToDuration(NemoCalendarEvent::Reminder reminder) const;
     NemoCalendarEvent::Reminder getReminder(const KCalCore::Event::Ptr &event) const;
     NemoCalendarData::Event createEventStruct(const KCalCore::Event::Ptr &event) const;
-    QHash<QString, NemoCalendarData::EventOccurrence> eventOccurences(const QList<NemoCalendarData::Range> &ranges) const;
+    QHash<QString, NemoCalendarData::EventOccurrence> eventOccurrences(const QList<NemoCalendarData::Range> &ranges) const;
     QHash<QDate, QStringList> dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
-                                                   const QStringList &allDay,
-                                                   const QList<NemoCalendarData::EventOccurrence> &occurrences);
+                                                    const QStringList &allDay,
+                                                    const QList<NemoCalendarData::EventOccurrence> &occurrences);
 
     mKCal::ExtendedCalendar::Ptr mCalendar;
     mKCal::ExtendedStorage::Ptr mStorage;

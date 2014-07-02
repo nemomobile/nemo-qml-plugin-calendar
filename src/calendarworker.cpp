@@ -148,83 +148,61 @@ void NemoCalendarWorker::save()
     mStorage->save();
 }
 
-void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData, const QString &notebookUid)
+void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData)
 {
+    QString notebookUid = eventData.calendarUid;
+
     if (!notebookUid.isEmpty() && !mStorage->isValidNotebook(notebookUid))
         return;
 
-    KCalCore::Event::Ptr event = mCalendar->event(eventData.uniqueId);
-    bool changed = false;
-    if (!event) {
+    KCalCore::Event::Ptr event;
+    bool createNew = eventData.uniqueId.isEmpty();
+
+    if (createNew) {
         event = KCalCore::Event::Ptr(new KCalCore::Event);
-        event->setUid(eventData.uniqueId);
-        // Set event start & end dates as default ctor KDateTime gives false positives for ==
-        event->setDtEnd(eventData.endTime);
-        event->setDtStart(eventData.startTime);
+    } else {
+        event = mCalendar->event(eventData.uniqueId);
+
+        if (!event) {
+            // possibility that event was removed while changes were edited. options to either skip, as done now,
+            // or resurrect the event
+            qWarning("Event to be saved not found");
+            return;
+        }
+
+        if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
+            // mkcal does funny things when moving event between notebooks, work around by changing uid
+            KCalCore::Event::Ptr newEvent = KCalCore::Event::Ptr(event->clone());
+            newEvent->setUid(KCalCore::CalFormat::createUniqueId());
+            emit eventNotebookChanged(event->uid(), newEvent->uid(), notebookUid);
+            mCalendar->deleteEvent(event);
+            mCalendar->addEvent(newEvent, notebookUid);
+            event = newEvent;
+        } else {
+            event->setRevision(event->revision() + 1);
+        }
+    }
+
+    event->setAllDay(eventData.allDay);
+    event->setDescription(eventData.description);
+    event->setSummary(eventData.displayLabel);
+    event->setDtStart(eventData.startTime);
+    event->setDtEnd(eventData.endTime);
+    event->setLocation(eventData.location);
+    setReminder(event, eventData.reminder);
+    setRecurrence(event, eventData.recur);
+
+    if (eventData.recur != NemoCalendarEvent::RecurOnce)
+        event->recurrence()->setEndDate(eventData.recurEndDate);
+
+    if (createNew) {
         if (notebookUid.isEmpty())
             mCalendar->addEvent(event);
         else
             mCalendar->addEvent(event, notebookUid);
-
-        changed = true;
-    } else if (!notebookUid.isEmpty() && mCalendar->notebook(event) != notebookUid) {
-        // mkcal does funny things when moving event between notebooks, work around by changing uid
-        KCalCore::Event::Ptr newEvent = KCalCore::Event::Ptr(event->clone());
-        newEvent->setUid(KCalCore::CalFormat::createUniqueId());
-        emit eventNotebookChanged(event->uid(), newEvent->uid(), notebookUid);
-        mCalendar->deleteEvent(event);
-        mCalendar->addEvent(newEvent, notebookUid);
-        event = newEvent;
-        changed = true;
-    } else {
-        event->setRevision(event->revision() + 1);
     }
 
-    if (event->allDay() != eventData.allDay) {
-        event->setAllDay(eventData.allDay);
-        changed = true;
-    }
-    if (event->description() != eventData.description) {
-        event->setDescription(eventData.description);
-        changed = true;
-    }
-    if (event->summary() != eventData.displayLabel) {
-        event->setSummary(eventData.displayLabel);
-        changed = true;
-    }
-    if (event->dtEnd() != eventData.endTime) {
-        event->setDtEnd(eventData.endTime);
-        changed = true;
-    }
-    if (event->location() != eventData.location) {
-        event->setLocation(eventData.location);
-        changed = true;
-    }
-    if (event->isReadOnly() != eventData.readonly) {
-        event->setReadOnly(eventData.readonly);
-        changed = true;
-    }
-
-    changed = setRecurrence(event, eventData.recur) ? true : changed;
-
-    // setEndDate saves to default rule, but Recurrence::endDate() returns cumulative date
-    KCalCore::RecurrenceRule *defaultRule = event->recurrence()->defaultRRule();
-    if ((eventData.recurEndDate.isValid() && (!defaultRule || defaultRule->endDt().date() != eventData.recurEndDate))
-        || (!eventData.recurEndDate.isValid() && defaultRule && defaultRule->endDt().isValid())) {
-        event->recurrence()->setEndDate(eventData.recurEndDate);
-        changed = true;
-    }
-
-    changed = setExceptions(event, eventData.recurExceptionDates) ? true : changed;
-
-    changed = setReminder(event, eventData.reminder) ? true : changed;
-    if (event->dtStart() != eventData.startTime) {
-        event->setDtStart(eventData.startTime);
-        changed = true;
-    }
-
-    if (changed)
-        save();
+    save();
 }
 
 void NemoCalendarWorker::init()
@@ -406,22 +384,6 @@ bool NemoCalendarWorker::setReminder(KCalCore::Event::Ptr &event, NemoCalendarEv
     return true;
 }
 
-bool NemoCalendarWorker::setExceptions(KCalCore::Event::Ptr &event, const QList<KDateTime> &exceptions)
-{
-    if (!event || !event->recurs())
-        return false;
-
-    KCalCore::DateTimeList newList;
-    newList.append(exceptions);
-    newList.sortUnique();
-    KCalCore::DateTimeList oldList = event->recurrence()->exDateTimes();
-    if (newList == oldList)
-        return false;
-
-    event->recurrence()->setExDateTimes(newList);
-    return true;
-}
-
 QList<NemoCalendarData::Notebook> NemoCalendarWorker::notebooks() const
 {
     return mNotebooks.values();
@@ -517,7 +479,8 @@ void NemoCalendarWorker::setNotebookColor(const QString &notebookUid, const QStr
     }
 }
 
-QHash<QString, NemoCalendarData::EventOccurrence> NemoCalendarWorker::eventOccurences(const QList<NemoCalendarData::Range> &ranges) const
+QHash<QString, NemoCalendarData::EventOccurrence>
+NemoCalendarWorker::eventOccurrences(const QList<NemoCalendarData::Range> &ranges) const
 {
     mKCal::ExtendedCalendar::ExpandedIncidenceList events;
     foreach (NemoCalendarData::Range range, ranges) {
@@ -547,9 +510,10 @@ QHash<QString, NemoCalendarData::EventOccurrence> NemoCalendarWorker::eventOccur
     return filtered;
 }
 
-QHash<QDate, QStringList> NemoCalendarWorker::dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
-                                                                   const QStringList &allDay,
-                                                                   const QList<NemoCalendarData::EventOccurrence> &occurrences)
+QHash<QDate, QStringList>
+NemoCalendarWorker::dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
+                                          const QStringList &allDay,
+                                          const QList<NemoCalendarData::EventOccurrence> &occurrences)
 {
     QHash<QDate, QStringList> occurrenceHash;
     foreach (const NemoCalendarData::Range &range, ranges) {
@@ -606,10 +570,10 @@ void NemoCalendarWorker::loadData(const QList<NemoCalendarData::Range> &ranges,
         }
     }
 
-    QHash<QString, NemoCalendarData::EventOccurrence> occurrences = eventOccurences(ranges);
-    QHash<QDate, QStringList> dailyOccurences = dailyEventOccurrences(ranges, allDay, occurrences.values());
+    QHash<QString, NemoCalendarData::EventOccurrence> occurrences = eventOccurrences(ranges);
+    QHash<QDate, QStringList> dailyOccurrences = dailyEventOccurrences(ranges, allDay, occurrences.values());
 
-    emit dataLoaded(ranges, uidList, events, occurrences, dailyOccurences, reset);
+    emit dataLoaded(ranges, uidList, events, occurrences, dailyOccurrences, reset);
 }
 
 NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Event::Ptr &e) const
@@ -628,7 +592,6 @@ NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Ev
     if (defaultRule) {
         event.recurEndDate = defaultRule->endDt().date();
     }
-    event.recurExceptionDates = e->recurrence()->exDateTimes();
     event.reminder = getReminder(e);
     event.startTime = e->dtStart();
     return event;
@@ -678,7 +641,7 @@ void NemoCalendarWorker::loadNotebooks()
 }
 
 
-NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurence(const QString &uid, const QDateTime &start) const
+NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurrence(const QString &uid, const QDateTime &start) const
 {
     KCalCore::Event::Ptr event = mCalendar->event(uid);
     NemoCalendarData::EventOccurrence occurrence;

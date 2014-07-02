@@ -158,7 +158,6 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
         if (mEvent.allDay != event.allDay
                 || mEvent.endTime != event.endTime
                 || mEvent.recur != event.recur
-                || mEvent.recurExceptionDates != event.recurExceptionDates
                 || mEvent.startTime != event.startTime) {
             updateOccurrence = true;
         }
@@ -170,7 +169,7 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
             mOccurrence = 0;
         }
         if (mEvent.isValid()) {
-            NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurence(mUid, mStartTime);
+            NemoCalendarEventOccurrence *occurrence = NemoCalendarManager::instance()->getNextOccurrence(mUid, mStartTime);
             if (occurrence) {
                 mOccurrence = occurrence;
                 mOccurrence->setParent(this);

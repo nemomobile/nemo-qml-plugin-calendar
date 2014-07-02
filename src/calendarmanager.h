@@ -38,6 +38,9 @@
 #include <QThread>
 #include <QTimer>
 
+// KCalCore
+#include <KDateTime>
+
 #include "calendardata.h"
 #include "calendarevent.h"
 
@@ -57,8 +60,8 @@ public:
     ~NemoCalendarManager();
 
     NemoCalendarEvent* eventObject(const QString &eventUid);
-    NemoCalendarEvent* createEvent(); // Synchronous DB thread access
-    void saveEvent(const QString &uid, const QString &calendarUid);
+
+    void saveModification(NemoCalendarData::Event eventData);
     void deleteEvent(const QString &uid, const QDateTime &dateTime = QDateTime());
     void save();
 
@@ -67,17 +70,6 @@ public:
 
     // Event
     NemoCalendarData::Event getEvent(const QString& uid);
-
-    void setAllDay(const QString &uid, bool allDay);
-    void setDescription(const QString &uid, const QString &description);
-    void setDisplayLabel(const QString &uid, const QString &displayLabel);
-    void setEndTime(const QString &uid, const KDateTime &endTime);
-    void setExceptions(const QString &uid, QList<KDateTime> exceptions);
-    void setLocation(const QString &uid, const QString &location);
-    void setStartTime(const QString &uid, const KDateTime &startTime);
-    void setRecurrence(const QString &uid, NemoCalendarEvent::Recur recur);
-    void setReminder(const QString &uid, NemoCalendarEvent::Reminder reminder);
-    void setRecurEndDate(const QString &uid, const QDate &endDate);
 
     // Notebooks
     QList<NemoCalendarData::Notebook> notebooks();
@@ -100,7 +92,7 @@ public:
 
     // Caller gets ownership of returned NemoCalendarEventOccurrence object
     // Does synchronous DB thread access - no DB operations, though, fast when no ongoing DB ops
-    NemoCalendarEventOccurrence* getNextOccurence(const QString &uid, const QDateTime &start);
+    NemoCalendarEventOccurrence* getNextOccurrence(const QString &uid, const QDateTime &start);
     // return attendees for given event, synchronous call
     QList<NemoCalendarData::Attendee> getEventAttendees(const QString &uid);
 
@@ -116,7 +108,7 @@ private slots:
                           QStringList uidList,
                           QHash<QString, NemoCalendarData::Event> events,
                           QHash<QString, NemoCalendarData::EventOccurrence> occurrences,
-                          QHash<QDate, QStringList> dailyOccurences,
+                          QHash<QDate, QStringList> dailyOccurrences,
                           bool reset);
     void timeout();
 
@@ -144,7 +136,6 @@ private:
     QThread mWorkerThread;
     NemoCalendarWorker *mCalendarWorker;
     QHash<QString, NemoCalendarData::Event> mEvents;
-    QHash<QString, NemoCalendarData::Event> mModifiedEvents;
     QHash<QString, NemoCalendarEvent *> mEventObjects;
     QHash<QString, NemoCalendarData::EventOccurrence> mEventOccurrences;
     QHash<QDate, QStringList> mEventOccurrenceForDates;

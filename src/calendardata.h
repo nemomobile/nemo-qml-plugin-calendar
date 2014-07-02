@@ -5,6 +5,7 @@
 
 // KCalCore
 #include <attendee.h>
+#include <KDateTime>
 
 #include "calendarevent.h"
 
@@ -29,7 +30,6 @@ struct Event {
     KDateTime endTime;
     bool allDay;
     NemoCalendarEvent::Recur recur;
-    QList<KDateTime> recurExceptionDates;
     QDate recurEndDate;
     NemoCalendarEvent::Reminder reminder;
     QString uniqueId;

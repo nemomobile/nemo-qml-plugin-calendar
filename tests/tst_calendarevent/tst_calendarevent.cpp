@@ -16,16 +16,13 @@ class tst_CalendarEvent : public QObject
 
 private slots:
     void initTestCase();
-    void initialValues();
-    void setters();
-    void testSignals();
-    void recurExceptions();
+    void modSetters();
     void testSave();
     void cleanupTestCase();
 
 private:
     QQmlEngine *engine;
-    QList <NemoCalendarEvent *> mSavedEvents;
+    QStringList mSavedEvents;
 };
 
 void tst_CalendarEvent::initTestCase()
@@ -36,238 +33,110 @@ void tst_CalendarEvent::initTestCase()
     plugin->initializeEngine(engine, "foobar");
 }
 
-void tst_CalendarEvent::initialValues()
+void tst_CalendarEvent::modSetters()
 {
     NemoCalendarApi calendarApi(this);
-    NemoCalendarEvent *event = calendarApi.createEvent();
-    QVERIFY(event != 0);
+    NemoCalendarEventModification *eventMod = calendarApi.createNewEvent();
+    QVERIFY(eventMod != 0);
 
-    // Check default values
-    QVERIFY(!event->uniqueId().isEmpty());
-    QVERIFY(!event->allDay());
-    QVERIFY(event->calendarUid().isEmpty());
-    QVERIFY(event->color() == "");
-    QVERIFY(event->description().isEmpty());
-    QVERIFY(event->displayLabel().isEmpty());
-    QVERIFY(event->location().isEmpty());
-    QVERIFY(!event->endTime().isValid());
-    QVERIFY(!event->readonly());
-    QVERIFY(event->recur() == NemoCalendarEvent::RecurOnce);
-    QVERIFY(!event->recurEndDate().isValid());
-    QVERIFY(event->recurExceptions() == 0);
-    QVERIFY(event->reminder() == NemoCalendarEvent::ReminderNone);
-    QVERIFY(!event->startTime().isValid());
-}
-
-void tst_CalendarEvent::setters()
-{
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEvent *event = calendarApi.createEvent();
-    QVERIFY(event != 0);
-
-    QSignalSpy allDaySpy(event, SIGNAL(allDayChanged()));
-    bool allDay = !event->allDay();
-    event->setAllDay(allDay);
+    QSignalSpy allDaySpy(eventMod, SIGNAL(allDayChanged()));
+    bool allDay = !eventMod->allDay();
+    eventMod->setAllDay(allDay);
     QCOMPARE(allDaySpy.count(), 1);
-    QCOMPARE(event->allDay(), allDay);
+    QCOMPARE(eventMod->allDay(), allDay);
 
-    QSignalSpy descriptionSpy(event, SIGNAL(descriptionChanged()));
+    QSignalSpy descriptionSpy(eventMod, SIGNAL(descriptionChanged()));
     QLatin1String description("Test event");
-    event->setDescription(description);
+    eventMod->setDescription(description);
     QCOMPARE(descriptionSpy.count(), 1);
-    QCOMPARE(event->description(), description);
+    QCOMPARE(eventMod->description(), description);
 
-    QSignalSpy displayLabelSpy(event, SIGNAL(displayLabelChanged()));
+    QSignalSpy displayLabelSpy(eventMod, SIGNAL(displayLabelChanged()));
     QLatin1String displayLabel("Test display label");
-    event->setDisplayLabel(displayLabel);
+    eventMod->setDisplayLabel(displayLabel);
     QCOMPARE(displayLabelSpy.count(), 1);
-    QCOMPARE(event->displayLabel(), displayLabel);
+    QCOMPARE(eventMod->displayLabel(), displayLabel);
 
-    QSignalSpy locationSpy(event, SIGNAL(locationChanged()));
+    QSignalSpy locationSpy(eventMod, SIGNAL(locationChanged()));
     QLatin1String location("Test location");
-    event->setLocation(location);
+    eventMod->setLocation(location);
     QCOMPARE(locationSpy.count(), 1);
-    QCOMPARE(event->location(), location);
+    QCOMPARE(eventMod->location(), location);
 
-    QSignalSpy endTimeSpy(event, SIGNAL(endTimeChanged()));
+    QSignalSpy endTimeSpy(eventMod, SIGNAL(endTimeChanged()));
     QDateTime endTime = QDateTime::currentDateTime();
-    event->setEndTime(endTime, NemoCalendarEvent::SpecLocalZone);
+    eventMod->setEndTime(endTime, NemoCalendarEvent::SpecLocalZone);
     QCOMPARE(endTimeSpy.count(), 1);
-    QCOMPARE(event->endTime(), endTime);
+    QCOMPARE(eventMod->endTime(), endTime);
 
-    QSignalSpy recurSpy(event, SIGNAL(recurChanged()));
+    QSignalSpy recurSpy(eventMod, SIGNAL(recurChanged()));
     NemoCalendarEvent::Recur recur = NemoCalendarEvent::RecurDaily; // Default value is RecurOnce
-    event->setRecur(recur);
+    eventMod->setRecur(recur);
     QCOMPARE(recurSpy.count(), 1);
-    QCOMPARE(event->recur(), recur);
+    QCOMPARE(eventMod->recur(), recur);
 
-    QSignalSpy recurEndSpy(event, SIGNAL(recurEndDateChanged()));
+    QSignalSpy recurEndSpy(eventMod, SIGNAL(recurEndDateChanged()));
     QDateTime recurEnd = QDateTime::currentDateTime().addDays(100);
-    event->setRecurEndDate(recurEnd);
+    eventMod->setRecurEndDate(recurEnd);
     QCOMPARE(recurEndSpy.count(), 1);
-    QCOMPARE(event->recurEndDate(), QDateTime(recurEnd.date())); // day precision
+    QCOMPARE(eventMod->recurEndDate(), QDateTime(recurEnd.date())); // day precision
 
-    QSignalSpy reminderSpy(event, SIGNAL(reminderChanged()));
+    QSignalSpy reminderSpy(eventMod, SIGNAL(reminderChanged()));
     NemoCalendarEvent::Reminder reminder = NemoCalendarEvent::ReminderTime; // default is ReminderNone
-    event->setReminder(reminder);
+    eventMod->setReminder(reminder);
     QCOMPARE(reminderSpy.count(), 1);
-    QCOMPARE(event->reminder(), reminder);
+    QCOMPARE(eventMod->reminder(), reminder);
 
-    QSignalSpy startTimeSpy(event, SIGNAL(startTimeChanged()));
+    QSignalSpy startTimeSpy(eventMod, SIGNAL(startTimeChanged()));
     QDateTime startTime = QDateTime::currentDateTime();
-    event->setStartTime(startTime, NemoCalendarEvent::SpecLocalZone);
+    eventMod->setStartTime(startTime, NemoCalendarEvent::SpecLocalZone);
     QCOMPARE(startTimeSpy.count(), 1);
-    QCOMPARE(event->startTime(), startTime);
-}
+    QCOMPARE(eventMod->startTime(), startTime);
 
-// Check that changes in one NemoCalendarEvent instance is reflected in other instances
-void tst_CalendarEvent::testSignals()
-{
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEvent *eventA = calendarApi.createEvent();
-    QVERIFY(eventA != 0);
-
-    NemoCalendarEventQuery query;
-    query.setUniqueId(eventA->uniqueId());
-    for (int i = 0; i < 30; i++) {
-        if (query.event())
-            break;
-
-        QTest::qWait(100);
-    }
-    NemoCalendarEvent *eventB = (NemoCalendarEvent*) query.event();
-    QVERIFY(eventB != 0);
-
-    QSignalSpy labelSpyA(eventA, SIGNAL(displayLabelChanged()));
-    QSignalSpy labelSpyB(eventB, SIGNAL(displayLabelChanged()));
-    QLatin1String label("event display label");
-
-    eventA->setDisplayLabel(label);
-    QCOMPARE(labelSpyA.count(), 1);
-    QCOMPARE(labelSpyB.count(), 1);
-    QCOMPARE(eventA->displayLabel(), label);
-    QCOMPARE(eventB->displayLabel(), label);
-
-    eventA->setDisplayLabel(label);
-    QCOMPARE(labelSpyA.count(), 1);
-    QCOMPARE(labelSpyB.count(), 1);
-    QCOMPARE(eventA->displayLabel(), label);
-    QCOMPARE(eventB->displayLabel(), label);
-
-    label = QLatin1String("another event label");
-    eventA->setDisplayLabel(label);
-    QCOMPARE(labelSpyA.count(), 2);
-    QCOMPARE(labelSpyB.count(), 2);
-    QCOMPARE(eventA->displayLabel(), label);
-    QCOMPARE(eventB->displayLabel(), label);
-
-    label = QLatin1String("yet another event label");
-    eventB->setDisplayLabel(label);
-    QCOMPARE(labelSpyA.count(), 3);
-    QCOMPARE(labelSpyB.count(), 3);
-    QCOMPARE(eventA->displayLabel(), label);
-    QCOMPARE(eventB->displayLabel(), label);
-}
-
-void tst_CalendarEvent::recurExceptions()
-{
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEvent *event = calendarApi.createEvent();
-    QVERIFY(event != 0);
-
-    event->setStartTime(QDateTime::currentDateTime(), NemoCalendarEvent::SpecLocalZone);
-    event->setEndTime(QDateTime::currentDateTime().addSecs(3600), NemoCalendarEvent::SpecLocalZone);
-    QCOMPARE(event->recurExceptions(), 0);
-    QCOMPARE(event->recur(), NemoCalendarEvent::RecurOnce);
-    QSignalSpy recurExceptionSpy(event, SIGNAL(recurExceptionsChanged()));
-
-    // Add invalid recur exception date to a non-recurring event, nothing should happen
-    event->addException(QDateTime());
-    QCOMPARE(recurExceptionSpy.count(), 0);
-
-    // Add valid recur exception date to a non-recurring event, nothing should happen
-    event->addException(event->startTime().addDays(1));
-    QCOMPARE(recurExceptionSpy.count(), 0);
-
-    event->setRecur(NemoCalendarEvent::RecurDaily);
-    // Add invalid recur exception date to a recurring event, nothing should happen
-    event->addException(QDateTime());
-    QCOMPARE(recurExceptionSpy.count(), 0);
-
-    // Add valid recur exception date to a recurring event
-    QDateTime exceptionDateTimeA = event->startTime().addDays(1);
-    event->addException(exceptionDateTimeA);
-    QCOMPARE(recurExceptionSpy.count(), 1);
-    QCOMPARE(event->recurExceptions(), 1);
-    QCOMPARE(event->recurException(0), exceptionDateTimeA);
-
-    // Add a second recur exception
-    QDateTime exceptionDateTimeB = event->startTime().addDays(2);
-    event->addException(exceptionDateTimeB);
-    QCOMPARE(recurExceptionSpy.count(), 2);
-    QCOMPARE(event->recurExceptions(), 2);
-    QCOMPARE(event->recurException(0), exceptionDateTimeA);
-    QCOMPARE(event->recurException(1), exceptionDateTimeB);
-
-    // Request non-valid recurException, valid index are 0,1.
-    QVERIFY(!event->recurException(-1).isValid());
-    QVERIFY(!event->recurException(17).isValid());
-
-    // Remove invalid recur exception, valid index are 0,1.
-    event->removeException(-7);
-    QCOMPARE(event->recurExceptions(), 2);
-    QCOMPARE(recurExceptionSpy.count(), 2);
-    event->removeException(4);
-    QCOMPARE(event->recurExceptions(), 2);
-    QCOMPARE(recurExceptionSpy.count(), 2);
-
-    // Remove valid recur exception
-    event->removeException(0);
-    QCOMPARE(recurExceptionSpy.count(), 3);
-    QCOMPARE(event->recurException(0), exceptionDateTimeB);
+    delete eventMod;
 }
 
 void tst_CalendarEvent::testSave()
 {
     NemoCalendarApi calendarApi(this);
-    NemoCalendarEvent *event = calendarApi.createEvent();
-    QVERIFY(event != 0);
+    NemoCalendarEventModification *eventMod = calendarApi.createNewEvent();
+    QVERIFY(eventMod != 0);
 
     bool allDay = false;
-    event->setAllDay(allDay);
-    QCOMPARE(event->allDay(), allDay);
+    eventMod->setAllDay(allDay);
+    QCOMPARE(eventMod->allDay(), allDay);
 
     QLatin1String description("Test event");
-    event->setDescription(description);
-    QCOMPARE(event->description(), description);
+    eventMod->setDescription(description);
+    QCOMPARE(eventMod->description(), description);
 
     QLatin1String displayLabel("Test display label");
-    event->setDisplayLabel(displayLabel);
-    QCOMPARE(event->displayLabel(), displayLabel);
+    eventMod->setDisplayLabel(displayLabel);
+    QCOMPARE(eventMod->displayLabel(), displayLabel);
 
     QLatin1String location("Test location");
-    event->setLocation(location);
-    QCOMPARE(event->location(), location);
+    eventMod->setLocation(location);
+    QCOMPARE(eventMod->location(), location);
 
     QDateTime endTime = QDateTime::currentDateTime();
-    event->setEndTime(endTime, NemoCalendarEvent::SpecLocalZone);
-    QCOMPARE(event->endTime(), endTime);
+    eventMod->setEndTime(endTime, NemoCalendarEvent::SpecLocalZone);
+    QCOMPARE(eventMod->endTime(), endTime);
 
     NemoCalendarEvent::Recur recur = NemoCalendarEvent::RecurDaily;
-    event->setRecur(recur);
-    QCOMPARE(event->recur(), recur);
+    eventMod->setRecur(recur);
+    QCOMPARE(eventMod->recur(), recur);
 
     QDateTime recurEnd = endTime.addDays(100);
-    event->setRecurEndDate(recurEnd);
-    QCOMPARE(event->recurEndDate(), QDateTime(recurEnd.date()));
+    eventMod->setRecurEndDate(recurEnd);
+    QCOMPARE(eventMod->recurEndDate(), QDateTime(recurEnd.date()));
 
     NemoCalendarEvent::Reminder reminder = NemoCalendarEvent::ReminderTime;
-    event->setReminder(reminder);
-    QCOMPARE(event->reminder(), reminder);
+    eventMod->setReminder(reminder);
+    QCOMPARE(eventMod->reminder(), reminder);
 
     QDateTime startTime = QDateTime::currentDateTime();
-    event->setStartTime(startTime, NemoCalendarEvent::SpecLocalZone);
-    QCOMPARE(event->startTime(), startTime);
+    eventMod->setStartTime(startTime, NemoCalendarEvent::SpecLocalZone);
+    QCOMPARE(eventMod->startTime(), startTime);
 
     NemoCalendarAgendaModel agendaModel;
     agendaModel.setStartDate(startTime.date());
@@ -279,8 +148,7 @@ void tst_CalendarEvent::testSave()
     int count = agendaModel.count();
     QSignalSpy countSpy(&agendaModel, SIGNAL(countChanged()));
     QCOMPARE(countSpy.count(), 0);
-    event->save();
-    mSavedEvents.append(event);
+    eventMod->save();
     for (int i = 0; i < 30; i++) {
         if (agendaModel.count() > count)
             break;
@@ -291,8 +159,21 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(agendaModel.count(), count + 1);
     QVERIFY(countSpy.count() > 0);
 
+    QString uid;
+    for (int i = 0; i < agendaModel.count(); ++i) {
+        QVariant eventVariant = agendaModel.get(i, NemoCalendarAgendaModel::EventObjectRole);
+        NemoCalendarEvent *modelEvent = qvariant_cast<NemoCalendarEvent*>(eventVariant);
+        // assume no left-over events with same description
+        if (modelEvent && modelEvent->description() == description) {
+            uid = modelEvent->uniqueId();
+            break;
+        }
+    }
+    QVERIFY(!uid.isEmpty());
+    mSavedEvents.append(uid);
     NemoCalendarEventQuery query;
-    query.setUniqueId(event->uniqueId());
+    query.setUniqueId(uid);
+
     for (int i = 0; i < 30; i++) {
         if (query.event())
             break;
@@ -315,17 +196,19 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(eventB->recurEndDate(), QDateTime(recurEnd.date()));
     QCOMPARE(eventB->reminder(), reminder);
 
-    calendarApi.remove(event->uniqueId());
+    calendarApi.remove(uid);
+
+    delete eventMod;
 }
 
 void tst_CalendarEvent::cleanupTestCase()
 {
     NemoCalendarApi calendarApi(this);
-    foreach (NemoCalendarEvent *event, mSavedEvents) {
-        if (event) {
-            calendarApi.remove(event->uniqueId());
-            QTest::qWait(1000);
-        }
+    foreach (const QString &uid, mSavedEvents) {
+        calendarApi.remove(uid);
+        // make sure worker thread has time to complete removal before being destroyed.
+        // TODO: finish method invocation queue before quitting?
+        QTest::qWait(1000);
     }
 }
 
