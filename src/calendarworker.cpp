@@ -192,8 +192,14 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData)
     setReminder(event, eventData.reminder);
     setRecurrence(event, eventData.recur);
 
-    if (eventData.recur != NemoCalendarEvent::RecurOnce)
+    if (eventData.recur != NemoCalendarEvent::RecurOnce) {
         event->recurrence()->setEndDate(eventData.recurEndDate);
+        if (!eventData.recurEndDate.isValid()) {
+            // Recurrence/RecurrenceRule don't have separate method to clear the end date, and currently
+            // setting invalid date doesn't make the duration() indicate recurring infinitely.
+            event->recurrence()->setDuration(-1);
+        }
+    }
 
     if (createNew) {
         if (notebookUid.isEmpty())
