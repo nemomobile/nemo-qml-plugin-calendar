@@ -54,7 +54,8 @@ NemoCalendarEventModification *NemoCalendarApi::createNewEvent()
 NemoCalendarEventModification * NemoCalendarApi::createModification(NemoCalendarEvent *sourceEvent)
 {
     if (sourceEvent) {
-        NemoCalendarData::Event data = NemoCalendarManager::instance()->getEvent(sourceEvent->uniqueId());
+        NemoCalendarData::Event data = NemoCalendarManager::instance()->getEvent(sourceEvent->uniqueId(),
+                                                                                 sourceEvent->recurrenceId());
         return new NemoCalendarEventModification(data);
     } else {
         qWarning("Null event passed to Calendar.getModification(). Returning new event.");
@@ -62,19 +63,18 @@ NemoCalendarEventModification * NemoCalendarApi::createModification(NemoCalendar
     }
 }
 
-void NemoCalendarApi::remove(const QString &uid)
+void NemoCalendarApi::remove(const QString &uid, const QString &recurrenceId, const QDateTime &time)
 {
-    NemoCalendarManager::instance()->deleteEvent(uid);
+    KDateTime recurrenceTime = KDateTime::fromString(recurrenceId);
+    NemoCalendarManager::instance()->deleteEvent(uid, recurrenceTime, time);
 
     // TODO: this sucks
     NemoCalendarManager::instance()->save();
 }
 
-void NemoCalendarApi::remove(const QString &uid, const QDateTime &time)
+void NemoCalendarApi::removeAll(const QString &uid)
 {
-    NemoCalendarManager::instance()->deleteEvent(uid, time);
-
-    // TODO: this sucks
+    NemoCalendarManager::instance()->deleteAll(uid);
     NemoCalendarManager::instance()->save();
 }
 

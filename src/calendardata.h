@@ -13,6 +13,7 @@ namespace NemoCalendarData {
 
 struct EventOccurrence {
     QString eventUid;
+    KDateTime recurrenceId;
     QDateTime startTime;
     QDateTime endTime;
 
@@ -33,6 +34,7 @@ struct Event {
     QDate recurEndDate;
     NemoCalendarEvent::Reminder reminder;
     QString uniqueId;
+    KDateTime recurrenceId;
     bool readonly;
     QString location;
     QString calendarUid;

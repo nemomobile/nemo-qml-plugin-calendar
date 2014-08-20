@@ -36,6 +36,8 @@
 #include <QObject>
 #include <QDateTime>
 
+#include <KDateTime>
+
 class NemoCalendarManager;
 
 class NemoCalendarEvent : public QObject
@@ -55,6 +57,7 @@ class NemoCalendarEvent : public QObject
     Q_PROPERTY(bool hasRecurEndDate READ hasRecurEndDate NOTIFY hasRecurEndDateChanged)
     Q_PROPERTY(Reminder reminder READ reminder NOTIFY reminderChanged)
     Q_PROPERTY(QString uniqueId READ uniqueId NOTIFY uniqueIdChanged)
+    Q_PROPERTY(QString recurrenceId READ recurrenceIdString CONSTANT)
     Q_PROPERTY(QString color READ color NOTIFY colorChanged)
     Q_PROPERTY(bool readonly READ readonly CONSTANT)
     Q_PROPERTY(QString calendarUid READ calendarUid NOTIFY calendarUidChanged)
@@ -88,7 +91,7 @@ public:
         SpecClockTime
     };
 
-    NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid);
+    NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, const KDateTime &recurrenceId);
     ~NemoCalendarEvent();
 
     QString displayLabel() const;
@@ -105,6 +108,8 @@ public:
     bool readonly() const;
     QString calendarUid() const;
     QString location() const;
+    KDateTime recurrenceId() const;
+    QString recurrenceIdString() const;
 
     Q_INVOKABLE QString vCalendar(const QString &prodId = QString()) const;
 
@@ -130,6 +135,7 @@ signals:
 private:
     NemoCalendarManager *mManager;
     QString mUniqueId;
+    KDateTime mRecurrenceId;
 };
 
 #endif // CALENDAREVENT_H

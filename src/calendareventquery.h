@@ -37,6 +37,8 @@
 #include <QDateTime>
 #include <QQmlParserStatus>
 
+#include <KDateTime>
+
 #include "calendardata.h"
 
 class NemoCalendarEventOccurrence;
@@ -81,6 +83,7 @@ class NemoCalendarEventQuery : public QObject, public QQmlParserStatus
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(QString uniqueId READ uniqueId WRITE setUniqueId NOTIFY uniqueIdChanged)
+    Q_PROPERTY(QString recurrenceId READ recurrenceIdString WRITE setRecurrenceIdString NOTIFY recurrenceIdStringChanged)
     Q_PROPERTY(QDateTime startTime READ startTime WRITE setStartTime RESET resetStartTime NOTIFY startTimeChanged)
     Q_PROPERTY(QObject *event READ event NOTIFY eventChanged)
     Q_PROPERTY(QObject *occurrence READ occurrence NOTIFY occurrenceChanged)
@@ -92,6 +95,10 @@ public:
 
     QString uniqueId() const;
     void setUniqueId(const QString &);
+
+    QString recurrenceIdString();
+    void setRecurrenceIdString(const QString &recurrenceId);
+    KDateTime recurrenceId();
 
     QDateTime startTime() const;
     void setStartTime(const QDateTime &);
@@ -109,6 +116,7 @@ public:
 
 signals:
     void uniqueIdChanged();
+    void recurrenceIdStringChanged();
     void eventChanged();
     void occurrenceChanged();
     void attendeesChanged();
@@ -126,6 +134,7 @@ private slots:
 private:
     bool mIsComplete;
     QString mUid;
+    KDateTime mRecurrenceId;
     QDateTime mStartTime;
     NemoCalendarData::Event mEvent;
     NemoCalendarEventOccurrence *mOccurrence;

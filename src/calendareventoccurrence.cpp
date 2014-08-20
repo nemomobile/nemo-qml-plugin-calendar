@@ -36,10 +36,11 @@
 #include "calendarmanager.h"
 
 NemoCalendarEventOccurrence::NemoCalendarEventOccurrence(const QString &eventUid,
+                                                         const KDateTime &recurrenceId,
                                                          const QDateTime &startTime,
                                                          const QDateTime &endTime,
                                                          QObject *parent)
-    : QObject(parent), mEventUid(eventUid), mStartTime(startTime), mEndTime(endTime)
+    : QObject(parent), mEventUid(eventUid), mRecurrenceId(recurrenceId), mStartTime(startTime), mEndTime(endTime)
 {
     connect(NemoCalendarManager::instance(), SIGNAL(eventUidChanged(QString,QString)),
             this, SLOT(eventUidChanged(QString,QString)));
@@ -61,15 +62,7 @@ QDateTime NemoCalendarEventOccurrence::endTime() const
 
 NemoCalendarEvent *NemoCalendarEventOccurrence::eventObject() const
 {
-    return NemoCalendarManager::instance()->eventObject(mEventUid);
-}
-
-// Removes just this occurrence of the event.  If this is a recurring event, it adds an exception for
-// this instance
-void NemoCalendarEventOccurrence::remove()
-{
-    NemoCalendarManager::instance()->deleteEvent(mEventUid, mStartTime);
-    NemoCalendarManager::instance()->save();
+    return NemoCalendarManager::instance()->eventObject(mEventUid, mRecurrenceId);
 }
 
 void NemoCalendarEventOccurrence::eventUidChanged(QString oldUid, QString newUid)

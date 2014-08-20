@@ -36,6 +36,8 @@
 #include <QObject>
 #include <QDateTime>
 
+#include <KDateTime>
+
 class NemoCalendarEvent;
 
 class NemoCalendarEventOccurrence : public QObject
@@ -47,6 +49,7 @@ class NemoCalendarEventOccurrence : public QObject
 
 public:
     NemoCalendarEventOccurrence(const QString &eventUid,
+                                const KDateTime &recurrenceId,
                                 const QDateTime &startTime,
                                 const QDateTime &endTime,
                                 QObject *parent = 0);
@@ -55,13 +58,13 @@ public:
     QDateTime startTime() const;
     QDateTime endTime() const;
     NemoCalendarEvent *eventObject() const;
-    Q_INVOKABLE void remove();
 
 private slots:
     void eventUidChanged(QString oldUid, QString newUid);
 
 private:
     QString mEventUid;
+    KDateTime mRecurrenceId;
     QDateTime mStartTime;
     QDateTime mEndTime;
 };
