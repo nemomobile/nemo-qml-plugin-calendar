@@ -171,7 +171,7 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData)
     if (createNew) {
         event = KCalCore::Event::Ptr(new KCalCore::Event);
     } else {
-        event = mCalendar->event(eventData.uniqueId);
+        event = mCalendar->event(eventData.uniqueId, eventData.recurrenceId);
 
         if (!event) {
             // possibility that event was removed while changes were edited. options to either skip, as done now,
