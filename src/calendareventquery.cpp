@@ -172,9 +172,11 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
         return;
 
     bool updateOccurrence = false;
+    bool signalEventChanged = false;
+
     if (event.uniqueId != mEvent.uniqueId) {
         mEvent = event;
-        emit eventChanged();
+        signalEventChanged = true;
         updateOccurrence = true;
     } else if (mEvent.isValid()) { // The event may have changed even if the pointer did not
         if (mEvent.allDay != event.allDay
@@ -201,6 +203,9 @@ void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
         }
         emit occurrenceChanged();
     }
+
+    if (signalEventChanged)
+        emit eventChanged();
 
     // always emit also attendee change signal
     mAttendees.clear();
