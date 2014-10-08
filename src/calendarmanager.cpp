@@ -147,7 +147,7 @@ NemoCalendarEvent* NemoCalendarManager::eventObject(const QString &eventUid, con
     }
 
     // TODO: maybe attempt to read event from DB? This situation should not happen.
-    qWarning() << Q_FUNC_INFO << "No event with uid" << eventUid << ", returning empty event";
+    qWarning() << Q_FUNC_INFO << "No event with uid" << eventUid << recurrenceId.toString() << ", returning empty event";
 
     return new NemoCalendarEvent(this, "", KDateTime());
 }
@@ -636,7 +636,7 @@ NemoCalendarEventOccurrence* NemoCalendarManager::getNextOccurrence(const QStrin
                               Q_ARG(QDateTime, start));
 
     if (!eo.startTime.isValid()) {
-        qWarning() << Q_FUNC_INFO << "Unable to find occurrence for event" << uid;
+        qWarning() << Q_FUNC_INFO << "Unable to find occurrence for event" << uid << recurrenceId.toString();
         return new NemoCalendarEventOccurrence(QString(), KDateTime(), QDateTime(), QDateTime());
     }
 
