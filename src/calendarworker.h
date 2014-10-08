@@ -93,6 +93,9 @@ signals:
                       QHash<QDate, QStringList> dailyOccurrences,
                       bool reset);
 
+    void occurrenceExceptionFailed(NemoCalendarData::Event eventData, QDateTime startTime);
+    void occurrenceExceptionCreated(NemoCalendarData::Event eventData, QDateTime startTime, KDateTime newRecurrenceId);
+
 private:
     void setEventData(KCalCore::Event::Ptr &event, const NemoCalendarData::Event &eventData);
     void loadNotebooks();

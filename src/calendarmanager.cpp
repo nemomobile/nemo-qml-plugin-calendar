@@ -39,6 +39,7 @@
 #include "calendaragendamodel.h"
 #include "calendareventoccurrence.h"
 #include "calendareventquery.h"
+#include "calendarchangeinformation.h"
 
 // kCalCore
 #include <calformat.h>
@@ -77,6 +78,10 @@ NemoCalendarManager::NemoCalendarManager() :
     connect(mCalendarWorker, SIGNAL(dataLoaded(QList<NemoCalendarData::Range>,QStringList,QMultiHash<QString,NemoCalendarData::Event>,QHash<QString,NemoCalendarData::EventOccurrence>,QHash<QDate,QStringList>,bool)),
             this, SLOT(dataLoadedSlot(QList<NemoCalendarData::Range>,QStringList,QMultiHash<QString,NemoCalendarData::Event>,QHash<QString,NemoCalendarData::EventOccurrence>,QHash<QDate,QStringList>,bool)));
 
+    connect(mCalendarWorker, SIGNAL(occurrenceExceptionFailed(NemoCalendarData::Event,QDateTime)),
+            this, SLOT(occurrenceExceptionFailedSlot(NemoCalendarData::Event,QDateTime)));
+    connect(mCalendarWorker, SIGNAL(occurrenceExceptionCreated(NemoCalendarData::Event,QDateTime,KDateTime)),
+            this, SLOT(occurrenceExceptionCreatedSlot(NemoCalendarData::Event,QDateTime,KDateTime)));
 
     mWorkerThread.setObjectName("calendarworker");
     mWorkerThread.start();
@@ -153,16 +158,29 @@ void NemoCalendarManager::saveModification(NemoCalendarData::Event eventData)
                               Q_ARG(NemoCalendarData::Event, eventData));
 }
 
-void NemoCalendarManager::replaceOccurrence(NemoCalendarData::Event eventData, NemoCalendarEventOccurrence *occurrence)
+// caller owns returned object
+NemoCalendarChangeInformation *
+NemoCalendarManager::replaceOccurrence(NemoCalendarData::Event eventData, NemoCalendarEventOccurrence *occurrence)
 {
     if (!occurrence) {
         qWarning() << Q_FUNC_INFO << "no occurrence given";
-        return;
+        return 0;
     }
+
+    if (eventData.uniqueId.isEmpty()) {
+        qWarning("NemocalendarManager::replaceOccurrence() - empty uid given");
+        return 0;
+    }
+
+    // save request information for signal handling
+    NemoCalendarChangeInformation *changes = new NemoCalendarChangeInformation;
+    OccurrenceData changeData = { eventData, occurrence->startTime(), changes };
+    mPendingOccurrenceExceptions.append(changeData);
 
     QMetaObject::invokeMethod(mCalendarWorker, "replaceOccurrence", Qt::QueuedConnection,
                               Q_ARG(NemoCalendarData::Event, eventData),
                               Q_ARG(QDateTime, occurrence->startTime()));
+    return changes;
 }
 
 QStringList NemoCalendarManager::excludedNotebooks()
@@ -445,6 +463,37 @@ void NemoCalendarManager::timeout() {
 
     if (!mAgendaRefreshList.isEmpty() || !mQueryRefreshList.isEmpty() || mResetPending)
         doAgendaAndQueryRefresh();
+}
+
+void NemoCalendarManager::occurrenceExceptionFailedSlot(NemoCalendarData::Event data, QDateTime occurrence)
+{
+    for (int i = 0; i < mPendingOccurrenceExceptions.length(); ++i) {
+        const OccurrenceData &item = mPendingOccurrenceExceptions.at(i);
+        if (item.event == data && item.occurrenceTime == occurrence) {
+            if (item.changeObject) {
+                item.changeObject->setInformation(QString(), KDateTime());
+            }
+            mPendingOccurrenceExceptions.removeAt(i);
+            break;
+        }
+    }
+}
+
+void NemoCalendarManager::occurrenceExceptionCreatedSlot(NemoCalendarData::Event data, QDateTime occurrence,
+                                                         KDateTime newRecurrenceId)
+{
+    for (int i = 0; i < mPendingOccurrenceExceptions.length(); ++i) {
+        const OccurrenceData &item = mPendingOccurrenceExceptions.at(i);
+        if (item.event == data && item.occurrenceTime == occurrence) {
+            if (item.changeObject) {
+                item.changeObject->setInformation(data.uniqueId, newRecurrenceId);
+            }
+
+            mPendingOccurrenceExceptions.removeAt(i);
+            break;
+        }
+    }
+
 }
 
 void NemoCalendarManager::deleteEvent(const QString &uid, const KDateTime &recurrenceId, const QDateTime &time)

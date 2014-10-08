@@ -37,12 +37,14 @@
 #include <QStringList>
 #include <QThread>
 #include <QTimer>
+#include <QPointer>
 
 // KCalCore
 #include <KDateTime>
 
 #include "calendardata.h"
 #include "calendarevent.h"
+#include "calendarchangeinformation.h"
 
 class NemoCalendarWorker;
 class NemoCalendarAgendaModel;
@@ -62,7 +64,8 @@ public:
     NemoCalendarEvent* eventObject(const QString &eventUid, const KDateTime &recurrenceId);
 
     void saveModification(NemoCalendarData::Event eventData);
-    void replaceOccurrence(NemoCalendarData::Event eventData, NemoCalendarEventOccurrence *occurrence);
+    NemoCalendarChangeInformation * replaceOccurrence(NemoCalendarData::Event eventData,
+                                                      NemoCalendarEventOccurrence *occurrence);
     void deleteEvent(const QString &uid, const KDateTime &recurrenceId, const QDateTime &dateTime);
     void deleteAll(const QString &uid);
     void save();
@@ -114,6 +117,9 @@ private slots:
                           QHash<QDate, QStringList> dailyOccurrences,
                           bool reset);
     void timeout();
+    void occurrenceExceptionFailedSlot(NemoCalendarData::Event data, QDateTime occurrence);
+    void occurrenceExceptionCreatedSlot(NemoCalendarData::Event data, QDateTime occurrence, KDateTime newRecurrenceId);
+
 
 signals:
     void excludedNotebooksChanged(QStringList excludedNotebooks);
@@ -147,6 +153,13 @@ private:
     QList<NemoCalendarEventQuery *> mQueryList; // List of all NemoCalendarEventQuery instances
     QStringList mExcludedNotebooks;
     QHash<QString, NemoCalendarData::Notebook> mNotebooks;
+
+    struct OccurrenceData {
+        NemoCalendarData::Event event;
+        QDateTime occurrenceTime;
+        QPointer<NemoCalendarChangeInformation> changeObject;
+    };
+    QList<OccurrenceData> mPendingOccurrenceExceptions;
 
     QTimer *mTimer;
 

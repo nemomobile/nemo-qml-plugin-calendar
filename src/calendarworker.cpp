@@ -226,23 +226,19 @@ void NemoCalendarWorker::setEventData(KCalCore::Event::Ptr &event, const NemoCal
     }
 }
 
-void NemoCalendarWorker::replaceOccurrence(const NemoCalendarData::Event &eventData,
-                                           const QDateTime &startTime)
+void NemoCalendarWorker::replaceOccurrence(const NemoCalendarData::Event &eventData, const QDateTime &startTime)
 {
     QString notebookUid = eventData.calendarUid;
     if (!notebookUid.isEmpty() && !mStorage->isValidNotebook(notebookUid)) {
         qWarning("replaceOccurrence() - invalid notebook given");
+        emit occurrenceExceptionFailed(eventData, startTime);
         return;
     }
 
-    if (eventData.uniqueId.isEmpty()) {
-        qWarning("replaceOccurrence() - empty uid given");
-        return;
-    }
-
-    KCalCore::Event::Ptr event = mCalendar->event(eventData.uniqueId);
+    KCalCore::Event::Ptr event = mCalendar->event(eventData.uniqueId, eventData.recurrenceId);
     if (!event) {
         qWarning("Event to create occurrence replacement for not found");
+        emit occurrenceExceptionFailed(eventData, startTime);
         return;
     }
 
@@ -255,12 +251,14 @@ void NemoCalendarWorker::replaceOccurrence(const NemoCalendarData::Event &eventD
     KCalCore::Event::Ptr replacement = replacementIncidence.staticCast<KCalCore::Event>();
     if (!replacement) {
         qWarning("Didn't find event occurrence to replace");
+        emit occurrenceExceptionFailed(eventData, startTime);
         return;
     }
 
     setEventData(replacement, eventData);
 
     mCalendar->addEvent(replacement, notebookUid);
+    emit occurrenceExceptionCreated(eventData, startTime, replacement->recurrenceId());
     save();
 }
 
