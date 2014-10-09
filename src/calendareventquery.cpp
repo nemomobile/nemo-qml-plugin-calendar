@@ -168,13 +168,13 @@ void NemoCalendarEventQuery::componentComplete()
 void NemoCalendarEventQuery::doRefresh(NemoCalendarData::Event event)
 {
     // The value of mUid may have changed, verify that we got what we asked for
-    if (event.isValid() && event.uniqueId != mUid)
+    if (event.isValid() && (event.uniqueId != mUid || event.recurrenceId != mRecurrenceId))
         return;
 
     bool updateOccurrence = false;
     bool signalEventChanged = false;
 
-    if (event.uniqueId != mEvent.uniqueId) {
+    if (event.uniqueId != mEvent.uniqueId || event.recurrenceId != mEvent.recurrenceId) {
         mEvent = event;
         signalEventChanged = true;
         updateOccurrence = true;
