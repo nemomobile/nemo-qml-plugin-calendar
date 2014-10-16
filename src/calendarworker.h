@@ -58,8 +58,10 @@ public slots:
     void init();
     void save();
 
-    void saveEvent(const NemoCalendarData::Event &event);
-    void deleteEvent(const QString &uid, const QDateTime &dateTime);
+    void saveEvent(const NemoCalendarData::Event &eventData);
+    void replaceOccurrence(const NemoCalendarData::Event &eventData, const QDateTime &startTime);
+    void deleteEvent(const QString &uid, const KDateTime &recurrenceId, const QDateTime &dateTime);
+    void deleteAll(const QString &uid);
     QString convertEventToVCalendar(const QString &uid, const QString &prodId) const;
 
     QList<NemoCalendarData::Notebook> notebooks() const;
@@ -71,8 +73,9 @@ public slots:
     void loadData(const QList<NemoCalendarData::Range> &ranges,
                     const QStringList &uidList, bool reset);
 
-    NemoCalendarData::EventOccurrence getNextOccurrence(const QString &uid, const QDateTime &startTime) const;
-    QList<NemoCalendarData::Attendee> getEventAttendees(const QString &uid);
+    NemoCalendarData::EventOccurrence getNextOccurrence(const QString &uid, const KDateTime &recurrenceId,
+                                                        const QDateTime &startTime) const;
+    QList<NemoCalendarData::Attendee> getEventAttendees(const QString &uid, const KDateTime &recurrenceId);
 
 signals:
     void storageModifiedSignal(QString info);
@@ -85,12 +88,16 @@ signals:
 
     void dataLoaded(QList<NemoCalendarData::Range> ranges,
                       QStringList uidList,
-                      QHash<QString, NemoCalendarData::Event> events,
+                      QMultiHash<QString, NemoCalendarData::Event> events,
                       QHash<QString, NemoCalendarData::EventOccurrence> occurrences,
                       QHash<QDate, QStringList> dailyOccurrences,
                       bool reset);
 
+    void occurrenceExceptionFailed(NemoCalendarData::Event eventData, QDateTime startTime);
+    void occurrenceExceptionCreated(NemoCalendarData::Event eventData, QDateTime startTime, KDateTime newRecurrenceId);
+
 private:
+    void setEventData(KCalCore::Event::Ptr &event, const NemoCalendarData::Event &eventData);
     void loadNotebooks();
     QStringList excludedNotebooks() const;
     bool saveExcludeNotebook(const QString &notebookUid, bool exclude);
@@ -104,7 +111,7 @@ private:
     NemoCalendarData::Event createEventStruct(const KCalCore::Event::Ptr &event) const;
     QHash<QString, NemoCalendarData::EventOccurrence> eventOccurrences(const QList<NemoCalendarData::Range> &ranges) const;
     QHash<QDate, QStringList> dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
-                                                    const QStringList &allDay,
+                                                    const QMultiHash<QString, KDateTime> &allDay,
                                                     const QList<NemoCalendarData::EventOccurrence> &occurrences);
 
     mKCal::ExtendedCalendar::Ptr mCalendar;
@@ -112,7 +119,8 @@ private:
 
     QHash<QString, NemoCalendarData::Notebook> mNotebooks;
 
-    QStringList mSentEvents;
+    // Tracks which events have been already passed to manager. Maps Uid -> RecurrenceId
+    QMultiHash<QString, KDateTime> mSentEvents;
 };
 
 #endif // CALENDARWORKER_H

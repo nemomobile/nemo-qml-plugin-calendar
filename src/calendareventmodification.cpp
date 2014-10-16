@@ -184,3 +184,9 @@ void NemoCalendarEventModification::save()
 {
     NemoCalendarManager::instance()->saveModification(m_event);
 }
+
+NemoCalendarChangeInformation *
+NemoCalendarEventModification::replaceOccurrence(NemoCalendarEventOccurrence *occurrence)
+{
+    return NemoCalendarManager::instance()->replaceOccurrence(m_event, occurrence);
+}

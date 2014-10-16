@@ -5,6 +5,8 @@
 
 #include "calendardata.h"
 #include "calendarevent.h"
+#include "calendareventoccurrence.h"
+#include "calendarchangeinformation.h"
 
 class NemoCalendarEventModification : public QObject
 {
@@ -59,6 +61,7 @@ public:
     void setCalendarUid(const QString &uid);
 
     Q_INVOKABLE void save();
+    Q_INVOKABLE NemoCalendarChangeInformation * replaceOccurrence(NemoCalendarEventOccurrence *occurrence);
 
 signals:
     void displayLabelChanged();

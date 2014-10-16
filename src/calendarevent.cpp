@@ -39,8 +39,8 @@
 
 #include "calendarmanager.h"
 
-NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid)
-    : QObject(manager), mManager(manager), mUniqueId(uid)
+NemoCalendarEvent::NemoCalendarEvent(NemoCalendarManager *manager, const QString &uid, const KDateTime &recurrenceId)
+    : QObject(manager), mManager(manager), mUniqueId(uid), mRecurrenceId(recurrenceId)
 {
     connect(mManager, SIGNAL(notebookColorChanged(QString)),
             this, SLOT(notebookColorChanged(QString)));
@@ -54,47 +54,47 @@ NemoCalendarEvent::~NemoCalendarEvent()
 
 QString NemoCalendarEvent::displayLabel() const
 {
-    return mManager->getEvent(mUniqueId).displayLabel;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).displayLabel;
 }
 
 QString NemoCalendarEvent::description() const
 {
-    return mManager->getEvent(mUniqueId).description;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).description;
 }
 
 QDateTime NemoCalendarEvent::startTime() const
 {
-    return mManager->getEvent(mUniqueId).startTime.dateTime();
+    return mManager->getEvent(mUniqueId, mRecurrenceId).startTime.dateTime();
 }
 
 QDateTime NemoCalendarEvent::endTime() const
 {
-    return mManager->getEvent(mUniqueId).endTime.dateTime();
+    return mManager->getEvent(mUniqueId, mRecurrenceId).endTime.dateTime();
 }
 
 bool NemoCalendarEvent::allDay() const
 {
-    return mManager->getEvent(mUniqueId).allDay;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).allDay;
 }
 
 NemoCalendarEvent::Recur NemoCalendarEvent::recur() const
 {
-    return mManager->getEvent(mUniqueId).recur;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).recur;
 }
 
 QDateTime NemoCalendarEvent::recurEndDate() const
 {
-    return QDateTime(mManager->getEvent(mUniqueId).recurEndDate);
+    return QDateTime(mManager->getEvent(mUniqueId, mRecurrenceId).recurEndDate);
 }
 
 bool NemoCalendarEvent::hasRecurEndDate() const
 {
-    return mManager->getEvent(mUniqueId).recurEndDate.isValid();
+    return mManager->getEvent(mUniqueId, mRecurrenceId).recurEndDate.isValid();
 }
 
 NemoCalendarEvent::Reminder NemoCalendarEvent::reminder() const
 {
-    return mManager->getEvent(mUniqueId).reminder;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).reminder;
 }
 
 QString NemoCalendarEvent::uniqueId() const
@@ -104,22 +104,36 @@ QString NemoCalendarEvent::uniqueId() const
 
 QString NemoCalendarEvent::color() const
 {
-    return mManager->getNotebookColor(mManager->getEvent(mUniqueId).calendarUid);
+    return mManager->getNotebookColor(mManager->getEvent(mUniqueId, mRecurrenceId).calendarUid);
 }
 
 bool NemoCalendarEvent::readonly() const
 {
-    return mManager->getEvent(mUniqueId).readonly;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).readonly;
 }
 
 QString NemoCalendarEvent::calendarUid() const
 {
-    return mManager->getEvent(mUniqueId).calendarUid;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).calendarUid;
 }
 
 QString NemoCalendarEvent::location() const
 {
-    return mManager->getEvent(mUniqueId).location;
+    return mManager->getEvent(mUniqueId, mRecurrenceId).location;
+}
+
+KDateTime NemoCalendarEvent::recurrenceId() const
+{
+    return mRecurrenceId;
+}
+
+QString NemoCalendarEvent::recurrenceIdString() const
+{
+    if (mRecurrenceId.isValid()) {
+        return mRecurrenceId.toString();
+    } else {
+        return QString();
+    }
 }
 
 // Returns the event as a VCalendar string
@@ -136,7 +150,7 @@ QString NemoCalendarEvent::vCalendar(const QString &prodId) const
 
 void NemoCalendarEvent::notebookColorChanged(QString notebookUid)
 {
-    if (mManager->getEvent(mUniqueId).calendarUid == notebookUid)
+    if (mManager->getEvent(mUniqueId, mRecurrenceId).calendarUid == notebookUid)
         emit colorChanged();
 }
 

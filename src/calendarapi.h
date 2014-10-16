@@ -34,6 +34,7 @@
 #define CALENDARAPI_H
 
 #include <QStringList>
+#include <QDateTime>
 
 class QJSEngine;
 class QQmlEngine;
@@ -51,8 +52,10 @@ public:
 
     Q_INVOKABLE NemoCalendarEventModification *createNewEvent();
     Q_INVOKABLE NemoCalendarEventModification *createModification(NemoCalendarEvent *sourceEvent);
-    Q_INVOKABLE void remove(const QString &uid);
-    Q_INVOKABLE void remove(const QString &uid, const QDateTime &time);
+
+    Q_INVOKABLE void remove(const QString &uid, const QString &recurrenceId = QString(),
+                            const QDateTime &time = QDateTime());
+    Q_INVOKABLE void removeAll(const QString &uid); // remove all instances an event, all recurrenceIds
 
     QStringList excludedNotebooks() const;
     void setExcludedNotebooks(const QStringList &);
