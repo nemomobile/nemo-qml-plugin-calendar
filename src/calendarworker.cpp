@@ -207,11 +207,12 @@ void NemoCalendarWorker::saveEvent(const NemoCalendarData::Event &eventData)
 
 void NemoCalendarWorker::setEventData(KCalCore::Event::Ptr &event, const NemoCalendarData::Event &eventData)
 {
-    event->setAllDay(eventData.allDay);
     event->setDescription(eventData.description);
     event->setSummary(eventData.displayLabel);
     event->setDtStart(eventData.startTime);
     event->setDtEnd(eventData.endTime);
+    // setDtStart() overwrites allDay status based on KDateTime::isDateOnly(), avoid by setting that later
+    event->setAllDay(eventData.allDay);
     event->setLocation(eventData.location);
     setReminder(event, eventData.reminder);
     setRecurrence(event, eventData.recur);
