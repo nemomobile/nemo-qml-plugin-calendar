@@ -105,9 +105,16 @@ void NemoCalendarAgendaModel::refresh()
 static bool eventsEqual(const NemoCalendarEventOccurrence *e1,
                         const NemoCalendarEventOccurrence *e2)
 {
-    return e1->startTime() == e2->startTime() &&
-           e1->endTime() == e2->endTime() &&
-           (e1->eventObject() && e2->eventObject() && e1->eventObject()->uniqueId() == e2->eventObject()->uniqueId());
+    if (e1->startTime() != e2->startTime() || e1->endTime() != e2->endTime()) {
+        return false;
+    }
+
+    NemoCalendarEvent *eventObject1 = e1->eventObject();
+    NemoCalendarEvent *eventObject2 = e2->eventObject();
+
+    return eventObject1 && eventObject2 &&
+           eventObject1->uniqueId() == eventObject2->uniqueId() &&
+           eventObject1->recurrenceId() == eventObject2->recurrenceId();
 }
 
 static bool eventsLessThan(const NemoCalendarEventOccurrence *e1,
