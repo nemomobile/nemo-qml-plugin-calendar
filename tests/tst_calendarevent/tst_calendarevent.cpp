@@ -2,6 +2,7 @@
 #include <QtTest>
 #include <QQmlEngine>
 #include <QSignalSpy>
+#include <QSet>
 
 #include <KDateTime>
 
@@ -27,7 +28,7 @@ private slots:
 private:
     bool saveEvent(NemoCalendarEventModification *eventMod, QString *uid);
     QQmlEngine *engine;
-    QStringList mSavedEvents;
+    QSet<QString> mSavedEvents;
 };
 
 void tst_CalendarEvent::initTestCase()
@@ -149,7 +150,7 @@ void tst_CalendarEvent::testSave()
         QFAIL("Failed to fetch new event uid");
     }
     QVERIFY(!uid.isEmpty());
-    mSavedEvents.append(uid);
+    mSavedEvents.insert(uid);
 
     NemoCalendarEventQuery query;
     query.setUniqueId(uid);
@@ -177,6 +178,7 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(eventB->reminder(), reminder);
 
     calendarApi.remove(uid);
+    mSavedEvents.remove(uid);
 
     delete eventMod;
 }
@@ -201,7 +203,7 @@ void tst_CalendarEvent::testRecurrenceException()
         QFAIL("Failed to fetch new event uid");
     }
     QVERIFY(!uid.isEmpty());
-    mSavedEvents.append(uid);
+    mSavedEvents.insert(uid);
 
     // need event and occurrence to replace....
     NemoCalendarEventQuery query;
@@ -284,6 +286,7 @@ void tst_CalendarEvent::testRecurrenceException()
 
     // ensure all gone
     calendarApi.removeAll(uid);
+    mSavedEvents.remove(uid);
     occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime(), startTime.addDays(-1));
     QVERIFY(!occurrence->startTime().isValid());
     occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime::fromString(info->recurrenceId()),
@@ -342,7 +345,7 @@ void tst_CalendarEvent::cleanupTestCase()
 {
     NemoCalendarApi calendarApi(this);
     foreach (const QString &uid, mSavedEvents) {
-        calendarApi.remove(uid);
+        calendarApi.removeAll(uid);
         // make sure worker thread has time to complete removal before being destroyed.
         // TODO: finish method invocation queue before quitting?
         QTest::qWait(1000);
