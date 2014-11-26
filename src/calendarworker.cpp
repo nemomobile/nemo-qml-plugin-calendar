@@ -601,7 +601,7 @@ void NemoCalendarWorker::loadData(const QList<NemoCalendarData::Range> &ranges,
                                   bool reset)
 {
     foreach (const NemoCalendarData::Range &range, ranges)
-        mStorage->load(range.first, range.second);
+        mStorage->load(range.first, range.second.addDays(1)); // end date is not inclusive
 
     // Note: omitting recurrence ids since loadRecurringIncidences() loads them anyway
     foreach (const QString &uid, uidList)

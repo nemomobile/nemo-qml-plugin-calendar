@@ -20,14 +20,18 @@ class tst_CalendarEvent : public QObject
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
+
     void modSetters();
     void testSave();
     void testRecurrenceException();
-    void cleanupTestCase();
+    void testDate_data();
+    void testDate();
 
 private:
     bool saveEvent(NemoCalendarEventModification *eventMod, QString *uid);
     QQmlEngine *engine;
+    NemoCalendarApi *calendarApi;
     QSet<QString> mSavedEvents;
 };
 
@@ -37,12 +41,18 @@ void tst_CalendarEvent::initTestCase()
     engine = new QQmlEngine(this);
     NemoCalendarPlugin* plugin = new NemoCalendarPlugin();
     plugin->initializeEngine(engine, "foobar");
+    calendarApi = new NemoCalendarApi(this);
+
+    // FIXME: calls made directly after instantiating seem to have threading issues.
+    // KDateTime/Timezone initialization somehow fails and caches invalid timezones,
+    // resulting in times such as 2014-11-26T00:00:00--596523:-14
+    // (Above offset hour is -2147482800 / (60*60))
+    QTest::qWait(100);
 }
 
 void tst_CalendarEvent::modSetters()
 {
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEventModification *eventMod = calendarApi.createNewEvent();
+    NemoCalendarEventModification *eventMod = calendarApi->createNewEvent();
     QVERIFY(eventMod != 0);
 
     QSignalSpy allDaySpy(eventMod, SIGNAL(allDayChanged()));
@@ -104,8 +114,7 @@ void tst_CalendarEvent::modSetters()
 
 void tst_CalendarEvent::testSave()
 {
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEventModification *eventMod = calendarApi.createNewEvent();
+    NemoCalendarEventModification *eventMod = calendarApi->createNewEvent();
     QVERIFY(eventMod != 0);
 
     bool allDay = false;
@@ -177,7 +186,7 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(eventB->recurEndDate(), QDateTime(recurEnd.date()));
     QCOMPARE(eventB->reminder(), reminder);
 
-    calendarApi.remove(uid);
+    calendarApi->remove(uid);
     mSavedEvents.remove(uid);
 
     delete eventMod;
@@ -185,8 +194,7 @@ void tst_CalendarEvent::testSave()
 
 void tst_CalendarEvent::testRecurrenceException()
 {
-    NemoCalendarApi calendarApi(this);
-    NemoCalendarEventModification *event = calendarApi.createNewEvent();
+    NemoCalendarEventModification *event = calendarApi->createNewEvent();
     QVERIFY(event != 0);
 
     // main event
@@ -222,7 +230,7 @@ void tst_CalendarEvent::testRecurrenceException()
     QVERIFY(query.occurrence());
 
     // adjust second occurrence a bit
-    NemoCalendarEventModification *recurrenceException = calendarApi.createModification(savedEvent);
+    NemoCalendarEventModification *recurrenceException = calendarApi->createModification(savedEvent);
     QVERIFY(recurrenceException != 0);
     QDateTime modifiedSecond = secondStart.addSecs(10*60); // 12:10
     recurrenceException->setStartTime(modifiedSecond, NemoCalendarEvent::SpecLocalZone);
@@ -262,7 +270,7 @@ void tst_CalendarEvent::testRecurrenceException()
     QVERIFY(eventChangeSpy.count() > 0);
     QVERIFY(query.event());
 
-    recurrenceException = calendarApi.createModification(static_cast<NemoCalendarEvent*>(query.event()));
+    recurrenceException = calendarApi->createModification(static_cast<NemoCalendarEvent*>(query.event()));
     QVERIFY(recurrenceException != 0);
 
     modifiedSecond = modifiedSecond.addSecs(20*60); // 12:30
@@ -289,7 +297,7 @@ void tst_CalendarEvent::testRecurrenceException()
 
     ///////
     // update the main event time within a day, exception stays intact
-    NemoCalendarEventModification *mod = calendarApi.createModification(savedEvent);
+    NemoCalendarEventModification *mod = calendarApi->createModification(savedEvent);
     QVERIFY(mod != 0);
     QDateTime modifiedStart = startTime.addSecs(40*60); // 12:40
     mod->setStartTime(modifiedStart, NemoCalendarEvent::SpecLocalZone);
@@ -328,7 +336,7 @@ void tst_CalendarEvent::testRecurrenceException()
     QVERIFY(modificationFound);
 
     // ensure all gone
-    calendarApi.removeAll(uid);
+    calendarApi->removeAll(uid);
     mSavedEvents.remove(uid);
     occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime(), startTime.addDays(-1));
     QVERIFY(!occurrence->startTime().isValid());
@@ -385,11 +393,39 @@ bool tst_CalendarEvent::saveEvent(NemoCalendarEventModification *eventMod, QStri
     return true;
 }
 
+void tst_CalendarEvent::testDate_data()
+{
+    QTest::addColumn<QDate>("date");
+    QTest::newRow("2014/12/7") << QDate(2014, 12, 7);
+    QTest::newRow("2014/12/8") << QDate(2014, 12, 8);
+}
+
+void tst_CalendarEvent::testDate()
+{
+    QFETCH(QDate, date);
+
+    NemoCalendarEventModification *eventMod = calendarApi->createNewEvent();
+    QVERIFY(eventMod != 0);
+
+    eventMod->setDisplayLabel(QString("test event for ") + date.toString());
+    QDateTime startTime(date, QTime(12, 0));
+    eventMod->setStartTime(startTime, NemoCalendarEvent::SpecLocalZone);
+    eventMod->setEndTime(startTime.addSecs(10*60), NemoCalendarEvent::SpecLocalZone);
+
+    QString uid;
+    bool ok = saveEvent(eventMod, &uid);
+    if (!ok) {
+        QFAIL("Failed to fetch new event uid");
+    }
+
+    QVERIFY(!uid.isEmpty());
+    mSavedEvents.insert(uid);
+}
+
 void tst_CalendarEvent::cleanupTestCase()
 {
-    NemoCalendarApi calendarApi(this);
     foreach (const QString &uid, mSavedEvents) {
-        calendarApi.removeAll(uid);
+        calendarApi->removeAll(uid);
         // make sure worker thread has time to complete removal before being destroyed.
         // TODO: finish method invocation queue before quitting?
         QTest::qWait(1000);
