@@ -2,6 +2,7 @@
 #include <QtTest>
 #include <QQmlEngine>
 #include <QSignalSpy>
+#include <QSet>
 
 #include <KDateTime>
 
@@ -27,7 +28,7 @@ private slots:
 private:
     bool saveEvent(NemoCalendarEventModification *eventMod, QString *uid);
     QQmlEngine *engine;
-    QStringList mSavedEvents;
+    QSet<QString> mSavedEvents;
 };
 
 void tst_CalendarEvent::initTestCase()
@@ -149,7 +150,7 @@ void tst_CalendarEvent::testSave()
         QFAIL("Failed to fetch new event uid");
     }
     QVERIFY(!uid.isEmpty());
-    mSavedEvents.append(uid);
+    mSavedEvents.insert(uid);
 
     NemoCalendarEventQuery query;
     query.setUniqueId(uid);
@@ -177,6 +178,7 @@ void tst_CalendarEvent::testSave()
     QCOMPARE(eventB->reminder(), reminder);
 
     calendarApi.remove(uid);
+    mSavedEvents.remove(uid);
 
     delete eventMod;
 }
@@ -201,7 +203,7 @@ void tst_CalendarEvent::testRecurrenceException()
         QFAIL("Failed to fetch new event uid");
     }
     QVERIFY(!uid.isEmpty());
-    mSavedEvents.append(uid);
+    mSavedEvents.insert(uid);
 
     // need event and occurrence to replace....
     NemoCalendarEventQuery query;
@@ -219,9 +221,10 @@ void tst_CalendarEvent::testRecurrenceException()
     QVERIFY(savedEvent);
     QVERIFY(query.occurrence());
 
+    // adjust second occurrence a bit
     NemoCalendarEventModification *recurrenceException = calendarApi.createModification(savedEvent);
     QVERIFY(recurrenceException != 0);
-    QDateTime modifiedSecond = secondStart.addSecs(10*60);
+    QDateTime modifiedSecond = secondStart.addSecs(10*60); // 12:10
     recurrenceException->setStartTime(modifiedSecond, NemoCalendarEvent::SpecLocalZone);
     recurrenceException->setEndTime(modifiedSecond.addSecs(10*60), NemoCalendarEvent::SpecLocalZone);
     recurrenceException->setDisplayLabel("Modified recurring event instance");
@@ -249,6 +252,7 @@ void tst_CalendarEvent::testRecurrenceException()
 
     QCOMPARE(occurrence->startTime(), modifiedSecond);
     delete recurrenceException;
+    recurrenceException = 0;
 
     // update the exception time
     QSignalSpy eventChangeSpy(&query, SIGNAL(eventChanged()));
@@ -261,10 +265,11 @@ void tst_CalendarEvent::testRecurrenceException()
     recurrenceException = calendarApi.createModification(static_cast<NemoCalendarEvent*>(query.event()));
     QVERIFY(recurrenceException != 0);
 
-    modifiedSecond = modifiedSecond.addSecs(20*60);
+    modifiedSecond = modifiedSecond.addSecs(20*60); // 12:30
     recurrenceException->setStartTime(modifiedSecond, NemoCalendarEvent::SpecLocalZone);
     recurrenceException->setEndTime(modifiedSecond.addSecs(10*60), NemoCalendarEvent::SpecLocalZone);
-    recurrenceException->setDisplayLabel("Modified recurring event instance, ver 2");
+    QString modifiedLabel("Modified recurring event instance, ver 2");
+    recurrenceException->setDisplayLabel(modifiedLabel);
     recurrenceException->save();
     QTest::qWait(1000); // allow saved data to be reloaded
 
@@ -282,8 +287,49 @@ void tst_CalendarEvent::testRecurrenceException()
     QVERIFY(occurrence);
     QCOMPARE(occurrence->startTime(), modifiedSecond);
 
+    ///////
+    // update the main event time within a day, exception stays intact
+    NemoCalendarEventModification *mod = calendarApi.createModification(savedEvent);
+    QVERIFY(mod != 0);
+    QDateTime modifiedStart = startTime.addSecs(40*60); // 12:40
+    mod->setStartTime(modifiedStart, NemoCalendarEvent::SpecLocalZone);
+    mod->setEndTime(modifiedStart.addSecs(40*60), NemoCalendarEvent::SpecLocalZone);
+    mod->save();
+    QTest::qWait(1000);
+
+    // and check
+    occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime(), startTime.addDays(-1));
+    QCOMPARE(occurrence->startTime(), modifiedStart);
+    occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime(), startTime.addDays(1));
+    // TODO: Would be the best if second occurrence in the main series stays away, but at the moment it doesn't.
+    //QCOMPARE(occurrence->startTime(), modifiedStart.addDays(14));
+    occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime::fromString(info->recurrenceId()),
+                                                                    startTime.addDays(1));
+    QVERIFY(occurrence);
+    QCOMPARE(occurrence->startTime(), modifiedSecond);
+
+    // at least the recurrence exception should be found at second occurrence date. for now we allow also newly
+    // appeared occurrence from main event
+    NemoCalendarAgendaModel agendaModel;
+    agendaModel.setStartDate(startTime.addDays(7).date());
+    agendaModel.setEndDate(agendaModel.startDate());
+    QTest::qWait(2000);
+
+    bool modificationFound = false;
+    for (int i = 0; i < agendaModel.count(); ++i) {
+        QVariant eventVariant = agendaModel.get(i, NemoCalendarAgendaModel::EventObjectRole);
+        NemoCalendarEvent *modelEvent = qvariant_cast<NemoCalendarEvent*>(eventVariant);
+        // assuming no left-over events
+        if (modelEvent && modelEvent->displayLabel() == modifiedLabel) {
+            modificationFound = true;
+            break;
+        }
+    }
+    QVERIFY(modificationFound);
+
     // ensure all gone
     calendarApi.removeAll(uid);
+    mSavedEvents.remove(uid);
     occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime(), startTime.addDays(-1));
     QVERIFY(!occurrence->startTime().isValid());
     occurrence = NemoCalendarManager::instance()->getNextOccurrence(uid, KDateTime::fromString(info->recurrenceId()),
@@ -292,6 +338,7 @@ void tst_CalendarEvent::testRecurrenceException()
 
     delete info;
     delete recurrenceException;
+    delete mod;
 }
 
 // saves event and tries to watch for new uid
@@ -342,7 +389,7 @@ void tst_CalendarEvent::cleanupTestCase()
 {
     NemoCalendarApi calendarApi(this);
     foreach (const QString &uid, mSavedEvents) {
-        calendarApi.remove(uid);
+        calendarApi.removeAll(uid);
         // make sure worker thread has time to complete removal before being destroyed.
         // TODO: finish method invocation queue before quitting?
         QTest::qWait(1000);

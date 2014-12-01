@@ -109,8 +109,10 @@ void NemoCalendarWorker::deleteEvent(const QString &uid, const KDateTime &recurr
 void NemoCalendarWorker::deleteAll(const QString &uid)
 {
     KCalCore::Event::Ptr event = mCalendar->event(uid);
-    if (!event)
+    if (!event) {
+        qWarning() << "Failed to delete event, not found" << uid;
         return;
+    }
 
     mCalendar->deleteEventInstances(event);
     mCalendar->deleteEvent(event);

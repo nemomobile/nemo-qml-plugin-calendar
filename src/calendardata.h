@@ -19,8 +19,7 @@ struct EventOccurrence {
 
     QString getId() const
     {
-        QDateTime tmp(startTime.date());
-        return QString("%1-%2").arg(eventUid).arg(tmp.toMSecsSinceEpoch());
+        return QString("%1-%2").arg(eventUid).arg(startTime.toMSecsSinceEpoch());
     }
 };
 
