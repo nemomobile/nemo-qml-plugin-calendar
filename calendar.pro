@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS = src tests
+SUBDIRS = src tests lightweight
 
 tests.depends = src
 
