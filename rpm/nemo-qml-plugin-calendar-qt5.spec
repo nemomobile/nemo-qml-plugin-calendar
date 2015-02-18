@@ -26,6 +26,19 @@ Requires:   %{name} = %{version}-%{release}
 %description tests
 %{summary}.
 
+%package lightweight
+Summary:    Calendar lightweight QML plugin
+Group:      System/Libraries
+BuildRequires:  pkgconfig(Qt5Core)
+BuildRequires:  pkgconfig(Qt5Qml)
+BuildRequires:  pkgconfig(Qt5Concurrent)
+BuildRequires:  pkgconfig(libmkcal-qt5)
+BuildRequires:  pkgconfig(libkcalcoren-qt5)
+BuildRequires:  pkgconfig(libical)
+
+%description lightweight
+%{summary}.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -47,3 +60,10 @@ rm -rf %{buildroot}
 %files tests
 %defattr(-,root,root,-)
 /opt/tests/nemo-qml-plugins-qt5/calendar/*
+
+%files lightweight
+%defattr(-,root,root,-)
+%attr(2755, root, privileged) %{_bindir}/calendardataservice
+%{_datadir}/dbus-1/services/org.nemomobile.calendardataservice.service
+%{_libdir}/qt5/qml/org/nemomobile/calendar/lightweight/libnemocalendarwidget.so
+%{_libdir}/qt5/qml/org/nemomobile/calendar/lightweight/qmldir
