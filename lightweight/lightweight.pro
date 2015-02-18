@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = calendardataservice
+SUBDIRS = calendardataservice calendareventsmodel
