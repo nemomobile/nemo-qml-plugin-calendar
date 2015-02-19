@@ -3,10 +3,16 @@
 QDBusArgument &operator<<(QDBusArgument &argument, const EventData &eventData)
 {
     argument.beginStructure();
-    argument << eventData.displayLabel << eventData.description << eventData.startTime
-             << eventData.endTime << eventData.recurrenceId << eventData.allDay
-             << eventData.location << eventData.calendarUid << eventData.uniqueId
-             << eventData.color;
+    argument << eventData.calendarUid
+             << eventData.uniqueId
+             << eventData.recurrenceId
+             << eventData.startTime
+             << eventData.endTime
+             << eventData.allDay
+             << eventData.color
+             << eventData.displayLabel
+             << eventData.description
+             << eventData.location;
     argument.endStructure();
     return argument;
 }
@@ -14,10 +20,16 @@ QDBusArgument &operator<<(QDBusArgument &argument, const EventData &eventData)
 const QDBusArgument &operator>>(const QDBusArgument &argument, EventData &eventData)
 {
     argument.beginStructure();
-    argument >> eventData.displayLabel >> eventData.description >> eventData.startTime
-             >> eventData.endTime >> eventData.recurrenceId >> eventData.allDay
-             >> eventData.location >> eventData.calendarUid >> eventData.uniqueId
-             >> eventData.color;
+    argument >> eventData.calendarUid
+             >> eventData.uniqueId
+             >> eventData.recurrenceId
+             >> eventData.startTime
+             >> eventData.endTime
+             >> eventData.allDay
+             >> eventData.color
+             >> eventData.displayLabel
+             >> eventData.description
+             >> eventData.location;
     argument.endStructure();
     return argument;
 }

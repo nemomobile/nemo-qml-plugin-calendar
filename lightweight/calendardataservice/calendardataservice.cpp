@@ -45,7 +45,7 @@
 CalendarDataService::CalendarDataService(QObject *parent) :
     QObject(parent), mAgendaModel(0)
 {
-    registerDataTypes();
+    registerCalendarDataServiceTypes();
     new CalendarDataServiceAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
     if (!connection.registerService("org.nemomobile.calendardataservice"))

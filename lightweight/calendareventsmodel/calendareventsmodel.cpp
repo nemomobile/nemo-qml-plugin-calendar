@@ -52,7 +52,7 @@ NemoCalendarEventsModel::NemoCalendarEventsModel(QObject *parent) :
     mEventLimit(1000),
     mTotalCount(0)
 {
-    registerDataTypes();
+    registerCalendarDataServiceTypes();
     mProxy = new CalendarDataServiceProxy("org.nemomobile.calendardataservice",
                                           "/org/nemomobile/calendardataservice",
                                           QDBusConnection::sessionBus(),

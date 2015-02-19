@@ -29,12 +29,6 @@ Requires:   %{name} = %{version}-%{release}
 %package lightweight
 Summary:    Calendar lightweight QML plugin
 Group:      System/Libraries
-BuildRequires:  pkgconfig(Qt5Core)
-BuildRequires:  pkgconfig(Qt5Qml)
-BuildRequires:  pkgconfig(Qt5Concurrent)
-BuildRequires:  pkgconfig(libmkcal-qt5)
-BuildRequires:  pkgconfig(libkcalcoren-qt5)
-BuildRequires:  pkgconfig(libical)
 
 %description lightweight
 %{summary}.

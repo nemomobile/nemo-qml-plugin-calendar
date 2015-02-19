@@ -6,16 +6,17 @@
 #include <QtDBus/QDBusMetaType>
 
 struct EventData {
-    QString displayLabel;
-    QString description;
-    QString startTime;
-    QString endTime;
-    QString recurrenceId;
-    bool allDay;
-    QString location;
     QString calendarUid;
     QString uniqueId;
+    QString recurrenceId;
+    QString startTime;
+    QString endTime;
+    bool allDay;
     QString color;
+    QString displayLabel;
+    QString description;
+    QString location;
+
 };
 Q_DECLARE_METATYPE(EventData)
 
@@ -25,7 +26,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, EventData &eventD
 typedef QList<EventData> EventDataList;
 Q_DECLARE_METATYPE(EventDataList)
 
-inline void registerDataTypes() {
+inline void registerCalendarDataServiceTypes() {
     qDBusRegisterMetaType<EventData>();
     qDBusRegisterMetaType<EventDataList>();
 }
