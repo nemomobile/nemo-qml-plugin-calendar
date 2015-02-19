@@ -35,13 +35,13 @@
 
 #include <QAbstractListModel>
 #include <QDateTime>
+#include <QTimer>
 
 #include "../common/eventdata.h"
 
 class QDBusPendingCallWatcher;
 class CalendarDataServiceProxy;
 class QFileSystemWatcher;
-class QTimer;
 
 class NemoCalendarEventsModel : public QAbstractListModel
 {
@@ -138,7 +138,7 @@ private:
 
     CalendarDataServiceProxy *mProxy;
     QFileSystemWatcher *mWatcher;
-    QTimer *mUpdateDelayTimer;
+    QTimer mUpdateDelayTimer;
     EventDataList mEventDataList;
     QDateTime mStartDate;
     QDateTime mEndDate;

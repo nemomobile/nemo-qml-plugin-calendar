@@ -37,7 +37,6 @@
 #include <QDBusPendingCallWatcher>
 #include <QDebug>
 #include <QFileSystemWatcher>
-#include <QTimer>
 #include <qqmlinfo.h>
 
 #include "calendardataserviceproxy.h"
@@ -46,7 +45,6 @@ NemoCalendarEventsModel::NemoCalendarEventsModel(QObject *parent) :
     QAbstractListModel(parent),
     mProxy(0),
     mWatcher(new QFileSystemWatcher(this)),
-    mUpdateDelayTimer(new QTimer(this)),
     mFilterMode(FilterNone),
     mContentType(ContentAll),
     mEventLimit(1000),
@@ -60,16 +58,16 @@ NemoCalendarEventsModel::NemoCalendarEventsModel(QObject *parent) :
     connect(mProxy, SIGNAL(getEventsResult(EventDataList)),
             this, SLOT(getEventsResult(EventDataList)));
 
-    mUpdateDelayTimer->setInterval(500);
-    mUpdateDelayTimer->setSingleShot(true);
-    connect(mUpdateDelayTimer, SIGNAL(timeout()), this, SLOT(update()));
+    mUpdateDelayTimer.setInterval(500);
+    mUpdateDelayTimer.setSingleShot(true);
+    connect(&mUpdateDelayTimer, SIGNAL(timeout()), this, SLOT(update()));
 
     QString privilegedDataDir = QString("%1/.local/share/system/privileged/Calendar/mkcal/db").arg(QDir::homePath());
     mWatcher->addPath(privilegedDataDir);
     QSettings settings("nemo", "nemo-qml-plugin-calendar");
     mWatcher->addPath(settings.fileName());
     // Updates to the calendar db will cause several file change notifications, delay update a bit
-    connect(mWatcher, SIGNAL(fileChanged(QString)), mUpdateDelayTimer, SLOT(start()));
+    connect(mWatcher, SIGNAL(fileChanged(QString)), &mUpdateDelayTimer, SLOT(start()));
 }
 
 int NemoCalendarEventsModel::count() const
@@ -311,7 +309,7 @@ QHash<int, QByteArray> NemoCalendarEventsModel::roleNames() const
 void NemoCalendarEventsModel::restartUpdateTimer()
 {
     if (mStartDate.isValid())
-        mUpdateDelayTimer->start();
+        mUpdateDelayTimer.start();
     else
-        mUpdateDelayTimer->stop();
+        mUpdateDelayTimer.stop();
 }
