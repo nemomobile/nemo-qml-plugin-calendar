@@ -211,7 +211,7 @@ QVariant NemoCalendarEventsModel::data(const QModelIndex &index, int role) const
 
 void NemoCalendarEventsModel::update()
 {
-    mTransactionId = "";
+    mTransactionId.clear();
     QDateTime endDate = (mEndDate.isValid()) ? mEndDate : mStartDate;
     QDBusPendingCall pcall = mProxy->getEvents(mStartDate.toString(Qt::ISODate),
                                                endDate.toString(Qt::ISODate));
