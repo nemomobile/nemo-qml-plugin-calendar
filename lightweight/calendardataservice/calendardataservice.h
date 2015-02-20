@@ -33,7 +33,9 @@
 #ifndef CALENDARDATASERVICE_H
 #define CALENDARDATASERVICE_H
 
-#include <QObject>
+#include <QtCore/QObject>
+#include <QtCore/QDate>
+#include <QtCore/QTimer>
 
 #include "../common/eventdata.h"
 
@@ -48,18 +50,30 @@ public:
     void fetchEvents();
 
 signals:
-    void getEventsResult(const EventDataList &eventDataList);
+    void getEventsResult(const QString &transactionId, const EventDataList &eventDataList);
 
 public slots:
-    void getEvents(const QString &startDate, const QString &endDate);
+    QString getEvents(const QString &startDate, const QString &endDate);
 
 private slots:
     void updated();
+    void shutdown();
+    void processQueue();
 
 private:
+    struct DataRequest {
+        QDate start;
+        QDate end;
+        QString transactionId;
+    };
+
     void initialize();
 
     NemoCalendarAgendaModel *mAgendaModel;
+    QTimer mKillTimer;
+    int mTransactionIdCounter;
+    QList<DataRequest> mDataRequestQueue;
+    DataRequest mCurrentDataRequest;
 };
 
 #endif // CALENDARDATASERVICE_H

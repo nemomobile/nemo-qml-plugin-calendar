@@ -48,9 +48,13 @@ CalendarDataServiceAdaptor::~CalendarDataServiceAdaptor()
 {
 }
 
-void CalendarDataServiceAdaptor::getEvents(const QString &startDate, const QString &endDate)
+QString CalendarDataServiceAdaptor::getEvents(const QString &startDate, const QString &endDate)
 {
     // handle method call org.nemomobile.calendardataservice.getEvents
-    QMetaObject::invokeMethod(parent(), "getEvents", Q_ARG(QString, startDate), Q_ARG(QString, endDate));
+    QString transactionId;
+    QMetaObject::invokeMethod(parent(), "getEvents",
+                              Q_RETURN_ARG(QString, transactionId),
+                              Q_ARG(QString, startDate),
+                              Q_ARG(QString, endDate));
+    return transactionId;
 }
-

@@ -50,9 +50,11 @@ class CalendarDataServiceAdaptor: public QDBusAbstractAdaptor
                 "    <method name=\"getEvents\">\n"
                 "      <arg direction=\"in\" type=\"s\" name=\"startDate\"/>\n"
                 "      <arg direction=\"in\" type=\"s\" name=\"endDate\"/>\n"
+                "      <arg direction=\"out\" type=\"s\" name=\"transactionId\"/>\n"
                 "    </method>\n"
                 "    <signal name=\"getEventsResult\">\n"
-                "      <arg type=\"a(sssssbssss)\" name=\"eventList\"/>\n"
+                "      <arg type=\"s\" name=\"transactionId\"/>\n"
+                "      <arg type=\"a(sssssbssss)\" name=\"eventDataList\"/>\n"
                 "    </signal>\n"
                 "  </interface>\n"
                 "")
@@ -62,10 +64,10 @@ public:
     virtual ~CalendarDataServiceAdaptor();
 
 public Q_SLOTS:
-    void getEvents(const QString &startDate, const QString &endDate);
+    QString getEvents(const QString &startDate, const QString &endDate);
 
 Q_SIGNALS:
-    void getEventsResult(const EventDataList &eventDataList);
+    void getEventsResult(const QString &transactionId, const EventDataList &eventDataList);
 };
 
 #endif

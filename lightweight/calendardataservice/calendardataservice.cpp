@@ -43,8 +43,12 @@
 #include "../../src/calendareventoccurrence.h"
 
 CalendarDataService::CalendarDataService(QObject *parent) :
-    QObject(parent), mAgendaModel(0)
+    QObject(parent), mAgendaModel(0), mTransactionIdCounter(0)
 {
+    mKillTimer.setSingleShot(true);
+    mKillTimer.setInterval(1000);
+    connect(&mKillTimer, SIGNAL(timeout()), this, SLOT(shutdown()));
+
     registerCalendarDataServiceTypes();
     new CalendarDataServiceAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
@@ -55,17 +59,24 @@ CalendarDataService::CalendarDataService(QObject *parent) :
         qWarning("Can't register org/nemomobile/calendardataservice object for the D-Bus service.");
 }
 
-void CalendarDataService::getEvents(const QString &startDate, const QString &endDate)
+QString CalendarDataService::getEvents(const QString &startDate, const QString &endDate)
 {
+    mKillTimer.stop();
     QDate start = QDate::fromString(startDate, Qt::ISODate);
     QDate end = QDate::fromString(endDate, Qt::ISODate);
+    QString transactionId;
     if (!start.isValid() || !end.isValid()) {
         qWarning() << "Invalid date parameter(s):" << startDate << ", " << endDate;
-        exit(1);
+    } else {
+        transactionId = QString("%1-%2")
+                .arg(QCoreApplication::applicationPid())
+                .arg(++mTransactionIdCounter);
+        DataRequest dataRequest = { start, end, transactionId };
+        mDataRequestQueue.insert(0, dataRequest);
     }
-    initialize();
-    mAgendaModel->setStartDate(start);
-    mAgendaModel->setEndDate(end);
+    // Delay triggering until after return to ensure that client gets transactionId
+    QTimer::singleShot(1, this, SLOT(processQueue()));
+    return transactionId;
 }
 
 void CalendarDataService::updated()
@@ -89,7 +100,19 @@ void CalendarDataService::updated()
             reply << eventStruct;
         }
     }
-    emit getEventsResult(reply);
+    if (!mCurrentDataRequest.transactionId.isEmpty()
+            && mCurrentDataRequest.start == mAgendaModel->startDate()
+            && mCurrentDataRequest.end == mAgendaModel->endDate()) {
+        emit getEventsResult(mCurrentDataRequest.transactionId, reply);
+        mCurrentDataRequest = DataRequest();
+    } else {
+        qWarning() << "No transactionId, discarding results";
+    }
+    processQueue();
+}
+
+void CalendarDataService::shutdown()
+{
     exit(0);
 }
 
@@ -98,5 +121,26 @@ void CalendarDataService::initialize()
     if (!mAgendaModel) {
         mAgendaModel = new NemoCalendarAgendaModel(this);
         connect(mAgendaModel, SIGNAL(updated()), this, SLOT(updated()));
+    }
+}
+
+void CalendarDataService::processQueue()
+{
+    if (mDataRequestQueue.isEmpty()) {
+        mKillTimer.start();
+        return;
+    }
+
+    if (mCurrentDataRequest.transactionId.isEmpty()) {
+        initialize();
+        mCurrentDataRequest = mDataRequestQueue.takeLast();
+        if (mAgendaModel->startDate() == mCurrentDataRequest.start
+                && mAgendaModel->endDate() == mCurrentDataRequest.end) {
+            // We already have the events, go to updated() directly
+            updated();
+        } else {
+            mAgendaModel->setStartDate(mCurrentDataRequest.start);
+            mAgendaModel->setEndDate(mCurrentDataRequest.end);
+        }
     }
 }
