@@ -55,7 +55,7 @@ public:
     ~CalendarDataServiceProxy();
 
 public Q_SLOTS:
-    inline QDBusPendingReply<> getEvents(const QString &startDate, const QString &endDate)
+    inline QDBusPendingReply<QString> getEvents(const QString &startDate, const QString &endDate)
     {
         QList<QVariant> argumentList;
         argumentList << QVariant::fromValue(startDate) << QVariant::fromValue(endDate);
@@ -63,12 +63,12 @@ public Q_SLOTS:
     }
 
 Q_SIGNALS:
-    void getEventsResult(const EventDataList &eventDataList);
+    void getEventsResult(const QString &transactionId, const EventDataList &eventDataList);
 };
 
 namespace org {
-namespace nemomobile {
-typedef ::CalendarDataServiceProxy calendardataservice;
-}
+    namespace nemomobile {
+        typedef ::CalendarDataServiceProxy calendardataservice;
+    }
 }
 #endif // CALENDARDATASERVICEPROXY_H

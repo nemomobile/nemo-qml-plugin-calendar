@@ -55,8 +55,8 @@ NemoCalendarEventsModel::NemoCalendarEventsModel(QObject *parent) :
                                           "/org/nemomobile/calendardataservice",
                                           QDBusConnection::sessionBus(),
                                           this);
-    connect(mProxy, SIGNAL(getEventsResult(EventDataList)),
-            this, SLOT(getEventsResult(EventDataList)));
+    connect(mProxy, SIGNAL(getEventsResult(QString,EventDataList)),
+            this, SLOT(getEventsResult(QString,EventDataList)));
 
     mUpdateDelayTimer.setInterval(500);
     mUpdateDelayTimer.setSingleShot(true);
@@ -211,6 +211,7 @@ QVariant NemoCalendarEventsModel::data(const QModelIndex &index, int role) const
 
 void NemoCalendarEventsModel::update()
 {
+    mTransactionId = "";
     QDateTime endDate = (mEndDate.isValid()) ? mEndDate : mStartDate;
     QDBusPendingCall pcall = mProxy->getEvents(mStartDate.toString(Qt::ISODate),
                                                endDate.toString(Qt::ISODate));
@@ -221,16 +222,19 @@ void NemoCalendarEventsModel::update()
 
 void NemoCalendarEventsModel::updateFinished(QDBusPendingCallWatcher *call)
 {
-    QDBusPendingReply<void> reply = *call;
+    QDBusPendingReply<QString> reply = *call;
     if (reply.isError())
         qWarning() << "dbus error:" << reply.error().name() << reply.error().message();
+    else
+        mTransactionId = reply.value();
 
     call->deleteLater();
 }
 
-void NemoCalendarEventsModel::getEventsResult(const EventDataList &eventDataList)
+void NemoCalendarEventsModel::getEventsResult(const QString &transactionId, const EventDataList &eventDataList)
 {
-    if (mEventDataList.isEmpty() && eventDataList.isEmpty())
+    if ((mTransactionId != transactionId)
+            || (mEventDataList.isEmpty() && eventDataList.isEmpty()))
         return;
 
     int oldcount = mEventDataList.count();

@@ -128,7 +128,7 @@ public slots:
 
 private slots:
     void updateFinished(QDBusPendingCallWatcher *call);
-    void getEventsResult(const EventDataList &eventDataList);
+    void getEventsResult(const QString &transactionId, const EventDataList &eventDataList);
 
 protected:
     virtual QHash<int, QByteArray> roleNames() const;
@@ -148,6 +148,7 @@ private:
     int mContentType;
     int mEventLimit;
     int mTotalCount;
+    QString mTransactionId;
 };
 
 #endif // CALENDAREVENTSMODEL_H
