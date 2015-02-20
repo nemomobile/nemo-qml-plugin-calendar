@@ -46,8 +46,9 @@ CalendarDataService::CalendarDataService(QObject *parent) :
     QObject(parent), mAgendaModel(0), mTransactionIdCounter(0)
 {
     mKillTimer.setSingleShot(true);
-    mKillTimer.setInterval(1000);
+    mKillTimer.setInterval(2000);
     connect(&mKillTimer, SIGNAL(timeout()), this, SLOT(shutdown()));
+    mKillTimer.start();
 
     registerCalendarDataServiceTypes();
     new CalendarDataServiceAdaptor(this);
@@ -57,6 +58,9 @@ CalendarDataService::CalendarDataService(QObject *parent) :
 
     if (!connection.registerObject("/org/nemomobile/calendardataservice", this))
         qWarning("Can't register org/nemomobile/calendardataservice object for the D-Bus service.");
+
+    if (connection.lastError().isValid())
+        QCoreApplication::exit(1);
 }
 
 QString CalendarDataService::getEvents(const QString &startDate, const QString &endDate)
@@ -113,7 +117,7 @@ void CalendarDataService::updated()
 
 void CalendarDataService::shutdown()
 {
-    exit(0);
+    QCoreApplication::exit(0);
 }
 
 void CalendarDataService::initialize()

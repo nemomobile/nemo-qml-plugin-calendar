@@ -45,7 +45,7 @@ class CalendarDataService : public QObject {
     Q_OBJECT
 
 public:
-    CalendarDataService(QObject *parent = 0);
+    explicit CalendarDataService(QObject *parent = 0);
 
     void fetchEvents();
 
