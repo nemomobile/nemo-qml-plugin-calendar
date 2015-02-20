@@ -29,6 +29,7 @@ Requires:   %{name} = %{version}-%{release}
 %package lightweight
 Summary:    Calendar lightweight QML plugin
 Group:      System/Libraries
+BuildRequires:  pkgconfig(Qt5DBus)
 
 %description lightweight
 %{summary}.
