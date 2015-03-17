@@ -57,6 +57,7 @@ class NemoCalendarEventsModel : public QAbstractListModel
     Q_PROPERTY(int eventLimit READ eventLimit WRITE setEventLimit NOTIFY eventLimitChanged)
     Q_PROPERTY(int contentType READ contentType WRITE setContentType NOTIFY contentTypeChanged)
     Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
+    Q_PROPERTY(int eventDisplayTime READ eventDisplayTime WRITE setEventDisplayTime NOTIFY eventDisplayTimeChanged)
 
 public:
     enum FilterMode {
@@ -109,6 +110,9 @@ public:
     int eventLimit() const;
     void setEventLimit(int limit);
 
+    int eventDisplayTime() const;
+    void setEventDisplayTime(int seconds);
+
     virtual int rowCount(const QModelIndex &index) const;
     virtual QVariant data(const QModelIndex &index, int role) const;
 
@@ -122,6 +126,7 @@ signals:
     void expiryDateChanged();
     void eventLimitChanged();
     void totalCountChanged();
+    void eventDisplayTimeChanged();
 
 public slots:
     void update();
@@ -148,6 +153,7 @@ private:
     int mContentType;
     int mEventLimit;
     int mTotalCount;
+    int mEventDisplayTime;
     QString mTransactionId;
 };
 

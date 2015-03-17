@@ -48,7 +48,8 @@ NemoCalendarEventsModel::NemoCalendarEventsModel(QObject *parent) :
     mFilterMode(FilterNone),
     mContentType(ContentAll),
     mEventLimit(1000),
-    mTotalCount(0)
+    mTotalCount(0),
+    mEventDisplayTime(0)
 {
     registerCalendarDataServiceTypes();
     mProxy = new CalendarDataServiceProxy("org.nemomobile.calendardataservice",
@@ -103,6 +104,22 @@ void NemoCalendarEventsModel::setEventLimit(int limit)
     mEventLimit = limit;
     emit eventLimitChanged();
     restartUpdateTimer(); // TODO: Could change list content without fetching data
+}
+
+int NemoCalendarEventsModel::eventDisplayTime() const
+{
+    return mEventDisplayTime;
+}
+
+void NemoCalendarEventsModel::setEventDisplayTime(int seconds)
+{
+    if (mEventDisplayTime == seconds)
+        return;
+
+    mEventDisplayTime = seconds;
+    emit eventDisplayTimeChanged();
+
+    restartUpdateTimer();
 }
 
 QDateTime NemoCalendarEventsModel::startDate() const
@@ -251,7 +268,13 @@ void NemoCalendarEventsModel::getEventsResult(const QString &transactionId, cons
         }
 
         QDateTime startTime = QDateTime::fromString(e.startTime, Qt::ISODate);
-        QDateTime endTime = QDateTime::fromString(e.endTime, Qt::ISODate);
+        QDateTime endTime;
+        if (mEventDisplayTime > 0) {
+            endTime = startTime.addSecs(mEventDisplayTime);
+        } else {
+            endTime = QDateTime::fromString(e.endTime, Qt::ISODate);
+        }
+
         if (e.allDay
                 || (mFilterMode == FilterPast && now < endTime)
                 || (mFilterMode == FilterPastAndCurrent && now < startTime)
