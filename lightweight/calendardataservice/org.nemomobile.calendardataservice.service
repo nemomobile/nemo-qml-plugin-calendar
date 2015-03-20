@@ -1,0 +1,4 @@
+[D-BUS Service]
+Interface=/org/nemomobile/calendardataservice
+Name=org.nemomobile.calendardataservice
+Exec=/usr/bin/calendardataservice
