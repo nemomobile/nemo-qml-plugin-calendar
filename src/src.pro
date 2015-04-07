@@ -32,7 +32,8 @@ SOURCES += \
     $$SRCDIR/calendarworker.cpp \
     $$SRCDIR/calendarnotebookquery.cpp \
     $$SRCDIR/calendareventmodification.cpp \
-    $$SRCDIR/calendarchangeinformation.cpp
+    $$SRCDIR/calendarchangeinformation.cpp \
+    $$SRCDIR/calendarutils.cpp
 
 HEADERS += \
     $$SRCDIR/calendarevent.h \
@@ -46,7 +47,8 @@ HEADERS += \
     $$SRCDIR/calendardata.h \
     $$SRCDIR/calendarnotebookquery.h \
     $$SRCDIR/calendareventmodification.h \
-    $$SRCDIR/calendarchangeinformation.h
+    $$SRCDIR/calendarchangeinformation.h \
+    $$SRCDIR/calendarutils.h
 
 MOC_DIR = $$PWD/.moc
 OBJECTS_DIR = $$PWD/.obj

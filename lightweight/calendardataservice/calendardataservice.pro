@@ -18,7 +18,8 @@ HEADERS += \
     ../../src/calendareventoccurrence.h \
     ../../src/calendarevent.h \
     ../../src/calendarchangeinformation.h \
-    ../../src/calendareventquery.h
+    ../../src/calendareventquery.h \
+    ../../src/calendarutils.h
 
 SOURCES += \
     calendardataservice.cpp \
@@ -31,6 +32,7 @@ SOURCES += \
     ../../src/calendarevent.cpp \
     ../../src/calendarchangeinformation.cpp \
     ../../src/calendareventquery.cpp \
+    ../../src/calendarutils.cpp \
     main.cpp
 
 dbus_service.path = /usr/share/dbus-1/services/
