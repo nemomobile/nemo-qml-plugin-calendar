@@ -47,6 +47,16 @@ QString NemoCalendarNotebookQuery::color() const
     return m_notebook.color;
 }
 
+int NemoCalendarNotebookQuery::accountId() const
+{
+    return m_notebook.accountId;
+}
+
+QUrl NemoCalendarNotebookQuery::accountIcon() const
+{
+    return m_notebook.accountIcon;
+}
+
 bool NemoCalendarNotebookQuery::isDefault() const
 {
     return m_notebook.isDefault;
@@ -82,6 +92,8 @@ void NemoCalendarNotebookQuery::updateData()
     bool nameUpdated = (notebook.name != m_notebook.name);
     bool descriptionUpdated = (notebook.description != m_notebook.description);
     bool colorUpdated = (notebook.color != m_notebook.color);
+    bool accountIdUpdated = (notebook.accountId != m_notebook.accountId);
+    bool accountIconUpdated = (notebook.accountIcon != m_notebook.accountIcon);
     bool isDefaultUpdated = (notebook.isDefault != m_notebook.isDefault);
     bool localCalendarUpdated = (notebook.localCalendar != m_notebook.localCalendar);
     bool isReadOnlyUpdated = (notebook.readOnly != m_notebook.readOnly);
@@ -94,6 +106,10 @@ void NemoCalendarNotebookQuery::updateData()
         emit descriptionChanged();
     if (colorUpdated)
         emit colorChanged();
+    if (accountIdUpdated)
+        emit accountIdChanged();
+    if (accountIconUpdated)
+        emit accountIconChanged();
     if (isDefaultUpdated)
         emit isDefaultChanged();
     if (localCalendarUpdated)

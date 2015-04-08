@@ -41,6 +41,9 @@
 // mkcal
 #include <extendedstorage.h>
 
+// libaccounts-qt
+namespace Accounts { class Manager; }
+
 class NemoCalendarWorker : public QObject, public mKCal::ExtendedStorageObserver
 {
     Q_OBJECT
@@ -113,6 +116,8 @@ private:
     QHash<QDate, QStringList> dailyEventOccurrences(const QList<NemoCalendarData::Range> &ranges,
                                                     const QMultiHash<QString, KDateTime> &allDay,
                                                     const QList<NemoCalendarData::EventOccurrence> &occurrences);
+
+    Accounts::Manager *mAccountManager;
 
     mKCal::ExtendedCalendar::Ptr mCalendar;
     mKCal::ExtendedStorage::Ptr mStorage;

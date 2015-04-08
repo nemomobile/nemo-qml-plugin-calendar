@@ -73,6 +73,10 @@ QVariant NemoCalendarNotebookModel::data(const QModelIndex &index, int role) con
         return notebook.readOnly;
     case LocalCalendarRole:
         return notebook.localCalendar;
+    case AccountIdRole:
+        return notebook.accountId;
+    case AccountIconRole:
+        return notebook.accountIcon;
     default:
         return QVariant();
     }
@@ -120,6 +124,8 @@ QHash<int, QByteArray> NemoCalendarNotebookModel::roleNames() const
     roleNames[DefaultRole] = "isDefault";
     roleNames[ReadOnlyRole] = "readOnly";
     roleNames[LocalCalendarRole] = "localCalendar";
+    roleNames[AccountIdRole] = "accountId";
+    roleNames[AccountIconRole] = "accountIcon";
 
     return roleNames;
 }
