@@ -6,7 +6,7 @@ QT += qml dbus
 QT -= gui
 
 CONFIG += link_pkgconfig
-PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical
+PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical accounts-qt5
 
 HEADERS += \
     calendardataservice.h \

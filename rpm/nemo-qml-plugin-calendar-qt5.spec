@@ -13,6 +13,7 @@ BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(libmkcal-qt5)
 BuildRequires:  pkgconfig(libkcalcoren-qt5)
 BuildRequires:  pkgconfig(libical)
+BuildRequires:  pkgconfig(accounts-qt5)
 
 %description
 %{summary}.

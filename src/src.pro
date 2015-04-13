@@ -8,7 +8,7 @@ QT += qml concurrent
 QT -= gui
 
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
-PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical
+PKGCONFIG += libkcalcoren-qt5 libmkcal-qt5 libical accounts-qt5
 
 INSTALLS += target
 

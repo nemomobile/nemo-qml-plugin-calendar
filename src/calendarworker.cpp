@@ -48,8 +48,13 @@
 #include <libical/vobject.h>
 #include <libical/vcaltmp.h>
 
+// libaccounts-qt
+#include <Accounts/Manager>
+#include <Accounts/Provider>
+#include <Accounts/Account>
+
 NemoCalendarWorker::NemoCalendarWorker() :
-    QObject(0)
+    QObject(0), mAccountManager(0)
 {
 }
 
@@ -691,6 +696,27 @@ void NemoCalendarWorker::loadNotebooks()
             notebook.color = notebooks.at(ii)->color();
         if (notebook.color.isEmpty())
             notebook.color = defaultNotebookColors.at((nextDefaultNotebookColor++) % defaultNotebookColors.count());
+
+        QString accountStr = notebooks.at(ii)->account();
+        if (!accountStr.isEmpty()) {
+            if (!mAccountManager) {
+                mAccountManager = new Accounts::Manager(this);
+            }
+            bool ok = false;
+            int accountId = accountStr.toInt(&ok);
+            if (ok && accountId > 0) {
+                Accounts::Account *account = Accounts::Account::fromId(mAccountManager, accountId, this);
+                if (account) {
+                    notebook.accountId = accountId;
+                    notebook.accountIcon = mAccountManager->provider(account->providerName()).iconName();
+                    if (notebook.description.isEmpty()) {
+                        // fill the description field with some account information
+                        notebook.description = account->displayName();
+                    }
+                }
+                delete account;
+            }
+        }
 
         if (mNotebooks.contains(notebook.uid) && mNotebooks.value(notebook.uid) != notebook)
             changed = true;

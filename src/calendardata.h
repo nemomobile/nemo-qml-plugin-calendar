@@ -2,6 +2,7 @@
 #define NEMOCALENDARDATA_H
 
 #include <QString>
+#include <QUrl>
 
 // KCalCore
 #include <attendee.h>
@@ -54,18 +55,21 @@ struct Notebook {
     QString uid;
     QString description;
     QString color;
+    int accountId;
+    QUrl accountIcon;
     bool isDefault;
     bool readOnly;
     bool localCalendar;
     bool excluded;
 
-    Notebook() : isDefault(false), readOnly(false), localCalendar(false), excluded(false) { }
+    Notebook() : accountId(0), isDefault(false), readOnly(false), localCalendar(false), excluded(false) { }
 
     bool operator==(const Notebook other) const
     {
         return uid == other.uid && name == other.name && description == other.description &&
-                color == other.color && isDefault == other.isDefault && readOnly == other.readOnly &&
-                localCalendar == other.localCalendar && excluded == other.excluded;
+               color == other.color && accountId == other.accountId && accountIcon == other.accountIcon &&
+               isDefault == other.isDefault && readOnly == other.readOnly && localCalendar == other.localCalendar &&
+               excluded == other.excluded;
     }
 
     bool operator!=(const Notebook other) const
