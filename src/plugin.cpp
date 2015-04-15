@@ -44,6 +44,7 @@
 #include "calendaragendamodel.h"
 #include "calendarmanager.h"
 #include "calendarnotebookquery.h"
+#include "calendarimportmodel.h"
 
 class QtDate : public QObject
 {
@@ -125,6 +126,7 @@ public:
         qmlRegisterType<NemoCalendarNotebookQuery>(uri, 1, 0, "NotebookQuery");
         qmlRegisterSingletonType<QtDate>(uri, 1, 0, "QtDate", QtDate::New);
         qmlRegisterSingletonType<NemoCalendarApi>(uri, 1, 0, "Calendar", NemoCalendarApi::New);
+        qmlRegisterType<NemoCalendarImportModel>(uri, 1, 0, "ImportModel");
     }
 };
 
