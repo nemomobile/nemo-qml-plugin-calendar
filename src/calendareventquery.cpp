@@ -34,6 +34,7 @@
 
 #include "calendarmanager.h"
 #include "calendareventoccurrence.h"
+#include "calendarutils.h"
 
 NemoCalendarEventQuery::NemoCalendarEventQuery()
     : mIsComplete(true), mOccurrence(0), mAttendeesCached(false)
@@ -138,20 +139,12 @@ QObject *NemoCalendarEventQuery::occurrence() const
 
 QList<QObject*> NemoCalendarEventQuery::attendees()
 {
-    QList<QObject*> result;
-
     if (!mAttendeesCached) {
         mAttendees = NemoCalendarManager::instance()->getEventAttendees(mUid, mRecurrenceId);
         mAttendeesCached = true;
     }
 
-    foreach (const NemoCalendarData::Attendee &attendee, mAttendees) {
-        QObject *person = new Person(attendee.name, attendee.email, attendee.isOrganizer,
-                                     attendee.participationRole);
-        result.append(person);
-    }
-
-    return result;
+    return NemoCalendarUtils::convertAttendeeList(mAttendees);
 }
 
 void NemoCalendarEventQuery::classBegin()

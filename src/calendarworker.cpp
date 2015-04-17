@@ -31,6 +31,7 @@
  */
 
 #include "calendarworker.h"
+#include "calendarutils.h"
 
 #include <QDebug>
 #include <QSettings>
@@ -279,38 +280,12 @@ void NemoCalendarWorker::init()
     loadNotebooks();
 }
 
-NemoCalendarEvent::Recur NemoCalendarWorker::convertRecurrence(const KCalCore::Event::Ptr &event) const
-{
-    if (!event->recurs())
-        return NemoCalendarEvent::RecurOnce;
-
-    if (event->recurrence()->rRules().count() != 1)
-        return NemoCalendarEvent::RecurCustom;
-
-    ushort rt = event->recurrence()->recurrenceType();
-    int freq = event->recurrence()->frequency();
-
-    if (rt == KCalCore::Recurrence::rDaily && freq == 1) {
-        return NemoCalendarEvent::RecurDaily;
-    } else if (rt == KCalCore::Recurrence::rWeekly && freq == 1) {
-        return NemoCalendarEvent::RecurWeekly;
-    } else if (rt == KCalCore::Recurrence::rWeekly && freq == 2) {
-        return NemoCalendarEvent::RecurBiweekly;
-    } else if (rt == KCalCore::Recurrence::rMonthlyDay && freq == 1) {
-        return NemoCalendarEvent::RecurMonthly;
-    } else if (rt == KCalCore::Recurrence::rYearlyMonth && freq == 1) {
-        return NemoCalendarEvent::RecurYearly;
-    }
-
-    return NemoCalendarEvent::RecurCustom;
-}
-
 bool NemoCalendarWorker::setRecurrence(KCalCore::Event::Ptr &event, NemoCalendarEvent::Recur recur)
 {
     if (!event)
         return false;
 
-    NemoCalendarEvent::Recur oldRecur = convertRecurrence(event);
+    NemoCalendarEvent::Recur oldRecur = NemoCalendarUtils::convertRecurrence(event);
 
     if (recur == NemoCalendarEvent::RecurCustom) {
         qWarning() << "Cannot assign RecurCustom, will assing RecurOnce";
@@ -381,56 +356,12 @@ KCalCore::Duration NemoCalendarWorker::reminderToDuration(NemoCalendarEvent::Rem
     return offset;
 }
 
-NemoCalendarEvent::Reminder NemoCalendarWorker::getReminder(const KCalCore::Event::Ptr &event) const
-{
-    KCalCore::Alarm::List alarms = event->alarms();
-
-    KCalCore::Alarm::Ptr alarm;
-
-    for (int ii = 0; ii < alarms.count(); ++ii) {
-        if (alarms.at(ii)->type() == KCalCore::Alarm::Procedure)
-            continue;
-
-        if (alarm)
-            return NemoCalendarEvent::ReminderNone;
-        else
-            alarm = alarms.at(ii);
-    }
-
-    if (!alarm)
-        return NemoCalendarEvent::ReminderNone;
-
-    KCalCore::Duration d = alarm->startOffset();
-    int sec = d.asSeconds();
-
-    switch (sec) {
-    case 0:
-        return NemoCalendarEvent::ReminderTime;
-    case -5 * 60:
-        return NemoCalendarEvent::Reminder5Min;
-    case -15 * 60:
-        return NemoCalendarEvent::Reminder15Min;
-    case -30 * 60:
-        return NemoCalendarEvent::Reminder30Min;
-    case -60 * 60:
-        return NemoCalendarEvent::Reminder1Hour;
-    case -2 * 60 * 60:
-        return NemoCalendarEvent::Reminder2Hour;
-    case -24 * 60 * 60:
-        return NemoCalendarEvent::Reminder1Day;
-    case -2 * 24 * 60 * 60:
-        return NemoCalendarEvent::Reminder2Day;
-    default:
-        return NemoCalendarEvent::ReminderNone;
-    }
-}
-
 bool NemoCalendarWorker::setReminder(KCalCore::Event::Ptr &event, NemoCalendarEvent::Reminder reminder)
 {
     if (!event)
         return false;
 
-    if (getReminder(event) == reminder)
+    if (NemoCalendarUtils::getReminder(event) == reminder)
         return false;
 
     KCalCore::Alarm::List alarms = event->alarms();
@@ -657,12 +588,12 @@ NemoCalendarData::Event NemoCalendarWorker::createEventStruct(const KCalCore::Ev
     event.endTime = e->dtEnd();
     event.location = e->location();
     event.readonly = mStorage->notebook(event.calendarUid)->isReadOnly();
-    event.recur = convertRecurrence(e);
+    event.recur = NemoCalendarUtils::convertRecurrence(e);
     KCalCore::RecurrenceRule *defaultRule = e->recurrence()->defaultRRule();
     if (defaultRule) {
         event.recurEndDate = defaultRule->endDt().date();
     }
-    event.reminder = getReminder(e);
+    event.reminder = NemoCalendarUtils::getReminder(e);
     event.startTime = e->dtStart();
     return event;
 }
@@ -737,39 +668,7 @@ NemoCalendarData::EventOccurrence NemoCalendarWorker::getNextOccurrence(const QS
                                                                         const QDateTime &start) const
 {
     KCalCore::Event::Ptr event = mCalendar->event(uid, recurrenceId);
-    NemoCalendarData::EventOccurrence occurrence;
-
-    if (event) {
-        mKCal::ExtendedCalendar::ExpandedIncidenceValidity eiv = {
-            event->dtStart().toLocalZone().dateTime(),
-            event->dtEnd().toLocalZone().dateTime()
-        };
-
-        if (!start.isNull() && event->recurs()) {
-            KDateTime startTime = KDateTime(start, KDateTime::Spec(KDateTime::LocalZone));
-            KCalCore::Recurrence *recurrence = event->recurrence();
-            if (recurrence->recursAt(startTime)) {
-                eiv.dtStart = startTime.toLocalZone().dateTime();
-                eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(startTime).toLocalZone().dateTime();
-            } else {
-                KDateTime match = recurrence->getNextDateTime(startTime);
-                if (match.isNull())
-                    match = recurrence->getPreviousDateTime(startTime);
-
-                if (!match.isNull()) {
-                    eiv.dtStart = match.toLocalZone().dateTime();
-                    eiv.dtEnd = KCalCore::Duration(event->dtStart(), event->dtEnd()).end(match).toLocalZone().dateTime();
-                }
-            }
-        }
-
-        occurrence.eventUid = event->uid();
-        occurrence.recurrenceId = event->recurrenceId();
-        occurrence.startTime = eiv.dtStart;
-        occurrence.endTime = eiv.dtEnd;
-    }
-
-    return occurrence;
+    return NemoCalendarUtils::getNextOccurrence(event, start);
 }
 
 QList<NemoCalendarData::Attendee> NemoCalendarWorker::getEventAttendees(const QString &uid, const KDateTime &recurrenceId)
@@ -782,32 +681,5 @@ QList<NemoCalendarData::Attendee> NemoCalendarWorker::getEventAttendees(const QS
         return result;
     }
 
-    KCalCore::Person::Ptr calOrganizer = event->organizer();
-
-    NemoCalendarData::Attendee organizer;
-
-    if (!calOrganizer.isNull() && !calOrganizer->isEmpty()) {
-        organizer.isOrganizer = true;
-        organizer.name = calOrganizer->name();
-        organizer.email = calOrganizer->email();
-        organizer.participationRole = KCalCore::Attendee::ReqParticipant;
-        result.append(organizer);
-    }
-
-    KCalCore::Attendee::List attendees = event->attendees();
-    NemoCalendarData::Attendee attendee;
-    attendee.isOrganizer = false;
-
-    foreach (KCalCore::Attendee::Ptr calAttendee, attendees) {
-        attendee.name = calAttendee->name();
-        attendee.email = calAttendee->email();
-        if (attendee.name == organizer.name && attendee.email == organizer.email) {
-            // avoid duplicate info
-            continue;
-        }
-        attendee.participationRole = calAttendee->role();
-        result.append(attendee);
-    }
-
-    return result;
+    return NemoCalendarUtils::getEventAttendees(event);
 }
