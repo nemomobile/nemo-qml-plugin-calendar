@@ -41,6 +41,7 @@
 #include "../../src/calendaragendamodel.h"
 #include "../../src/calendarevent.h"
 #include "../../src/calendareventoccurrence.h"
+#include "../../src/calendarmanager.h"
 
 CalendarDataService::CalendarDataService(QObject *parent) :
     QObject(parent), mAgendaModel(0), mTransactionIdCounter(0)
@@ -117,7 +118,12 @@ void CalendarDataService::updated()
 
 void CalendarDataService::shutdown()
 {
-    QCoreApplication::exit(0);
+    if (mAgendaModel) {
+        // Call NemoCalendarManager dtor to ensure that the QThread managed by it
+        // will be destroyed via deleteLater when control returns to the event loop.
+        delete NemoCalendarManager::instance();
+    }
+    QTimer::singleShot(1, QCoreApplication::instance(), SLOT(quit()));
 }
 
 void CalendarDataService::initialize()
