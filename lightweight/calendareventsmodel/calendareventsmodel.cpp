@@ -37,6 +37,9 @@
 #include <QDBusPendingCallWatcher>
 #include <QDebug>
 #include <QFileSystemWatcher>
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
 #include <qqmlinfo.h>
 
 #include "calendardataserviceproxy.h"
@@ -64,9 +67,29 @@ NemoCalendarEventsModel::NemoCalendarEventsModel(QObject *parent) :
     connect(&mUpdateDelayTimer, SIGNAL(timeout()), this, SLOT(update()));
 
     QString privilegedDataDir = QString("%1/.local/share/system/privileged/Calendar/mkcal/db").arg(QDir::homePath());
-    mWatcher->addPath(privilegedDataDir);
+    if (QFile::exists(privilegedDataDir)) {
+        if (!mWatcher->addPath(privilegedDataDir)) {
+            qWarning() << "CalendarEventsModel: error adding filesystem watcher for calendar db";
+        }
+    } else {
+        qWarning() << "CalendarEventsModel not following database changes, dir not found:" << privilegedDataDir;
+    }
+
     QSettings settings("nemo", "nemo-qml-plugin-calendar");
-    mWatcher->addPath(settings.fileName());
+
+    if (!QFile::exists(settings.fileName())) {
+        // forcefully create a settings file so changes can be followed
+        QFileInfo info(settings.fileName());
+        QDir path;
+        path.mkpath(info.absoluteDir().path());
+        QFile touch(settings.fileName());
+        touch.open(QIODevice::WriteOnly | QIODevice::Text);
+    }
+
+    if (!mWatcher->addPath(settings.fileName())) {
+        qWarning() << "CalendarEventsModel: error following settings file changes" << settings.fileName();
+    }
+
     // Updates to the calendar db will cause several file change notifications, delay update a bit
     connect(mWatcher, SIGNAL(fileChanged(QString)), &mUpdateDelayTimer, SLOT(start()));
 }
