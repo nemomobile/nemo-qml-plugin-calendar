@@ -121,6 +121,8 @@ void CalendarDataService::shutdown()
     if (mAgendaModel) {
         // Call NemoCalendarManager dtor to ensure that the QThread managed by it
         // will be destroyed via deleteLater when control returns to the event loop.
+        // Delete the AgendaModel first, its destructor refers to NemoCalendarManager
+        delete mAgendaModel;
         delete NemoCalendarManager::instance();
     }
     QTimer::singleShot(1, QCoreApplication::instance(), SLOT(quit()));
