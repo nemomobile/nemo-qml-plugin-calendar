@@ -54,5 +54,7 @@ HEADERS += \
     $$SRCDIR/calendarimportmodel.h \
     $$SRCDIR/calendarimportevent.h
 
+OTHER_FILES += qmldir
+
 MOC_DIR = $$PWD/.moc
 OBJECTS_DIR = $$PWD/.obj

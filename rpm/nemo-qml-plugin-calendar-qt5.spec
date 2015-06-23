@@ -35,6 +35,16 @@ BuildRequires:  pkgconfig(Qt5DBus)
 %description lightweight
 %{summary}.
 
+%package tools
+Summary:    Calendar import/export tool
+License:    BSD
+Group:      Applications/System
+BuildRequires:  pkgconfig(libmkcal-qt5)
+BuildRequires:  pkgconfig(libkcalcoren-qt5)
+
+%description tools
+%{summary}.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -63,3 +73,7 @@ rm -rf %{buildroot}
 %{_datadir}/dbus-1/services/org.nemomobile.calendardataservice.service
 %{_libdir}/qt5/qml/org/nemomobile/calendar/lightweight/libnemocalendarwidget.so
 %{_libdir}/qt5/qml/org/nemomobile/calendar/lightweight/qmldir
+
+%files tools
+%defattr(-,root,root,-)
+%{_bindir}/icalconverter
