@@ -118,12 +118,16 @@ void CalendarDataService::updated()
 
 void CalendarDataService::shutdown()
 {
+    QDBusConnection connection = QDBusConnection::sessionBus();
+    connection.unregisterService("org.nemomobile.calendardataservice");
+    connection.unregisterObject("/org/nemomobile/calendardataservice");
+
     if (mAgendaModel) {
         // Call NemoCalendarManager dtor to ensure that the QThread managed by it
         // will be destroyed via deleteLater when control returns to the event loop.
         delete NemoCalendarManager::instance();
     }
-    QTimer::singleShot(1, QCoreApplication::instance(), SLOT(quit()));
+    QTimer::singleShot(0, QCoreApplication::instance(), SLOT(quit()));
 }
 
 void CalendarDataService::initialize()
