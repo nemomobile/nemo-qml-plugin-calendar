@@ -553,12 +553,32 @@ void NemoCalendarWorker::loadData(const QList<NemoCalendarData::Range> &ranges,
 
     QMultiHash<QString, NemoCalendarData::Event> events;
     QMultiHash<QString, KDateTime> allDay;
+    bool orphansDeleted = false;
 
     foreach (const KCalCore::Event::Ptr e, list) {
         // The database may have changed after loading the events, make sure that the notebook
         // of the event still exists.
-        if (mStorage->notebook(mCalendar->notebook(e)).isNull())
+        if (mStorage->notebook(mCalendar->notebook(e)).isNull()) {
+            // This may be a symptom of a deeper bug: if a sync adapter (or mkcal)
+            // doesn't delete events which belong to a deleted notebook, then the
+            // events will be "orphan" and need to be deleted.
+            if (mStorage->load(e->uid())) {
+                KCalCore::Incidence::Ptr orphan = mCalendar->incidence(e->uid(), KDateTime());
+                if (!orphan.isNull()) {
+                    bool deletedOrphanOccurrences = mCalendar->deleteIncidenceInstances(orphan);
+                    bool deletedOrphanSeries = mCalendar->deleteIncidence(orphan);
+                    if (deletedOrphanOccurrences || deletedOrphanSeries) {
+                        qWarning() << "Deleted orphan calendar event:" << orphan->uid()
+                                   << orphan->summary() << orphan->description() << orphan->location();
+                        orphansDeleted = true;
+                    } else {
+                        qWarning() << "Failed to delete orphan calendar event:" << orphan->uid()
+                                   << orphan->summary() << orphan->description() << orphan->location();
+                    }
+                }
+            }
             continue;
+        }
 
         NemoCalendarData::Event event = createEventStruct(e);
 
@@ -568,6 +588,10 @@ void NemoCalendarWorker::loadData(const QList<NemoCalendarData::Range> &ranges,
             if (event.allDay)
                 allDay.insert(event.uniqueId, event.recurrenceId);
         }
+    }
+
+    if (orphansDeleted) {
+        save(); // save the orphan deletions to storage.
     }
 
     QHash<QString, NemoCalendarData::EventOccurrence> occurrences = eventOccurrences(ranges);
